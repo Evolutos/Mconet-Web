@@ -2,4 +2,5 @@
 
 /** Public runtime-independent Mconet domain contracts. */
 export { isOpenIdentifier } from "./open-identifier.js";
+export type { JsonPrimitive } from "./json-primitive.js";
 export type { OpenIdentifier } from "./open-identifier.js";
