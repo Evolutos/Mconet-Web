@@ -7,6 +7,7 @@ export { isModelDescriptor } from "./model-descriptor.js";
 export { isModelTarget } from "./model-target.js";
 export { parseMediaType } from "./media-type.js";
 export { isRawPayloadWithinSizeLimit } from "./raw-payload.js";
+export { isServiceAccess } from "./service-access.js";
 export { ModelInteractionError } from "./model-interaction-error.js";
 export { NamedModel } from "./named-model.js";
 export { SecretValue } from "./secret-value.js";
