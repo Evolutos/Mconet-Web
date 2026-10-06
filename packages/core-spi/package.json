@@ -4,6 +4,12 @@
   "private": true,
   "description": "Replaceable behavior contracts for the Mconet Web SDK.",
   "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
   "sideEffects": false,
   "author": {
     "name": "Mcont",
