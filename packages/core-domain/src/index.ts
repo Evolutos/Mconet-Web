@@ -66,6 +66,7 @@ export type { ModelRequest } from "./model-request.js";
 export type { ModelTaskRequest } from "./model-task-request.js";
 export type { ModelTarget } from "./model-target.js";
 export type { OpenIdentifier } from "./open-identifier.js";
+export type { OutputStatus } from "./output-status.js";
 export type { ProcessingResult } from "./processing-result.js";
 export type { QueryField } from "./query-field.js";
 export type { QueryFields } from "./query-fields.js";
