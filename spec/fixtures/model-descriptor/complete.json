@@ -1,0 +1,21 @@
+{
+  "name": "vendor/model-v2",
+  "displayName": "Vendor 文本模型",
+  "family": "vendor.text",
+  "version": "2026-10-07",
+  "metadata": {
+    "contextWindow": 128000,
+    "multimodal": false,
+    "aliases": ["vendor-model-latest", null],
+    "limits": {
+      "requestsPerMinute": 0,
+      "temperatureStep": 0.1
+    }
+  },
+  "extensions": {
+    "vendor.routing": {
+      "regions": ["global", "asia"],
+      "automatic": true
+    }
+  }
+}

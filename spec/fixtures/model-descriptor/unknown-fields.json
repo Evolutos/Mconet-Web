@@ -1,0 +1,18 @@
+{
+  "name": "future-model",
+  "metadata": {
+    "known": true
+  },
+  "extensions": {
+    "vendor.feature": {
+      "enabled": false
+    }
+  },
+  "futureOption": {
+    "enabled": false,
+    "threshold": 0,
+    "values": [],
+    "settings": {}
+  },
+  "futureNullable": null
+}
