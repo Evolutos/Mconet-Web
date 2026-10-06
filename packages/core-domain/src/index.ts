@@ -10,6 +10,7 @@ export { parseTimestamp } from "./timestamp.js";
 export { isUriValue } from "./uri-value.js";
 export type { Bytes } from "./bytes.js";
 export type { Duration } from "./duration.js";
+export type { ErrorCategory } from "./error-category.js";
 export type { Extensions } from "./extensions.js";
 export type { JsonPrimitive } from "./json-primitive.js";
 export type { JsonValue } from "./json-value.js";
