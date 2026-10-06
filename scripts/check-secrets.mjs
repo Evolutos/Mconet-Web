@@ -51,7 +51,15 @@ const secretRules = [
   },
 ];
 
-const excludedPathPrefixes = [".git/", ".artifacts/", "coverage/", "node_modules/"];
+/** Directory names containing generated output, dependencies, or Git metadata. */
+const excludedDirectoryNames = new Set([
+  ".artifacts",
+  ".git",
+  ".pnpm-store",
+  "coverage",
+  "dist",
+  "node_modules",
+]);
 
 /**
  * Returns tracked and non-ignored untracked files. Scanning both sets catches a
@@ -94,13 +102,11 @@ function shouldScanPath(relativePath) {
     throw new Error(`Refusing to scan a path outside the workspace: ${relativePath}`);
   }
 
-  // Exclude only reviewed generated/dependency paths; all other tracked and
-  // untracked source-like files remain in scope.
-  return (
-    !excludedPathPrefixes.some((prefix) => normalizedPath.startsWith(prefix)) &&
-    !normalizedPath.includes("/dist/") &&
-    !normalizedPath.endsWith("/dist")
-  );
+  // Check every directory segment instead of only repository-root prefixes.
+  // Workspace package dependencies create nested node_modules symlinks, and
+  // attempting to read those directory entries as files would fail the scan.
+  const directorySegments = normalizedPath.split("/").slice(0, -1);
+  return !directorySegments.some((segment) => excludedDirectoryNames.has(segment));
 }
 
 /**
@@ -225,6 +231,23 @@ function runSelfTest() {
 
   if (scanText(approvedInput, "approved-placeholder-input").length > 0) {
     throw new Error("Secret detector self-test rejected an approved placeholder.");
+  }
+
+  // Dependency and generated-output directories must be excluded at both the
+  // workspace root and package depth, while ordinary source remains scannable.
+  const pathFilterCases = [
+    ["node_modules/package/index.js", false],
+    ["packages/core-spi/node_modules/package/index.js", false],
+    ["packages/core-spi/dist/index.js", false],
+    [".pnpm-store/v11/index.db", false],
+    ["packages/core-spi/src/credential-source.ts", true],
+  ];
+  for (const [relativePath, expectedResult] of pathFilterCases) {
+    // Compare each reviewed path classification explicitly so a future filter
+    // change cannot silently reintroduce directory reads or skip source files.
+    if (shouldScanPath(relativePath) !== expectedResult) {
+      throw new Error(`Secret path filter self-test failed: ${relativePath}`);
+    }
   }
 
   writeLog(`Secret detector self-test passed (${secretRules.length} rules).`);

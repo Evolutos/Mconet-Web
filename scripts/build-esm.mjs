@@ -124,6 +124,48 @@ function assertNoDiagnostics(diagnostics, packageRole) {
 }
 
 /**
+ * Removes JavaScript artifacts recursively while preserving declarations.
+ *
+ * Declaration output is prepared before ESM compilation so dependent packages
+ * can resolve public workspace types. Removing only JavaScript files keeps that
+ * dependency surface and the final package declarations intact.
+ *
+ * @param {string} directory Package output directory.
+ */
+async function removeJavaScriptOutputs(directory) {
+  // Read the current tree without requiring an earlier declaration or ESM build.
+  /** @type {import("node:fs").Dirent[]} */
+  let entries;
+
+  try {
+    entries = await fs.readdir(directory, { withFileTypes: true });
+  } catch (error) {
+    // A missing output directory is already free of stale JavaScript. Preserve
+    // every other filesystem failure so incomplete cleanup cannot be ignored.
+    if (error && typeof error === "object" && "code" in error && error.code === "ENOENT") {
+      return;
+    }
+    throw error;
+  }
+
+  // Traverse nested output deterministically and remove only files owned by the
+  // ESM build. Declaration files and maps remain available to later packages.
+  await Promise.all(
+    entries.map(async (entry) => {
+      const entryPath = path.join(directory, entry.name);
+      if (entry.isDirectory()) {
+        await removeJavaScriptOutputs(entryPath);
+        return;
+      }
+
+      if (entry.name.endsWith(".js") || entry.name.endsWith(".js.map")) {
+        await fs.rm(entryPath);
+      }
+    }),
+  );
+}
+
+/**
  * Type-checks one package and optionally emits its package-local ESM output.
  *
  * @param {string} packageRole Workspace package role.
@@ -157,8 +199,9 @@ async function buildPackage(packageRole, sourceFiles, buildOptions, shouldEmit) 
     return;
   }
 
-  // Remove only this reviewed package output so stale modules cannot survive.
-  await fs.rm(outputRoot, { force: true, recursive: true });
+  // Remove stale ESM artifacts without deleting declarations prepared for
+  // workspace dependency resolution and final package publication.
+  await removeJavaScriptOutputs(outputRoot);
 
   // Emit into the clean package-local directory and reject both reported
   // diagnostics and an unexpected compiler decision to skip output.

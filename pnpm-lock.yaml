@@ -49,7 +49,11 @@ importers:
 
   packages/core-runtime: {}
 
-  packages/core-spi: {}
+  packages/core-spi:
+    dependencies:
+      '@evolutos/mconet-core-domain':
+        specifier: workspace:*
+        version: link:../core-domain
 
   packages/integration-openai-compatible: {}
 

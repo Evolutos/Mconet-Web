@@ -24,6 +24,27 @@ const environmentConfigByPackage = new Map([
 /** Default type environment for platform-neutral package declarations. */
 const defaultEnvironmentConfig = "tsconfig.pure-core.json";
 
+/**
+ * Package order that guarantees declarations exist before dependent packages
+ * resolve their public type imports.
+ *
+ * Every newly introduced package must be placed after all of its internal
+ * dependencies. The explicit list also makes an unreviewed package addition a
+ * deterministic build failure instead of silently compiling in filesystem order.
+ */
+const declarationBuildOrder = [
+  "core-domain",
+  "core-spi",
+  "core-runtime",
+  "auth-basic",
+  "codec-json",
+  "integration-openai-compatible",
+  "testing",
+  "transport-fetch-browser",
+  "transport-fetch-node",
+  "client",
+];
+
 /** TypeScript diagnostic host that emits workspace-relative context. */
 const diagnosticHost = {
   getCanonicalFileName: (fileName) => fileName,
@@ -195,17 +216,35 @@ async function main() {
     sourcesByPackage.set(packageRole, packageSources);
   }
 
-  // Sort package and source order for deterministic behavior, then emit package
-  // declarations concurrently because outputs are disjoint.
-  const packageBuilds = [...sourcesByPackage.entries()]
-    .sort(([leftRole], [rightRole]) => leftRole.localeCompare(rightRole))
-    .map(([packageRole, sourceFiles]) =>
-      buildPackageDeclarations(packageRole, sourceFiles.sort(), declarationConfig.options),
+  // Reject source-bearing packages missing from the reviewed dependency order.
+  // Otherwise a new internal dependency could compile only when stale output is
+  // present, making clean and incremental builds disagree.
+  const unorderedPackages = [...sourcesByPackage.keys()].filter(
+    (packageRole) => !declarationBuildOrder.includes(packageRole),
+  );
+  if (unorderedPackages.length > 0) {
+    throw new Error(
+      `Declaration build order is missing package entries: ${unorderedPackages.sort().join(", ")}`,
     );
-  await Promise.all(packageBuilds);
+  }
+
+  // Emit one package at a time in dependency order. TypeScript then resolves an
+  // internal package's public declarations from the output produced earlier in
+  // this same clean build rather than relying on stale local artifacts.
+  let builtPackageCount = 0;
+  for (const packageRole of declarationBuildOrder) {
+    const sourceFiles = sourcesByPackage.get(packageRole);
+    if (!sourceFiles) {
+      // An ordered package with no source entry requires no output in this build.
+      continue;
+    }
+
+    await buildPackageDeclarations(packageRole, sourceFiles.sort(), declarationConfig.options);
+    builtPackageCount += 1;
+  }
 
   // Summarize only after every isolated package emit succeeds.
-  process.stdout.write(`Built declarations for ${packageBuilds.length} package entries.\n`);
+  process.stdout.write(`Built declarations for ${builtPackageCount} package entries.\n`);
 }
 
 await main();

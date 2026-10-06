@@ -11,7 +11,7 @@
   "copyright": "Copyright © 2026 Mcont",
   "license": "UNLICENSED",
   "scripts": {
-    "build": "pnpm run build:esm && pnpm run build:types",
+    "build": "pnpm run build:types && pnpm run build:esm",
     "build:esm": "node scripts/build-esm.mjs",
     "build:types": "node scripts/build-declarations.mjs",
     "check:boundaries": "node scripts/check-boundaries.mjs",
@@ -25,7 +25,7 @@
     "test:contract": "vitest run --config vitest.contract.ts",
     "test:conformance": "vitest run --config vitest.conformance.ts",
     "test:coverage": "vitest run --coverage --config vitest.workspace.ts",
-    "typecheck": "node scripts/build-esm.mjs --check"
+    "typecheck": "pnpm run build:types && node scripts/build-esm.mjs --check"
   },
   "packageManager": "pnpm@11.19.0",
   "engines": {
