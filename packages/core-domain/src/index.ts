@@ -81,6 +81,7 @@ export type { TaskNode } from "./task-node.js";
 export type { TaskRelation } from "./task-relation.js";
 export type { TextMessageContent } from "./text-message-content.js";
 export type { Timestamp } from "./timestamp.js";
+export type { TokenUsage } from "./token-usage.js";
 export type { UnknownMessageContent } from "./unknown-message-content.js";
 export type { UnknownTaskNode } from "./unknown-task-node.js";
 export type { UriArtifactSource } from "./uri-artifact-source.js";
