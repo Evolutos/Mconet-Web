@@ -1,0 +1,22 @@
+// Copyright © 2026 Mcont.
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "compilerOptions": {
+    // Keep emitted module semantics aligned with the ESM package manifests.
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    // The base configuration is a type-checking policy; build steps explicitly
+    // override this setting when JavaScript or declaration output is required.
+    "noEmit": true,
+    // Runtime-specific libraries and ambient types are deliberately omitted.
+    // Pure-core, browser, and Node configurations add only their required APIs.
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    "useUnknownInCatchVariables": true,
+    "noImplicitOverride": true,
+    "verbatimModuleSyntax": true,
+    "isolatedModules": true
+  }
+}
