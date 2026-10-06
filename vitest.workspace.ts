@@ -39,6 +39,15 @@ function createPackageProject(
 /** Shared workspace test configuration with one project per package. */
 export default defineConfig({
   test: {
+    coverage: {
+      clean: true,
+      cleanOnRerun: true,
+      exclude: ["**/*.d.ts", "**/*.{spec,test}.ts"],
+      include: ["packages/*/src/**/*.ts"],
+      provider: "v8",
+      reporter: ["text", "json-summary", "html"],
+      reportsDirectory: "./coverage",
+    },
     passWithNoTests: true,
     projects: packageRoles.map(createPackageProject),
   },
