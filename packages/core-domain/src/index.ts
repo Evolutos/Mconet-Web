@@ -32,6 +32,7 @@ export type { InteractionResourceLimits } from "./interaction-resource-limits.js
 export type { JsonPrimitive } from "./json-primitive.js";
 export type { JsonValue } from "./json-value.js";
 export type { MediaType } from "./media-type.js";
+export type { MessageContent } from "./message-content.js";
 export type { MessageContentKind } from "./message-content-kind.js";
 export type { MessageRole } from "./message-role.js";
 export type { ModelDescriptor } from "./model-descriptor.js";
