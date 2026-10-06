@@ -1,0 +1,11 @@
+// Copyright © 2026 Mcont.
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    // The Node.js transport receives standard ECMAScript APIs and the pinned
+    // Node 20 ambient surface without inheriting browser DOM globals.
+    "lib": ["ES2022"],
+    "types": ["node"]
+  },
+  "include": ["packages/transport-fetch-node/src/**/*.ts"]
+}
