@@ -10,12 +10,18 @@
   },
   "copyright": "Copyright © 2026 Mcont",
   "license": "UNLICENSED",
+  "scripts": {
+    "lint": "eslint . --max-warnings 0"
+  },
   "packageManager": "pnpm@11.19.0",
   "engines": {
-    "node": ">=20",
+    "node": "^20.19.0 || ^22.13.0 || >=24",
     "pnpm": ">=11"
   },
   "devDependencies": {
-    "typescript": "7.0.2"
+    "@eslint/js": "10.0.1",
+    "eslint": "10.12.0",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.71.1"
   }
 }
