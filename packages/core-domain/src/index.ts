@@ -25,7 +25,7 @@ export { serializeModelInteractionError } from "./serialize-model-interaction-er
 export { parseTimestamp } from "./timestamp.js";
 export { isUriValue } from "./uri-value.js";
 export { isArtifact, type Artifact } from "./artifact.js";
-export type { ArtifactCatalog } from "./artifact-catalog.js";
+export { validateArtifactCatalogIds, type ArtifactCatalog } from "./artifact-catalog.js";
 export type { ArtifactDescriptor } from "./artifact-descriptor.js";
 export type { ArtifactKind } from "./artifact-kind.js";
 export type { ArtifactMetadata } from "./artifact-metadata.js";
