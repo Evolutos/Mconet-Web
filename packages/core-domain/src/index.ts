@@ -14,6 +14,7 @@ export { isMessageGroup } from "./message-group.js";
 export { isMessageRole } from "./message-role.js";
 export { isTextMessageContent } from "./text-message-content.js";
 export { validateTextMessageContentSupport } from "./validate-text-message-content-support.js";
+export { validateEmptyArtifactCatalogSupport } from "./validate-empty-artifact-catalog-support.js";
 export { createDefaultCompatibilityPolicy } from "./create-default-compatibility-policy.js";
 export { parseMediaType } from "./media-type.js";
 export { isRawPayloadWithinSizeLimit } from "./raw-payload.js";
