@@ -1,0 +1,17 @@
+{
+  "name": "@evolutos/mconet-auth-basic",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Basic authentication components for the Mconet Web SDK.",
+  "type": "module",
+  "sideEffects": false,
+  "author": {
+    "name": "Mcont",
+    "email": "Mcont@gmail.com"
+  },
+  "copyright": "Copyright © 2026 Mcont",
+  "license": "UNLICENSED",
+  "engines": {
+    "node": ">=20"
+  }
+}
