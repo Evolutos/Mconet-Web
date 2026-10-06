@@ -1,0 +1,10 @@
+{
+  "serviceId": "vendor.service",
+  "protocolId": "vendor.protocol",
+  "model": {
+    "name": "example-model",
+    "metadata": {},
+    "extensions": {}
+  },
+  "extensions": {}
+}

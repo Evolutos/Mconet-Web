@@ -1,0 +1,27 @@
+{
+  "serviceId": "gateway.service",
+  "protocolId": "openai.chat.completions",
+  "model": {
+    "name": "vendor/model-v2",
+    "displayName": "Vendor 文本模型",
+    "family": "vendor.text",
+    "version": "2026-10-07",
+    "metadata": {
+      "contextWindow": 128000,
+      "multimodal": false,
+      "aliases": ["vendor-model-latest", null]
+    },
+    "extensions": {
+      "vendor.model": {
+        "capability": "text"
+      }
+    }
+  },
+  "deploymentId": "deployment-blue",
+  "extensions": {
+    "vendor.routing": {
+      "regions": ["global", "asia"],
+      "weight": 0
+    }
+  }
+}

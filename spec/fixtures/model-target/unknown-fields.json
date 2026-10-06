@@ -1,0 +1,19 @@
+{
+  "serviceId": "future.service",
+  "protocolId": "future.protocol",
+  "model": {
+    "name": "future-model",
+    "metadata": {},
+    "extensions": {},
+    "futureModelOption": {
+      "enabled": false,
+      "values": []
+    }
+  },
+  "extensions": {},
+  "futureTargetOption": {
+    "threshold": 0,
+    "settings": {}
+  },
+  "futureNullable": null
+}
