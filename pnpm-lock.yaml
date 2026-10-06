@@ -23,6 +23,8 @@ importers:
 
   packages/auth-basic: {}
 
+  packages/client: {}
+
   packages/codec-json: {}
 
   packages/core-domain: {}
