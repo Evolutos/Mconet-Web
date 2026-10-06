@@ -1,0 +1,32 @@
+{
+  "cases": [
+    {
+      "name": "resolved-provider-artifact",
+      "reference": {
+        "artifactId": "artifact-provider-vector",
+        "relation": "message.attachment",
+        "metadata": {
+          "ordinal": 0,
+          "preferred": true
+        }
+      },
+      "expected": {
+        "status": "resolved",
+        "artifactId": "artifact-provider-vector"
+      }
+    },
+    {
+      "name": "missing-local-artifact",
+      "reference": {
+        "artifactId": "artifact-missing",
+        "metadata": {
+          "ordinal": 1
+        }
+      },
+      "expected": {
+        "status": "error",
+        "code": "artifact_reference_not_found"
+      }
+    }
+  ]
+}

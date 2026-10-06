@@ -1,0 +1,61 @@
+{
+  "artifacts": [
+    {
+      "id": "artifact-image-preview",
+      "kind": {
+        "id": "artifact.image",
+        "semantic": "image",
+        "extensions": {}
+      },
+      "mediaType": "image/png",
+      "source": {
+        "kind": "artifact.source.uri",
+        "uri": {
+          "kind": "absolute",
+          "value": "https://assets.example.invalid/previews/image.png"
+        }
+      },
+      "descriptor": {
+        "kind": "artifact.descriptor.image",
+        "width": 640,
+        "height": 360
+      },
+      "metadata": {
+        "label": "预览图",
+        "featured": true
+      },
+      "extensions": {}
+    },
+    {
+      "id": "artifact-provider-vector",
+      "kind": {
+        "id": "provider.embedding_vector",
+        "semantic": "embedding",
+        "extensions": {
+          "provider.kind": {
+            "dimensions": 3
+          }
+        }
+      },
+      "mediaType": "application/vnd.provider.vector+json",
+      "source": {
+        "kind": "provider.source.handle",
+        "handleId": "asset-向量-1",
+        "repeatable": true
+      },
+      "descriptor": {
+        "kind": "provider.descriptor.vector",
+        "dimensions": 3
+      },
+      "metadata": {
+        "label": "向量结果",
+        "values": [0, 0.5, -1]
+      },
+      "extensions": {
+        "provider.artifact": {
+          "retained": false
+        }
+      }
+    }
+  ]
+}

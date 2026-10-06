@@ -1,0 +1,41 @@
+{
+  "artifacts": [
+    {
+      "id": "artifact-duplicate",
+      "kind": {
+        "id": "artifact.image",
+        "semantic": "image",
+        "extensions": {}
+      },
+      "mediaType": "image/webp",
+      "source": {
+        "kind": "artifact.source.uri",
+        "uri": {
+          "kind": "relative",
+          "value": "../assets/first.webp"
+        }
+      },
+      "metadata": {
+        "ordinal": 0
+      },
+      "extensions": {}
+    },
+    {
+      "id": "artifact-duplicate",
+      "kind": {
+        "id": "provider.preview_asset",
+        "semantic": "preview",
+        "extensions": {}
+      },
+      "source": {
+        "kind": "provider.source.handle",
+        "handleId": "asset-preview-2",
+        "repeatable": false
+      },
+      "metadata": {
+        "ordinal": 1
+      },
+      "extensions": {}
+    }
+  ]
+}
