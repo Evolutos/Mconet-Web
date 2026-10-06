@@ -26,6 +26,7 @@ export type { Extensions } from "./extensions.js";
 export type { HeaderField } from "./header-field.js";
 export type { HeaderFields } from "./header-fields.js";
 export type { InteractionPhase } from "./interaction-phase.js";
+export type { InteractionResourceLimits } from "./interaction-resource-limits.js";
 export type { JsonPrimitive } from "./json-primitive.js";
 export type { JsonValue } from "./json-value.js";
 export type { MediaType } from "./media-type.js";
