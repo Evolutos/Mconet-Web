@@ -1,0 +1,8 @@
+{
+  "kind": "uri-value",
+  "cases": [
+    { "kind": "absolute", "value": "https://api.example.com/models?active=true#result" },
+    { "kind": "relative", "value": "../models?active=true" },
+    { "kind": "relative", "value": "" }
+  ]
+}

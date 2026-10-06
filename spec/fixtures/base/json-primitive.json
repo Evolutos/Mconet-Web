@@ -1,0 +1,4 @@
+{
+  "kind": "json-primitive",
+  "cases": [null, "text", 0, 1.5, true, false]
+}

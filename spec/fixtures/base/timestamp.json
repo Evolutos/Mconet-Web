@@ -1,0 +1,8 @@
+{
+  "kind": "timestamp",
+  "cases": [
+    { "epochMilliseconds": -62135596800000 },
+    { "epochMilliseconds": 0 },
+    { "epochMilliseconds": 9007199254740991 }
+  ]
+}

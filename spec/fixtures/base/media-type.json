@@ -1,0 +1,18 @@
+{
+  "kind": "media-type",
+  "cases": [
+    {
+      "type": "application",
+      "subtype": "json",
+      "parameters": {}
+    },
+    {
+      "type": "application",
+      "subtype": "problem+json",
+      "parameters": {
+        "charset": "utf-8",
+        "profile": "model output"
+      }
+    }
+  ]
+}

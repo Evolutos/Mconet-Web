@@ -1,0 +1,23 @@
+{
+  "kind": "diagnostic",
+  "cases": [
+    {
+      "code": "response.partial",
+      "severity": "warning",
+      "phase": "response_parsing",
+      "message": "The response omitted optional metadata."
+    },
+    {
+      "code": "provider.notice",
+      "severity": "info",
+      "phase": "vendor.post_processing",
+      "message": "Provider metadata was preserved.",
+      "path": "/metadata",
+      "serviceId": "vendor.gateway",
+      "details": {
+        "attempt": 1,
+        "labels": []
+      }
+    }
+  ]
+}

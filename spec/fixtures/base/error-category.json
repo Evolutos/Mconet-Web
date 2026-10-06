@@ -1,0 +1,4 @@
+{
+  "kind": "error-category",
+  "cases": ["invalid_request", "network", "unknown", "vendor.quota_exhausted"]
+}

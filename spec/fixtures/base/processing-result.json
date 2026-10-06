@@ -1,0 +1,25 @@
+{
+  "kind": "processing-result",
+  "cases": [
+    {
+      "diagnostics": []
+    },
+    {
+      "value": null,
+      "diagnostics": []
+    },
+    {
+      "value": {
+        "text": "completed"
+      },
+      "diagnostics": [
+        {
+          "code": "response.normalized",
+          "severity": "info",
+          "phase": "response_parsing",
+          "message": "The response was normalized."
+        }
+      ]
+    }
+  ]
+}

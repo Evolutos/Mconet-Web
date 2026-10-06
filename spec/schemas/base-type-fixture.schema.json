@@ -1,0 +1,336 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.evolutos.com/mconet/base/type-fixture",
+  "title": "Mconet language-neutral base type Fixture",
+  "description": "Validates named collections of representative JSON values for base contracts that already define a language-neutral representation.",
+  "$comment": "Copyright © 2026 Mcont. Binary payloads have no committed JSON encoding, and secrets or language-specific class representations are intentionally excluded.",
+  "oneOf": [
+    { "$ref": "#/$defs/openIdentifierFixture" },
+    { "$ref": "#/$defs/jsonPrimitiveFixture" },
+    { "$ref": "#/$defs/jsonValueFixture" },
+    { "$ref": "#/$defs/extensionsFixture" },
+    { "$ref": "#/$defs/timestampFixture" },
+    { "$ref": "#/$defs/durationFixture" },
+    { "$ref": "#/$defs/uriValueFixture" },
+    { "$ref": "#/$defs/mediaTypeFixture" },
+    { "$ref": "#/$defs/errorCategoryFixture" },
+    { "$ref": "#/$defs/interactionPhaseFixture" },
+    { "$ref": "#/$defs/recoveryHintFixture" },
+    { "$ref": "#/$defs/diagnosticFixture" },
+    { "$ref": "#/$defs/processingResultFixture" }
+  ],
+  "$defs": {
+    "openIdentifier": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^(?!.*[\\s\\p{C}])(?!\\.)(?!.*\\.\\.)(?!.*\\.$).+$"
+    },
+    "jsonPrimitive": {
+      "oneOf": [
+        { "type": "string" },
+        { "type": "number" },
+        { "type": "boolean" },
+        { "type": "null" }
+      ]
+    },
+    "jsonValue": {
+      "oneOf": [
+        { "$ref": "#/$defs/jsonPrimitive" },
+        {
+          "type": "array",
+          "items": { "$ref": "#/$defs/jsonValue" }
+        },
+        {
+          "type": "object",
+          "additionalProperties": { "$ref": "#/$defs/jsonValue" }
+        }
+      ]
+    },
+    "extensions": {
+      "type": "object",
+      "additionalProperties": { "$ref": "#/$defs/jsonValue" }
+    },
+    "timestamp": {
+      "type": "object",
+      "properties": {
+        "epochMilliseconds": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": ["epochMilliseconds"],
+      "additionalProperties": true
+    },
+    "duration": {
+      "type": "object",
+      "properties": {
+        "milliseconds": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": ["milliseconds"],
+      "additionalProperties": true
+    },
+    "absoluteUriValue": {
+      "type": "object",
+      "properties": {
+        "kind": { "const": "absolute" },
+        "value": {
+          "type": "string",
+          "format": "uri",
+          "pattern": "^[A-Za-z][A-Za-z0-9+.-]*:"
+        }
+      },
+      "required": ["kind", "value"],
+      "additionalProperties": true
+    },
+    "relativeUriValue": {
+      "type": "object",
+      "properties": {
+        "kind": { "const": "relative" },
+        "value": {
+          "type": "string",
+          "format": "uri-reference",
+          "not": { "pattern": "^[^/?#]*:" }
+        }
+      },
+      "required": ["kind", "value"],
+      "additionalProperties": true
+    },
+    "uriValue": {
+      "oneOf": [{ "$ref": "#/$defs/absoluteUriValue" }, { "$ref": "#/$defs/relativeUriValue" }]
+    },
+    "normalizedMediaTypeToken": {
+      "type": "string",
+      "pattern": "^[!#$%&'*+\\-.^_`|~a-z0-9]+$"
+    },
+    "mediaType": {
+      "type": "object",
+      "properties": {
+        "type": { "$ref": "#/$defs/normalizedMediaTypeToken" },
+        "subtype": { "$ref": "#/$defs/normalizedMediaTypeToken" },
+        "parameters": {
+          "type": "object",
+          "propertyNames": { "$ref": "#/$defs/normalizedMediaTypeToken" },
+          "additionalProperties": { "type": "string" }
+        }
+      },
+      "required": ["type", "subtype", "parameters"],
+      "additionalProperties": true
+    },
+    "errorCategory": {
+      "$ref": "#/$defs/openIdentifier"
+    },
+    "interactionPhase": {
+      "$ref": "#/$defs/openIdentifier"
+    },
+    "recoveryHint": {
+      "type": "object",
+      "properties": {
+        "transient": { "type": "boolean" },
+        "retryAfterMilliseconds": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "requestMayHaveBeenProcessed": { "type": "boolean" }
+      },
+      "additionalProperties": true
+    },
+    "diagnostic": {
+      "type": "object",
+      "properties": {
+        "code": { "type": "string" },
+        "severity": { "enum": ["info", "warning", "error"] },
+        "phase": { "$ref": "#/$defs/interactionPhase" },
+        "message": { "type": "string" },
+        "path": { "type": "string" },
+        "serviceId": { "$ref": "#/$defs/openIdentifier" },
+        "details": { "$ref": "#/$defs/jsonValue" }
+      },
+      "required": ["code", "severity", "phase", "message"],
+      "additionalProperties": true
+    },
+    "processingResult": {
+      "type": "object",
+      "properties": {
+        "value": { "$ref": "#/$defs/jsonValue" },
+        "diagnostics": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/diagnostic" }
+        }
+      },
+      "required": ["diagnostics"],
+      "additionalProperties": true
+    },
+    "openIdentifierFixture": {
+      "$ref": "#/$defs/fixtureEnvelope",
+      "type": "object",
+      "properties": {
+        "kind": { "const": "open-identifier" },
+        "cases": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/openIdentifier" },
+          "minItems": 1
+        }
+      }
+    },
+    "jsonPrimitiveFixture": {
+      "$ref": "#/$defs/fixtureEnvelope",
+      "type": "object",
+      "properties": {
+        "kind": { "const": "json-primitive" },
+        "cases": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/jsonPrimitive" },
+          "minItems": 1
+        }
+      }
+    },
+    "jsonValueFixture": {
+      "$ref": "#/$defs/fixtureEnvelope",
+      "type": "object",
+      "properties": {
+        "kind": { "const": "json-value" },
+        "cases": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/jsonValue" },
+          "minItems": 1
+        }
+      }
+    },
+    "extensionsFixture": {
+      "$ref": "#/$defs/fixtureEnvelope",
+      "type": "object",
+      "properties": {
+        "kind": { "const": "extensions" },
+        "cases": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/extensions" },
+          "minItems": 1
+        }
+      }
+    },
+    "timestampFixture": {
+      "$ref": "#/$defs/fixtureEnvelope",
+      "type": "object",
+      "properties": {
+        "kind": { "const": "timestamp" },
+        "cases": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/timestamp" },
+          "minItems": 1
+        }
+      }
+    },
+    "durationFixture": {
+      "$ref": "#/$defs/fixtureEnvelope",
+      "type": "object",
+      "properties": {
+        "kind": { "const": "duration" },
+        "cases": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/duration" },
+          "minItems": 1
+        }
+      }
+    },
+    "uriValueFixture": {
+      "$ref": "#/$defs/fixtureEnvelope",
+      "type": "object",
+      "properties": {
+        "kind": { "const": "uri-value" },
+        "cases": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/uriValue" },
+          "minItems": 1
+        }
+      }
+    },
+    "mediaTypeFixture": {
+      "$ref": "#/$defs/fixtureEnvelope",
+      "type": "object",
+      "properties": {
+        "kind": { "const": "media-type" },
+        "cases": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/mediaType" },
+          "minItems": 1
+        }
+      }
+    },
+    "errorCategoryFixture": {
+      "$ref": "#/$defs/fixtureEnvelope",
+      "type": "object",
+      "properties": {
+        "kind": { "const": "error-category" },
+        "cases": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/errorCategory" },
+          "minItems": 1
+        }
+      }
+    },
+    "interactionPhaseFixture": {
+      "$ref": "#/$defs/fixtureEnvelope",
+      "type": "object",
+      "properties": {
+        "kind": { "const": "interaction-phase" },
+        "cases": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/interactionPhase" },
+          "minItems": 1
+        }
+      }
+    },
+    "recoveryHintFixture": {
+      "$ref": "#/$defs/fixtureEnvelope",
+      "type": "object",
+      "properties": {
+        "kind": { "const": "recovery-hint" },
+        "cases": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/recoveryHint" },
+          "minItems": 1
+        }
+      }
+    },
+    "diagnosticFixture": {
+      "$ref": "#/$defs/fixtureEnvelope",
+      "type": "object",
+      "properties": {
+        "kind": { "const": "diagnostic" },
+        "cases": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/diagnostic" },
+          "minItems": 1
+        }
+      }
+    },
+    "processingResultFixture": {
+      "$ref": "#/$defs/fixtureEnvelope",
+      "type": "object",
+      "properties": {
+        "kind": { "const": "processing-result" },
+        "cases": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/processingResult" },
+          "minItems": 1
+        }
+      }
+    },
+    "fixtureEnvelope": {
+      "type": "object",
+      "properties": {
+        "kind": { "type": "string" },
+        "cases": { "type": "array" }
+      },
+      "required": ["kind", "cases"],
+      "additionalProperties": false
+    }
+  }
+}

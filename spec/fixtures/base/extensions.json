@@ -1,0 +1,12 @@
+{
+  "kind": "extensions",
+  "cases": [
+    {},
+    {
+      "vendor.feature": {
+        "enabled": false,
+        "labels": []
+      }
+    }
+  ]
+}

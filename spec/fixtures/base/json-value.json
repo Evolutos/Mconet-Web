@@ -1,0 +1,13 @@
+{
+  "kind": "json-value",
+  "cases": [
+    null,
+    [],
+    {},
+    {
+      "enabled": false,
+      "items": ["text", 1.5, null],
+      "metadata": {}
+    }
+  ]
+}

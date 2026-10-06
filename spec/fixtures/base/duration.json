@@ -1,0 +1,4 @@
+{
+  "kind": "duration",
+  "cases": [{ "milliseconds": 0 }, { "milliseconds": 250 }, { "milliseconds": 9007199254740991 }]
+}

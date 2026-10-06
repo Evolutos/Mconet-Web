@@ -1,0 +1,16 @@
+{
+  "kind": "recovery-hint",
+  "cases": [
+    {},
+    {
+      "transient": false,
+      "retryAfterMilliseconds": 0,
+      "requestMayHaveBeenProcessed": false
+    },
+    {
+      "transient": true,
+      "retryAfterMilliseconds": 1000,
+      "requestMayHaveBeenProcessed": true
+    }
+  ]
+}

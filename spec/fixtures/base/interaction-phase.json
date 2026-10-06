@@ -1,0 +1,4 @@
+{
+  "kind": "interaction-phase",
+  "cases": ["validation", "transport", "response_parsing", "vendor.post_processing"]
+}
