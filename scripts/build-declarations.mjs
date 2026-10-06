@@ -16,6 +16,7 @@ const declarationConfigPath = path.join(workspaceRoot, "tsconfig.declarations.js
 
 /** Explicit type environments for shared Web contracts and platform transports. */
 const environmentConfigByPackage = new Map([
+  ["core-runtime", "tsconfig.web-platform.json"],
   ["core-spi", "tsconfig.web-platform.json"],
   ["transport-fetch-browser", "tsconfig.browser.json"],
   ["transport-fetch-node", "tsconfig.node.json"],

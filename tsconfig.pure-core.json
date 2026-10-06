@@ -2,10 +2,10 @@
 {
   "extends": "./tsconfig.base.json",
   "compilerOptions": {
-    // Pure core contracts may use ECMAScript built-ins but cannot depend on
+    // Pure domain contracts may use ECMAScript built-ins but cannot depend on
     // browser globals, Node.js globals, or package-provided ambient types.
     "lib": ["ES2022"],
     "types": []
   },
-  "include": ["packages/core-domain/src/**/*.ts", "packages/core-runtime/src/**/*.ts"]
+  "include": ["packages/core-domain/src/**/*.ts"]
 }

@@ -2,10 +2,10 @@
 {
   "extends": "./tsconfig.base.json",
   "compilerOptions": {
-    // Shared Web contracts may reference platform-standard primitives such as
-    // AbortSignal without exposing DOM document APIs or Node.js ambient types.
+    // Shared Web contracts and interaction lifecycle data may reference
+    // platform primitives without exposing DOM document APIs or Node ambients.
     "lib": ["ES2022", "WebWorker"],
     "types": []
   },
-  "include": ["packages/core-spi/src/**/*.ts"]
+  "include": ["packages/core-spi/src/**/*.ts", "packages/core-runtime/src/**/*.ts"]
 }
