@@ -10,6 +10,7 @@ export type { Duration } from "./duration.js";
 export type { Extensions } from "./extensions.js";
 export type { JsonPrimitive } from "./json-primitive.js";
 export type { JsonValue } from "./json-value.js";
+export type { MediaType } from "./media-type.js";
 export type { OpenIdentifier } from "./open-identifier.js";
 export type { Timestamp } from "./timestamp.js";
 export type { UriValue } from "./uri-value.js";
