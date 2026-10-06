@@ -34,6 +34,7 @@ export type { JsonValue } from "./json-value.js";
 export type { MediaType } from "./media-type.js";
 export type { MessageContent } from "./message-content.js";
 export type { MessageContentKind } from "./message-content-kind.js";
+export type { MessageDocument } from "./message-document.js";
 export type { MessageEntry } from "./message-entry.js";
 export type { MessageGroup } from "./message-group.js";
 export type { MessageRelation } from "./message-relation.js";
