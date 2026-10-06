@@ -23,6 +23,8 @@ importers:
 
   packages/core-domain: {}
 
+  packages/core-spi: {}
+
 packages:
 
   '@cacheable/memory@2.2.0':
