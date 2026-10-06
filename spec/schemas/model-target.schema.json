@@ -1,0 +1,98 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.evolutos.com/mconet/model/target",
+  "title": "Mconet ModelTarget",
+  "description": "Language-neutral interaction target that identifies a model service, protocol, model descriptor, optional deployment, and namespaced extensions.",
+  "$comment": "Copyright © 2026 Mcont. Protocol identity is explicit and must not be inferred from the model name or an access endpoint; access, authorization, task, and execution state are outside this contract.",
+  "type": "object",
+  "properties": {
+    "serviceId": {
+      "$ref": "#/$defs/openIdentifier",
+      "description": "Open identifier of the model service being addressed."
+    },
+    "protocolId": {
+      "$ref": "#/$defs/openIdentifier",
+      "description": "Open identifier of the interaction protocol used for adapter selection."
+    },
+    "model": {
+      "$ref": "#/$defs/modelDescriptor",
+      "description": "Model description independent from service and protocol identity."
+    },
+    "deploymentId": {
+      "type": "string",
+      "description": "Optional opaque service-side deployment identifier."
+    },
+    "extensions": {
+      "$ref": "#/$defs/jsonRecord",
+      "description": "Always-present namespaced target extension data."
+    }
+  },
+  "required": ["serviceId", "protocolId", "model", "extensions"],
+  "additionalProperties": true,
+  "$defs": {
+    "modelDescriptor": {
+      "description": "Open model description embedded in a target without adding service or protocol semantics.",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Protocol-facing model name preserved without normalization."
+        },
+        "displayName": {
+          "type": "string",
+          "description": "Optional human-readable model label."
+        },
+        "family": {
+          "$ref": "#/$defs/openIdentifier",
+          "description": "Optional open model-family identifier."
+        },
+        "version": {
+          "type": "string",
+          "description": "Optional provider-defined model version."
+        },
+        "metadata": {
+          "$ref": "#/$defs/jsonRecord",
+          "description": "Always-present platform-neutral descriptive metadata."
+        },
+        "extensions": {
+          "$ref": "#/$defs/jsonRecord",
+          "description": "Always-present namespaced extension data."
+        }
+      },
+      "required": ["name", "metadata", "extensions"],
+      "additionalProperties": true
+    },
+    "openIdentifier": {
+      "description": "Unicode-friendly open identifier with non-empty period-delimited segments.",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^(?!.*[\\s\\p{C}])(?!\\.)(?!.*\\.\\.)(?!.*\\.$).+$"
+    },
+    "jsonPrimitive": {
+      "description": "Primitive value represented directly by JSON.",
+      "oneOf": [
+        { "type": "string" },
+        { "type": "number" },
+        { "type": "boolean" },
+        { "type": "null" }
+      ]
+    },
+    "jsonValue": {
+      "description": "Recursive language-neutral JSON value.",
+      "oneOf": [
+        { "$ref": "#/$defs/jsonPrimitive" },
+        {
+          "type": "array",
+          "items": { "$ref": "#/$defs/jsonValue" }
+        },
+        { "$ref": "#/$defs/jsonRecord" }
+      ]
+    },
+    "jsonRecord": {
+      "description": "String-keyed JSON object whose values remain recursively JSON-compatible.",
+      "type": "object",
+      "additionalProperties": { "$ref": "#/$defs/jsonValue" }
+    }
+  }
+}
