@@ -1,0 +1,181 @@
+{
+  "targetCases": [
+    {
+      "id": "request-over-client",
+      "requestSource": "request",
+      "clientSource": "client",
+      "expectedSource": "request"
+    },
+    {
+      "id": "client-fallback",
+      "requestSource": null,
+      "clientSource": "client",
+      "expectedSource": "client"
+    }
+  ],
+  "serviceAccessCases": [
+    {
+      "id": "interaction-over-all",
+      "interactionSource": "interaction",
+      "requestSource": "request",
+      "clientSource": "client",
+      "integrationSource": "integration",
+      "expectedSource": "interaction"
+    },
+    {
+      "id": "request-fallback",
+      "interactionSource": null,
+      "requestSource": "request",
+      "clientSource": "client",
+      "integrationSource": "integration",
+      "expectedSource": "request"
+    },
+    {
+      "id": "client-fallback",
+      "interactionSource": null,
+      "requestSource": null,
+      "clientSource": "client",
+      "integrationSource": "integration",
+      "expectedSource": "client"
+    },
+    {
+      "id": "integration-fallback",
+      "interactionSource": null,
+      "requestSource": null,
+      "clientSource": null,
+      "integrationSource": "integration",
+      "expectedSource": "integration"
+    },
+    {
+      "id": "complete-absence",
+      "interactionSource": null,
+      "requestSource": null,
+      "clientSource": null,
+      "integrationSource": null,
+      "expectedSource": null
+    }
+  ],
+  "compatibilityCases": [
+    {
+      "id": "interaction-over-client",
+      "interactionMode": "strict",
+      "clientMode": "permissive",
+      "expectedMode": "strict",
+      "expectedSource": "interaction"
+    },
+    {
+      "id": "client-fallback",
+      "interactionMode": null,
+      "clientMode": "permissive",
+      "expectedMode": "permissive",
+      "expectedSource": "client"
+    },
+    {
+      "id": "sdk-default",
+      "interactionMode": null,
+      "clientMode": null,
+      "expectedMode": "compatible",
+      "expectedSource": "sdk"
+    }
+  ],
+  "resourceLimitCases": [
+    {
+      "id": "interaction-over-all",
+      "sdk": {
+        "maxResponseBodyBytes": 100,
+        "maxStreamingErrorBodyBytes": 200,
+        "maxFrameBytes": 300
+      },
+      "client": {
+        "maxResponseBodyBytes": 110,
+        "maxStreamingErrorBodyBytes": 220,
+        "maxFrameBytes": 330
+      },
+      "interaction": {
+        "maxResponseBodyBytes": 111,
+        "maxStreamingErrorBodyBytes": 222,
+        "maxFrameBytes": 333
+      },
+      "expected": {
+        "maxResponseBodyBytes": 111,
+        "maxStreamingErrorBodyBytes": 222,
+        "maxFrameBytes": 333
+      },
+      "expectedSources": {
+        "maxResponseBodyBytes": "interaction",
+        "maxStreamingErrorBodyBytes": "interaction",
+        "maxFrameBytes": "interaction"
+      }
+    },
+    {
+      "id": "client-fallback",
+      "sdk": {
+        "maxResponseBodyBytes": 100,
+        "maxStreamingErrorBodyBytes": 200,
+        "maxFrameBytes": 300
+      },
+      "client": {
+        "maxResponseBodyBytes": 110,
+        "maxStreamingErrorBodyBytes": 220,
+        "maxFrameBytes": 330
+      },
+      "interaction": null,
+      "expected": {
+        "maxResponseBodyBytes": 110,
+        "maxStreamingErrorBodyBytes": 220,
+        "maxFrameBytes": 330
+      },
+      "expectedSources": {
+        "maxResponseBodyBytes": "client",
+        "maxStreamingErrorBodyBytes": "client",
+        "maxFrameBytes": "client"
+      }
+    },
+    {
+      "id": "sdk-fallback",
+      "sdk": {
+        "maxResponseBodyBytes": 100,
+        "maxStreamingErrorBodyBytes": 200,
+        "maxFrameBytes": 300
+      },
+      "client": null,
+      "interaction": null,
+      "expected": {
+        "maxResponseBodyBytes": 100,
+        "maxStreamingErrorBodyBytes": 200,
+        "maxFrameBytes": 300
+      },
+      "expectedSources": {
+        "maxResponseBodyBytes": "sdk",
+        "maxStreamingErrorBodyBytes": "sdk",
+        "maxFrameBytes": "sdk"
+      }
+    },
+    {
+      "id": "mixed-per-field",
+      "sdk": {
+        "maxResponseBodyBytes": 100,
+        "maxStreamingErrorBodyBytes": 200,
+        "maxFrameBytes": 300
+      },
+      "client": {
+        "maxResponseBodyBytes": 110,
+        "maxStreamingErrorBodyBytes": 220
+      },
+      "interaction": {
+        "maxResponseBodyBytes": 111,
+        "maxFrameBytes": 333
+      },
+      "expected": {
+        "maxResponseBodyBytes": 111,
+        "maxStreamingErrorBodyBytes": 220,
+        "maxFrameBytes": 333
+      },
+      "expectedSources": {
+        "maxResponseBodyBytes": "interaction",
+        "maxStreamingErrorBodyBytes": "client",
+        "maxFrameBytes": "interaction"
+      }
+    }
+  ]
+}
