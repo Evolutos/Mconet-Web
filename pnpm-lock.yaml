@@ -35,6 +35,8 @@ importers:
 
   packages/integration-openai-compatible: {}
 
+  packages/testing: {}
+
   packages/transport-fetch-browser: {}
 
   packages/transport-fetch-node: {}

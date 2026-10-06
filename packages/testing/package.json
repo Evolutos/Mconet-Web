@@ -1,0 +1,17 @@
+{
+  "name": "@evolutos/mconet-testing",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Contract testing utilities for the Mconet Web SDK.",
+  "type": "module",
+  "sideEffects": false,
+  "author": {
+    "name": "Mcont",
+    "email": "Mcont@gmail.com"
+  },
+  "copyright": "Copyright © 2026 Mcont",
+  "license": "UNLICENSED",
+  "engines": {
+    "node": ">=20"
+  }
+}
