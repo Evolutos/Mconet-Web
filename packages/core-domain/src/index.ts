@@ -6,6 +6,7 @@ export { isDuration } from "./duration.js";
 export { parseMediaType } from "./media-type.js";
 export { isRawPayloadWithinSizeLimit } from "./raw-payload.js";
 export { ModelInteractionError } from "./model-interaction-error.js";
+export { NamedModel } from "./named-model.js";
 export { SecretValue } from "./secret-value.js";
 export { serializeModelInteractionError } from "./serialize-model-interaction-error.js";
 export { parseTimestamp } from "./timestamp.js";
