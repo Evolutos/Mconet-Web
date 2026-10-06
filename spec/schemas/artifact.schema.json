@@ -1,0 +1,175 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.evolutos.com/mconet/artifact",
+  "title": "Mconet Artifact",
+  "description": "Language-neutral Artifact data containing catalog-local identity, open classification, source representation, optional modality description, metadata, and namespaced extensions.",
+  "$comment": "Copyright © 2026 Mcont. This Schema validates one Artifact structure. Catalog-wide ID uniqueness, reference resolution, source access, byte limits, transfer, decoding, and transformation remain separate runtime responsibilities.",
+  "type": "object",
+  "properties": {
+    "id": {
+      "$ref": "#/$defs/openIdentifier",
+      "description": "Catalog-local Artifact identity."
+    },
+    "kind": {
+      "$ref": "#/$defs/artifactKind",
+      "description": "Open Artifact classification with optional semantic meaning."
+    },
+    "mediaType": {
+      "$ref": "#/$defs/mediaTypeString",
+      "description": "Optional original media type text retained without normalization."
+    },
+    "source": {
+      "$ref": "#/$defs/artifactSource",
+      "description": "Inline, URI-referenced, or integration-defined Artifact source."
+    },
+    "descriptor": {
+      "$ref": "#/$defs/artifactDescriptor",
+      "description": "Optional open modality-specific description."
+    },
+    "metadata": {
+      "$ref": "#/$defs/jsonRecord",
+      "description": "Always-present JSON-compatible descriptive metadata."
+    },
+    "extensions": {
+      "$ref": "#/$defs/jsonRecord",
+      "description": "Always-present namespaced extension data."
+    }
+  },
+  "required": ["id", "kind", "source", "metadata", "extensions"],
+  "additionalProperties": true,
+  "$defs": {
+    "artifactKind": {
+      "description": "Open Artifact classification with independent optional semantics and extensions.",
+      "type": "object",
+      "properties": {
+        "id": { "$ref": "#/$defs/openIdentifier" },
+        "semantic": { "type": "string" },
+        "extensions": { "$ref": "#/$defs/jsonRecord" }
+      },
+      "required": ["id", "extensions"],
+      "additionalProperties": true
+    },
+    "artifactSource": {
+      "description": "Known sources enforce concrete payloads while unknown source kinds remain open.",
+      "oneOf": [
+        { "$ref": "#/$defs/inlineArtifactSource" },
+        { "$ref": "#/$defs/uriArtifactSource" },
+        { "$ref": "#/$defs/unknownArtifactSource" }
+      ]
+    },
+    "inlineArtifactSource": {
+      "description": "Inline byte source whose in-memory byte carrier is runtime-specific.",
+      "$comment": "The Web runtime requires Uint8Array. No language-neutral binary JSON encoding is committed by this Schema, so the required bytes member remains unconstrained here.",
+      "type": "object",
+      "properties": {
+        "kind": { "const": "artifact.source.inline" },
+        "bytes": true
+      },
+      "required": ["kind", "bytes"],
+      "additionalProperties": true
+    },
+    "uriArtifactSource": {
+      "description": "URI source retaining an explicit absolute or relative reference without resolution.",
+      "type": "object",
+      "properties": {
+        "kind": { "const": "artifact.source.uri" },
+        "uri": { "$ref": "#/$defs/uriValue" }
+      },
+      "required": ["kind", "uri"],
+      "additionalProperties": true
+    },
+    "unknownArtifactSource": {
+      "description": "Integration-defined source whose fields are owned by its defining integration.",
+      "type": "object",
+      "properties": {
+        "kind": {
+          "allOf": [
+            { "$ref": "#/$defs/openIdentifier" },
+            {
+              "not": {
+                "enum": ["artifact.source.inline", "artifact.source.uri"]
+              }
+            }
+          ]
+        }
+      },
+      "required": ["kind"],
+      "additionalProperties": true
+    },
+    "artifactDescriptor": {
+      "description": "Open descriptor carrying at least one modality classification.",
+      "type": "object",
+      "properties": {
+        "kind": { "$ref": "#/$defs/openIdentifier" }
+      },
+      "required": ["kind"],
+      "additionalProperties": true
+    },
+    "mediaTypeString": {
+      "description": "HTTP-style media type string with optional token or quoted parameters.",
+      "type": "string",
+      "pattern": "^[ \\t]*[!#$%&'*+\\-.^_`|~A-Za-z0-9]+/[!#$%&'*+\\-.^_`|~A-Za-z0-9]+(?:[ \\t]*;[ \\t]*[!#$%&'*+\\-.^_`|~A-Za-z0-9]+=(?:[!#$%&'*+\\-.^_`|~A-Za-z0-9]+|\"(?:[\\t\\x20-\\x21\\x23-\\x5B\\x5D-\\x7E]|\\\\[\\t\\x20-\\x7E])*\"))*[ \\t]*$"
+    },
+    "uriValue": {
+      "oneOf": [{ "$ref": "#/$defs/absoluteUriValue" }, { "$ref": "#/$defs/relativeUriValue" }]
+    },
+    "absoluteUriValue": {
+      "type": "object",
+      "properties": {
+        "kind": { "const": "absolute" },
+        "value": {
+          "type": "string",
+          "format": "uri",
+          "pattern": "^[A-Za-z][A-Za-z0-9+.-]*:"
+        }
+      },
+      "required": ["kind", "value"],
+      "additionalProperties": true
+    },
+    "relativeUriValue": {
+      "type": "object",
+      "properties": {
+        "kind": { "const": "relative" },
+        "value": {
+          "type": "string",
+          "format": "uri-reference",
+          "not": { "pattern": "^[^/?#]*:" }
+        }
+      },
+      "required": ["kind", "value"],
+      "additionalProperties": true
+    },
+    "openIdentifier": {
+      "description": "Unicode-friendly open identifier with non-empty period-delimited segments.",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^(?!.*[\\s\\p{C}])(?!\\.)(?!.*\\.\\.)(?!.*\\.$).+$"
+    },
+    "jsonPrimitive": {
+      "description": "Primitive value represented directly by JSON.",
+      "oneOf": [
+        { "type": "string" },
+        { "type": "number" },
+        { "type": "boolean" },
+        { "type": "null" }
+      ]
+    },
+    "jsonValue": {
+      "description": "Recursive language-neutral JSON value.",
+      "oneOf": [
+        { "$ref": "#/$defs/jsonPrimitive" },
+        {
+          "type": "array",
+          "items": { "$ref": "#/$defs/jsonValue" }
+        },
+        { "$ref": "#/$defs/jsonRecord" }
+      ]
+    },
+    "jsonRecord": {
+      "description": "String-keyed JSON object whose values remain recursively JSON-compatible.",
+      "type": "object",
+      "additionalProperties": { "$ref": "#/$defs/jsonValue" }
+    }
+  }
+}
