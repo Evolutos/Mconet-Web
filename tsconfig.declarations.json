@@ -1,0 +1,13 @@
+// Copyright © 2026 Mcont.
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    // Public declarations are emitted separately from JavaScript so each output
+    // can be validated and published through an explicit package export.
+    "declaration": true,
+    "declarationMap": true,
+    "emitDeclarationOnly": true,
+    "noEmit": false
+  },
+  "include": ["packages/*/src/**/*.ts"]
+}
