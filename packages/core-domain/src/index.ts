@@ -29,6 +29,7 @@ export type { ModelDescriptor } from "./model-descriptor.js";
 export type { ModelTarget } from "./model-target.js";
 export type { OpenIdentifier } from "./open-identifier.js";
 export type { ProcessingResult } from "./processing-result.js";
+export type { QueryField } from "./query-field.js";
 export type { RawPayload } from "./raw-payload.js";
 export type { RecoveryHint } from "./recovery-hint.js";
 export type { Timestamp } from "./timestamp.js";
