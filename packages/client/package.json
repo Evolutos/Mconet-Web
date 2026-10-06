@@ -8,6 +8,7 @@
     ".": {
       "types": "./dist/index.d.ts",
       "browser": "./dist/browser.js",
+      "node": "./dist/node.js",
       "default": "./dist/index.js"
     }
   },
