@@ -33,10 +33,12 @@ const buildConfigPath = path.join(workspaceRoot, "tsconfig.build.json");
 /**
  * Runtime type configurations used while type-checking each emitted package.
  *
- * Platform-neutral packages use the pure-core environment by default. Browser
- * and Node transports receive only their explicitly reviewed runtime APIs.
+ * Platform-neutral packages use the pure-core environment by default. Shared
+ * Web SPI contracts and platform transports receive only their explicitly
+ * reviewed runtime APIs.
  */
 const environmentConfigByPackage = new Map([
+  ["core-spi", "tsconfig.web-platform.json"],
   ["transport-fetch-browser", "tsconfig.browser.json"],
   ["transport-fetch-node", "tsconfig.node.json"],
 ]);

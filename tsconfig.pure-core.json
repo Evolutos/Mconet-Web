@@ -7,9 +7,5 @@
     "lib": ["ES2022"],
     "types": []
   },
-  "include": [
-    "packages/core-domain/src/**/*.ts",
-    "packages/core-runtime/src/**/*.ts",
-    "packages/core-spi/src/**/*.ts"
-  ]
+  "include": ["packages/core-domain/src/**/*.ts", "packages/core-runtime/src/**/*.ts"]
 }

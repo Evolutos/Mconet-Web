@@ -1,0 +1,11 @@
+// Copyright © 2026 Mcont.
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    // Shared Web contracts may reference platform-standard primitives such as
+    // AbortSignal without exposing DOM document APIs or Node.js ambient types.
+    "lib": ["ES2022", "WebWorker"],
+    "types": []
+  },
+  "include": ["packages/core-spi/src/**/*.ts"]
+}
