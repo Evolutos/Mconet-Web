@@ -1,0 +1,111 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.evolutos.com/mconet/access/service",
+  "title": "Mconet ServiceAccess",
+  "description": "Language-neutral non-sensitive service access configuration containing an optional HTTP endpoint, ordered header and query occurrences, optional provider context, and namespaced extensions.",
+  "$comment": "Copyright © 2026 Mcont. Authorization is intentionally forbidden because open authorization objects and credentials require a separate secure configuration protocol and must not enter ordinary JSON serialization.",
+  "type": "object",
+  "properties": {
+    "endpoint": {
+      "$ref": "#/$defs/httpEndpoint",
+      "description": "Optional absolute HTTP or HTTPS endpoint without user information or a fragment."
+    },
+    "authorization": false,
+    "headers": {
+      "type": "array",
+      "description": "Ordered non-sensitive header occurrences with repeated names preserved.",
+      "items": { "$ref": "#/$defs/headerField" }
+    },
+    "query": {
+      "type": "array",
+      "description": "Ordered pre-encoding query occurrences with repeated names preserved.",
+      "items": { "$ref": "#/$defs/queryField" }
+    },
+    "apiVersion": {
+      "type": "string",
+      "description": "Optional provider API version interpreted by the selected integration."
+    },
+    "projectId": {
+      "type": "string",
+      "description": "Optional non-sensitive provider project identifier."
+    },
+    "tenantId": {
+      "type": "string",
+      "description": "Optional non-sensitive provider tenant identifier."
+    },
+    "extensions": {
+      "$ref": "#/$defs/jsonRecord",
+      "description": "Always-present namespaced non-sensitive extension data."
+    }
+  },
+  "required": ["headers", "query", "extensions"],
+  "additionalProperties": true,
+  "$defs": {
+    "httpEndpoint": {
+      "description": "Absolute HTTP or HTTPS UriValue accepted at the ordinary configuration boundary.",
+      "type": "object",
+      "properties": {
+        "kind": { "const": "absolute" },
+        "value": {
+          "type": "string",
+          "format": "uri",
+          "pattern": "^[Hh][Tt][Tt][Pp][Ss]?://(?![^/?#]*@)(?:\\[[^\\]]+\\](?::[0-9]+)?|[^:/?#]+(?::[0-9]+)?)(?:[/?][^#]*)?$"
+        }
+      },
+      "required": ["kind", "value"],
+      "additionalProperties": true
+    },
+    "headerField": {
+      "description": "One normalized non-sensitive header occurrence.",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[!#$%&'*+\\-.^_`|~0-9a-z]+$"
+        },
+        "value": {
+          "type": "string",
+          "not": { "pattern": "[\\r\\n]" }
+        }
+      },
+      "required": ["name", "value"],
+      "additionalProperties": true
+    },
+    "queryField": {
+      "description": "One case-sensitive query occurrence before percent-encoding.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "value": { "type": "string" }
+      },
+      "required": ["name", "value"],
+      "additionalProperties": true
+    },
+    "jsonPrimitive": {
+      "description": "Primitive value represented directly by JSON.",
+      "oneOf": [
+        { "type": "string" },
+        { "type": "number" },
+        { "type": "boolean" },
+        { "type": "null" }
+      ]
+    },
+    "jsonValue": {
+      "description": "Recursive language-neutral JSON value.",
+      "oneOf": [
+        { "$ref": "#/$defs/jsonPrimitive" },
+        {
+          "type": "array",
+          "items": { "$ref": "#/$defs/jsonValue" }
+        },
+        { "$ref": "#/$defs/jsonRecord" }
+      ]
+    },
+    "jsonRecord": {
+      "description": "String-keyed JSON object whose values remain recursively JSON-compatible.",
+      "type": "object",
+      "additionalProperties": { "$ref": "#/$defs/jsonValue" }
+    }
+  }
+}
