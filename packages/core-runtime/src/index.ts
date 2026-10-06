@@ -3,3 +3,4 @@
 /** Public data contracts and behavior used by Mconet runtime orchestration. */
 export type { InteractionOptionsData } from "./interaction-options-data.js";
 export type { ModelClientConfigurationData } from "./model-client-configuration-data.js";
+export type { ResolvedInteractionConfiguration } from "./resolved-interaction-configuration.js";
