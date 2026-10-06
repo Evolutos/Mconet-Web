@@ -9,6 +9,7 @@ export { isModelTarget } from "./model-target.js";
 export { createDefaultCompatibilityPolicy } from "./create-default-compatibility-policy.js";
 export { parseMediaType } from "./media-type.js";
 export { isRawPayloadWithinSizeLimit } from "./raw-payload.js";
+export { resolveInteractionResourceLimits } from "./resolve-interaction-resource-limits.js";
 export { isServiceAccess } from "./service-access.js";
 export { ModelInteractionError } from "./model-interaction-error.js";
 export { NamedModel } from "./named-model.js";
