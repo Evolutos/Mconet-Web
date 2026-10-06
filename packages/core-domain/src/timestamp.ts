@@ -32,15 +32,21 @@ const millisecondsPerMinute = 60_000;
  * @returns A normalized UTC timestamp, or `undefined` when validation fails.
  */
 export function parseTimestamp(value: unknown): Timestamp | undefined {
+  // Refuse coercion so objects, numbers, and other primitives cannot acquire an
+  // implementation-dependent timestamp interpretation.
   if (typeof value !== "string") {
     return undefined;
   }
 
+  // Match the complete strict syntax before extracting fields; partial matches
+  // cannot reach calendar arithmetic.
   const match = timestampPattern.exec(value);
   if (!match) {
     return undefined;
   }
 
+  // Convert every decimal capture and retain fraction/zone text for their
+  // dedicated precision and offset validation.
   const year = readDecimalPart(match[1]);
   const month = readDecimalPart(match[2]);
   const day = readDecimalPart(match[3]);
@@ -50,6 +56,8 @@ export function parseTimestamp(value: unknown): Timestamp | undefined {
   const fraction = match[7] ?? "";
   const zone = match[8];
 
+  // Validate Gregorian date and clock ranges explicitly instead of allowing
+  // Date to roll invalid source values into another instant.
   if (
     year === undefined ||
     month === undefined ||
@@ -70,16 +78,22 @@ export function parseTimestamp(value: unknown): Timestamp | undefined {
     return undefined;
   }
 
+  // Right-pad accepted fractions to milliseconds and resolve the explicit zone
+  // separately so neither operation rounds or truncates input.
   const millisecond = fraction.length === 0 ? 0 : Number(fraction.padEnd(3, "0"));
   const offsetMinutes = readOffsetMinutes(zone, match[9], match[10], match[11]);
   if (offsetMinutes === undefined) {
     return undefined;
   }
 
+  // Set UTC fields explicitly so years below 100 are not remapped by the
+  // multi-argument Date constructor.
   const utcDate = new Date(0);
   utcDate.setUTCFullYear(year, month - 1, day);
   utcDate.setUTCHours(hour, minute, second, millisecond);
 
+  // Convert the stated local offset to UTC and keep only instants exactly
+  // representable by the public safe-integer contract.
   const epochMilliseconds = utcDate.getTime() - offsetMinutes * millisecondsPerMinute;
   if (!Number.isSafeInteger(epochMilliseconds)) {
     return undefined;
@@ -95,6 +109,8 @@ export function parseTimestamp(value: unknown): Timestamp | undefined {
  * @returns Parsed integer, or `undefined` for a missing capture.
  */
 function readDecimalPart(value: string | undefined): number | undefined {
+  // Captures already contain decimal digits; preserve a missing capture as
+  // undefined instead of coercing it to zero.
   return value === undefined ? undefined : Number(value);
 }
 
@@ -116,10 +132,13 @@ function readOffsetMinutes(
   hourText: string | undefined,
   minuteText: string | undefined,
 ): number | undefined {
+  // The UTC designator resolves directly without numeric offset captures.
   if (zone === "Z") {
     return 0;
   }
 
+  // Reject missing pieces, out-of-range units, and the unknown-offset sentinel
+  // before calculating signed minutes.
   const hour = readDecimalPart(hourText);
   const minute = readDecimalPart(minuteText);
   if (
@@ -133,6 +152,7 @@ function readOffsetMinutes(
     return undefined;
   }
 
+  // Combine validated units and apply the sign as minutes east of UTC.
   const absoluteMinutes = hour * 60 + minute;
   return sign === "+" ? absoluteMinutes : -absoluteMinutes;
 }
@@ -144,14 +164,18 @@ function readOffsetMinutes(
  * @param month One-based month.
  */
 function daysInMonth(year: number, month: number): number {
+  // February is the only month whose length depends on the supplied year.
   if (month === 2) {
     return isLeapYear(year) ? 29 : 28;
   }
 
+  // Enumerate the four thirty-day months; every other validated month has 31.
   return month === 4 || month === 6 || month === 9 || month === 11 ? 30 : 31;
 }
 
 /** Determines whether a Gregorian calendar year contains February 29. */
 function isLeapYear(year: number): boolean {
+  // Gregorian years divide by four except centuries, while centuries divisible
+  // by four hundred regain leap-year status.
   return year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0);
 }

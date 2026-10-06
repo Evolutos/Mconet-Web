@@ -30,6 +30,8 @@ export function createPackageProjects(
   excludePatterns: readonly string[] = [],
   nameSuffix?: string,
 ): readonly TestProjectConfiguration[] {
+  // Preserve reviewed package order while creating isolated roots. Clone input
+  // arrays so later caller mutation cannot rewrite project discovery patterns.
   return packageRoles.map((packageRole) => ({
     test: {
       environment: "node",

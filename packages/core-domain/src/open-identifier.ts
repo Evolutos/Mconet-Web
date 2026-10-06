@@ -28,17 +28,25 @@ const disallowedIdentifierCharacter = /[\s\p{C}]/u;
  * @returns Whether the value is a valid {@link OpenIdentifier}.
  */
 export function isOpenIdentifier(value: unknown): value is OpenIdentifier {
+  // Reject non-strings and the empty identity before applying string-specific
+  // Unicode or namespace rules.
   if (typeof value !== "string" || value.length === 0) {
     return false;
   }
 
+  // Count Unicode code points rather than UTF-16 code units so supplementary
+  // characters consume one stable position across JavaScript runtimes.
   if ([...value].length > maximumOpenIdentifierCodePoints) {
     return false;
   }
 
+  // Fail closed on whitespace and non-semantic Unicode categories without
+  // normalizing the caller's identifier into a different value.
   if (disallowedIdentifierCharacter.test(value)) {
     return false;
   }
 
+  // Periods delimit namespaces; every segment must therefore contain at least
+  // one character, rejecting leading, trailing, and repeated delimiters.
   return value.split(".").every((segment) => segment.length > 0);
 }

@@ -37,11 +37,15 @@ const diagnosticHost = {
  * @returns {ts.ParsedCommandLine} Parsed files and compiler options.
  */
 function parseConfig(configPath) {
+  // Preserve native TypeScript read diagnostics before resolving inherited
+  // configuration, file discovery, and compiler options.
   const loaded = ts.readConfigFile(configPath, ts.sys.readFile);
   if (loaded.error) {
     throw new Error(ts.formatDiagnosticsWithColorAndContext([loaded.error], diagnosticHost));
   }
 
+  // Parse relative to the owning config and reject semantic configuration errors
+  // before any package output is touched.
   const parsed = ts.parseJsonConfigFileContent(
     loaded.config,
     ts.sys,
@@ -63,6 +67,8 @@ function parseConfig(configPath) {
  * @returns {string} Owning package role.
  */
 function packageRoleForFile(filePath) {
+  // Derive the first workspace-relative path segment and fail closed if the
+  // declaration source is outside the fixed packages root.
   const relativePath = path.relative(packagesRoot, filePath);
   const [packageRole] = relativePath.split(path.sep);
 
@@ -80,10 +86,12 @@ function packageRoleForFile(filePath) {
  * @param {string} packageRole Package currently being emitted.
  */
 function assertNoDiagnostics(diagnostics, packageRole) {
+  // Avoid formatting work on the successful path.
   if (diagnostics.length === 0) {
     return;
   }
 
+  // Combine all compiler diagnostics into one package-scoped failure.
   const formatted = ts.formatDiagnosticsWithColorAndContext(diagnostics, diagnosticHost);
   throw new Error(`Declaration build failed for '${packageRole}'.\n${formatted}`);
 }
@@ -94,20 +102,28 @@ function assertNoDiagnostics(diagnostics, packageRole) {
  * @param {string} directory Package output directory.
  */
 async function removeDeclarationOutputs(directory) {
+  // Read the current output tree without assuming that a package has already
+  // produced a dist directory.
   /** @type {import("node:fs").Dirent[]} */
   let entries;
 
   try {
     entries = await fs.readdir(directory, { withFileTypes: true });
   } catch (error) {
+    // A missing directory is already clean; every other filesystem failure must
+    // remain fatal so stale declarations cannot be silently retained.
     if (error && typeof error === "object" && "code" in error && error.code === "ENOENT") {
       return;
     }
     throw error;
   }
 
+  // Recurse through nested output folders concurrently, removing only declaration
+  // files and maps while preserving previously emitted JavaScript artifacts.
   await Promise.all(
     entries.map(async (entry) => {
+      // Descend into directories, ignore unrelated JavaScript artifacts, and
+      // remove only declaration files at leaf entries.
       const entryPath = path.join(directory, entry.name);
       if (entry.isDirectory()) {
         await removeDeclarationOutputs(entryPath);
@@ -129,6 +145,8 @@ async function removeDeclarationOutputs(directory) {
  * @param {ts.CompilerOptions} declarationOptions Shared declaration options.
  */
 async function buildPackageDeclarations(packageRole, sourceFiles, declarationOptions) {
+  // Resolve package roots and its explicit runtime type environment before
+  // merging shared declaration-only compiler options.
   const packageRoot = path.join(packagesRoot, packageRole);
   const sourceRoot = path.join(packageRoot, "src");
   const outputRoot = path.join(packageRoot, "dist");
@@ -142,11 +160,16 @@ async function buildPackageDeclarations(packageRole, sourceFiles, declarationOpt
     rootDir: sourceRoot,
   };
 
+  // Remove stale declaration artifacts first, leaving JavaScript from the ESM
+  // build intact for the combined package output.
   await removeDeclarationOutputs(outputRoot);
 
+  // Type-check the isolated package program before emitting declarations.
   const program = ts.createProgram({ options: compilerOptions, rootNames: [...sourceFiles] });
   assertNoDiagnostics(ts.getPreEmitDiagnostics(program), packageRole);
 
+  // Emit and reject diagnostics or an unexpected skipped output, preventing a
+  // partially updated declaration surface.
   const emitResult = program.emit();
   assertNoDiagnostics(emitResult.diagnostics, packageRole);
   if (emitResult.emitSkipped) {
@@ -158,6 +181,8 @@ async function buildPackageDeclarations(packageRole, sourceFiles, declarationOpt
  * Emits declaration files for every package in the shared declaration config.
  */
 async function main() {
+  // Parse shared declaration configuration and group every resolved source by
+  // package to avoid cross-package compiler programs.
   const declarationConfig = parseConfig(declarationConfigPath);
   /** @type {Map<string, string[]>} */
   const sourcesByPackage = new Map();
@@ -169,6 +194,8 @@ async function main() {
     sourcesByPackage.set(packageRole, packageSources);
   }
 
+  // Sort package and source order for deterministic behavior, then emit package
+  // declarations concurrently because outputs are disjoint.
   const packageBuilds = [...sourcesByPackage.entries()]
     .sort(([leftRole], [rightRole]) => leftRole.localeCompare(rightRole))
     .map(([packageRole, sourceFiles]) =>
@@ -176,6 +203,7 @@ async function main() {
     );
   await Promise.all(packageBuilds);
 
+  // Summarize only after every isolated package emit succeeds.
   process.stdout.write(`Built declarations for ${packageBuilds.length} package entries.\n`);
 }
 

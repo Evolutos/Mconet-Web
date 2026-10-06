@@ -60,11 +60,15 @@ const diagnosticHost = {
  * @returns {ts.ParsedCommandLine} Parsed file list and compiler options.
  */
 function parseConfig(configPath) {
+  // Read raw JSON first so syntax and file-access diagnostics retain TypeScript's
+  // native context rather than being converted to generic parse failures.
   const loaded = ts.readConfigFile(configPath, ts.sys.readFile);
   if (loaded.error) {
     throw new Error(ts.formatDiagnosticsWithColorAndContext([loaded.error], diagnosticHost));
   }
 
+  // Resolve extends/include/options relative to the config file and reject every
+  // semantic configuration diagnostic before compilation begins.
   const parsed = ts.parseJsonConfigFileContent(
     loaded.config,
     ts.sys,
@@ -86,6 +90,8 @@ function parseConfig(configPath) {
  * @returns {string} Owning package role.
  */
 function packageRoleForFile(filePath) {
+  // Derive package ownership from the fixed packages root and reject any source
+  // that escapes the expected workspace layout.
   const relativePath = path.relative(packagesRoot, filePath);
   const [packageRole] = relativePath.split(path.sep);
 
@@ -103,10 +109,13 @@ function packageRoleForFile(filePath) {
  * @param {string} packageRole Package currently being built.
  */
 function assertNoDiagnostics(diagnostics, packageRole) {
+  // The successful hot path returns without formatting or allocating error text.
   if (diagnostics.length === 0) {
     return;
   }
 
+  // Format the complete diagnostic set and name the active operation so the same
+  // helper produces precise typecheck and emit failures.
   const formatted = ts.formatDiagnosticsWithColorAndContext(diagnostics, diagnosticHost);
   const operationName = typecheckOnly ? "Typecheck" : "ESM build";
   throw new Error(`${operationName} failed for '${packageRole}'.\n${formatted}`);
@@ -121,6 +130,8 @@ function assertNoDiagnostics(diagnostics, packageRole) {
  * @param {boolean} shouldEmit Whether validated source should be emitted.
  */
 async function buildPackage(packageRole, sourceFiles, buildOptions, shouldEmit) {
+  // Resolve package-local roots and the reviewed runtime type environment before
+  // merging it with shared emit options.
   const packageRoot = path.join(packagesRoot, packageRole);
   const sourceRoot = path.join(packageRoot, "src");
   const outputRoot = path.join(packageRoot, "dist");
@@ -134,16 +145,21 @@ async function buildPackage(packageRole, sourceFiles, buildOptions, shouldEmit) 
     rootDir: sourceRoot,
   };
 
+  // Create one isolated program per package and stop on all pre-emit diagnostics,
+  // preventing invalid code from reaching either mode's output stage.
   const program = ts.createProgram({ options: compilerOptions, rootNames: [...sourceFiles] });
   assertNoDiagnostics(ts.getPreEmitDiagnostics(program), packageRole);
 
   if (!shouldEmit) {
+    // Typecheck mode is deliberately read-only after successful diagnostics.
     return;
   }
 
   // Remove only this reviewed package output so stale modules cannot survive.
   await fs.rm(outputRoot, { force: true, recursive: true });
 
+  // Emit into the clean package-local directory and reject both reported
+  // diagnostics and an unexpected compiler decision to skip output.
   const emitResult = program.emit();
   assertNoDiagnostics(emitResult.diagnostics, packageRole);
   if (emitResult.emitSkipped) {
@@ -155,6 +171,8 @@ async function buildPackage(packageRole, sourceFiles, buildOptions, shouldEmit) 
  * Builds every package declared by the shared build configuration.
  */
 async function main() {
+  // Parse the shared config once, then group its resolved source files by their
+  // owning package so each compiler program retains a strict package boundary.
   const buildConfig = parseConfig(buildConfigPath);
   /** @type {Map<string, string[]>} */
   const sourcesByPackage = new Map();
@@ -166,6 +184,8 @@ async function main() {
     sourcesByPackage.set(packageRole, packageSources);
   }
 
+  // Sort packages and their source lists for deterministic diagnostics, then run
+  // independent package builds concurrently.
   const packageBuilds = [...sourcesByPackage.entries()]
     .sort(([leftRole], [rightRole]) => leftRole.localeCompare(rightRole))
     .map(([packageRole, sourceFiles]) =>
@@ -173,6 +193,7 @@ async function main() {
     );
   await Promise.all(packageBuilds);
 
+  // Report the selected mode and the number of completed package entries.
   const completedAction = typecheckOnly ? "Type-checked" : "Built";
   process.stdout.write(`${completedAction} ${packageBuilds.length} ESM package entries.\n`);
 }

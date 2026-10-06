@@ -34,16 +34,21 @@ const tokenCharacter = /^[!#$%&'*+\-.^_`|~A-Za-z0-9]$/u;
  * @returns Parsed media type, or `undefined` when the input is invalid.
  */
 export function parseMediaType(input: unknown): MediaType | undefined {
+  // Refuse coercion so non-string values cannot hide malformed media types.
   if (typeof input !== "string") {
     return undefined;
   }
 
+  // Consume field whitespace, then require a non-empty type immediately
+  // followed by the grammar's slash delimiter.
   let position = skipOptionalWhitespace(input, 0);
   const type = readToken(input, position);
   if (!type || input[type.nextPosition] !== "/") {
     return undefined;
   }
 
+  // Read the subtype directly after the slash. Whitespace or an empty token
+  // fails instead of being normalized into another value.
   position = type.nextPosition + 1;
   const subtype = readToken(input, position);
   if (!subtype) {
@@ -54,7 +59,11 @@ export function parseMediaType(input: unknown): MediaType | undefined {
   const parameterEntries: [string, string][] = [];
   const parameterNames = new Set<string>();
 
+  // Parse sequentially because quoted values may contain semicolons that a
+  // split-based implementation would mistake for parameter delimiters.
   while (true) {
+    // Reaching the end commits normalized identifiers and safely materializes
+    // the accumulated entries as own data properties.
     position = skipOptionalWhitespace(input, position);
     if (position === input.length) {
       // fromEntries defines special names as own data properties instead of
@@ -66,21 +75,29 @@ export function parseMediaType(input: unknown): MediaType | undefined {
       };
     }
 
+    // Any remaining content must begin a parameter; unexpected characters,
+    // including a comma-combined header value, invalidate the input.
     if (input[position] !== ";") {
       return undefined;
     }
 
+    // Names are non-empty tokens followed immediately by equals. Whitespace
+    // around equals is not silently repaired.
     position = skipOptionalWhitespace(input, position + 1);
     const name = readToken(input, position);
     if (!name || input[name.nextPosition] !== "=") {
       return undefined;
     }
 
+    // Detect duplicates after lowercase normalization so alternate casing
+    // cannot overwrite a previously accepted parameter.
     const normalizedName = name.value.toLowerCase();
     if (parameterNames.has(normalizedName)) {
       return undefined;
     }
 
+    // Select the escape-aware quoted reader or strict token reader and retain
+    // the exact cursor returned by the chosen grammar branch.
     position = name.nextPosition + 1;
     const parsedValue =
       input[position] === '"' ? readQuotedString(input, position) : readToken(input, position);
@@ -88,6 +105,8 @@ export function parseMediaType(input: unknown): MediaType | undefined {
       return undefined;
     }
 
+    // Commit only a completely validated pair, then continue from the first
+    // character not consumed by its value.
     parameterNames.add(normalizedName);
     parameterEntries.push([normalizedName, parsedValue.value]);
     position = parsedValue.nextPosition;
@@ -105,15 +124,19 @@ function readToken(
   input: string,
   position: number,
 ): { readonly value: string; readonly nextPosition: number } | undefined {
+  // Advance over the maximal contiguous token span without accepting any
+  // delimiter or character outside the explicit ASCII allowlist.
   const start = position;
   while (position < input.length && tokenCharacter.test(input[position] ?? "")) {
     position += 1;
   }
 
+  // Empty spans are syntax failures rather than valid empty tokens.
   if (position === start) {
     return undefined;
   }
 
+  // Preserve original spelling and return the next cursor for delimiter checks.
   return { value: input.slice(start, position), nextPosition: position };
 }
 
@@ -128,15 +151,21 @@ function readQuotedString(
   input: string,
   position: number,
 ): { readonly value: string; readonly nextPosition: number } | undefined {
+  // The caller verified the opening quote, so accumulation starts immediately
+  // after it and stores only the decoded parameter value.
   let value = "";
   position += 1;
 
+  // Scan until a closing quote while validating every raw or escaped character.
   while (position < input.length) {
     const character = input[position];
+    // Return the decoded value with the cursor positioned after the close quote.
     if (character === '"') {
       return { value, nextPosition: position + 1 };
     }
 
+    // A backslash consumes exactly one valid quoted-pair character; a missing or
+    // forbidden pair makes the entire value invalid.
     if (character === "\\") {
       const escaped = input[position + 1];
       if (!escaped || !isQuotedPairCharacter(escaped)) {
@@ -148,6 +177,7 @@ function readQuotedString(
       continue;
     }
 
+    // Raw content must stay inside the reviewed quoted-text ranges.
     if (!character || !isQuotedTextCharacter(character)) {
       return undefined;
     }
@@ -156,6 +186,7 @@ function readQuotedString(
     position += 1;
   }
 
+  // End of input without a closing quote is an unterminated quoted-string.
   return undefined;
 }
 
@@ -167,6 +198,8 @@ function readQuotedString(
  * @returns First position after optional whitespace.
  */
 function skipOptionalWhitespace(input: string, position: number): number {
+  // Only space and horizontal tab are optional HTTP whitespace; line breaks
+  // remain unconsumed so the outer parser rejects them.
   while (input[position] === " " || input[position] === "\t") {
     position += 1;
   }
@@ -180,7 +213,10 @@ function skipOptionalWhitespace(input: string, position: number): number {
  * @returns Whether the character is valid quoted text.
  */
 function isQuotedTextCharacter(character: string): boolean {
+  // Convert once so the accepted ASCII ranges remain explicit and locale-free.
   const codePoint = character.codePointAt(0);
+  // Permit tab, space, and visible ASCII except quote and backslash; controls
+  // and raw Unicode remain outside these ranges.
   return (
     codePoint !== undefined &&
     (codePoint === 0x09 ||
@@ -198,6 +234,8 @@ function isQuotedTextCharacter(character: string): boolean {
  * @returns Whether the character is a valid quoted-pair value.
  */
 function isQuotedPairCharacter(character: string): boolean {
+  // Quoted pairs permit horizontal tab or printable ASCII only; a numeric range
+  // makes the upper boundary explicit and rejects Unicode input.
   const codePoint = character.codePointAt(0);
   return (
     codePoint !== undefined && (codePoint === 0x09 || (codePoint >= 0x20 && codePoint <= 0x7e))

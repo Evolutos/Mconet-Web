@@ -23,10 +23,14 @@ export interface Duration {
  * @returns Whether the value is a valid {@link Duration}.
  */
 export function isDuration(value: unknown): value is Duration {
+  // A duration is a record-like value. Arrays and null cannot satisfy its
+  // named value-object contract even though JavaScript calls them objects.
   if (typeof value !== "object" || value === null || Array.isArray(value)) {
     return false;
   }
 
+  // Inspect the own descriptor so validation never executes an inherited or
+  // accessor-backed property. Proxy trap failures become invalid input.
   let descriptor: PropertyDescriptor | undefined;
   try {
     descriptor = Object.getOwnPropertyDescriptor(value, "milliseconds");
@@ -34,10 +38,14 @@ export function isDuration(value: unknown): value is Duration {
     return false;
   }
 
+  // Require an own data property with a numeric value before applying number
+  // invariants; accessor descriptors intentionally have no accepted value.
   if (!descriptor || !("value" in descriptor) || typeof descriptor.value !== "number") {
     return false;
   }
 
+  // Exclude fractions, infinities, NaN, overflow, negative values, and the
+  // non-canonical negative-zero representation.
   return (
     Number.isSafeInteger(descriptor.value) &&
     descriptor.value >= 0 &&

@@ -37,10 +37,14 @@ const invalidPercentEncoding = /%(?![A-Fa-f0-9]{2})/u;
  * @returns Whether the input is a valid {@link UriValue}.
  */
 export function isUriValue(input: unknown): input is UriValue {
+  // Only non-array objects can carry the named data properties required by the
+  // URI value-object contract.
   if (typeof input !== "object" || input === null || Array.isArray(input)) {
     return false;
   }
 
+  // Read own descriptors without invoking accessors. Hostile Proxy descriptor
+  // failures are contained as invalid boundary input.
   let kindDescriptor: PropertyDescriptor | undefined;
   let valueDescriptor: PropertyDescriptor | undefined;
   try {
@@ -50,6 +54,8 @@ export function isUriValue(input: unknown): input is UriValue {
     return false;
   }
 
+  // Require both own data fields, constrain the discriminator, and reject a
+  // non-string URI payload before inspecting syntax.
   if (
     !kindDescriptor ||
     !("value" in kindDescriptor) ||
@@ -61,6 +67,8 @@ export function isUriValue(input: unknown): input is UriValue {
     return false;
   }
 
+  // Enforce the ASCII URI surface, forbid platform path separators, validate
+  // percent triplets, and allow at most one fragment delimiter.
   const value = valueDescriptor.value;
   if (
     !uriCharacters.test(value) ||
@@ -71,6 +79,8 @@ export function isUriValue(input: unknown): input is UriValue {
     return false;
   }
 
+  // Absolute values require a scheme. Relative values prohibit one and also
+  // apply the first path-segment colon restriction.
   const hasAbsoluteScheme = absoluteScheme.test(value);
   if (kindDescriptor.value === "absolute") {
     return hasAbsoluteScheme;
@@ -89,16 +99,21 @@ export function isUriValue(input: unknown): input is UriValue {
  * @returns Whether the first relative path segment contains a colon.
  */
 function relativeFirstPathSegmentContainsColon(value: string): boolean {
+  // These reference forms do not use a path-noscheme first segment.
   if (value.startsWith("/") || value.startsWith("?") || value.startsWith("#")) {
     return false;
   }
 
+  // Isolate path text before query or fragment data so later colons cannot be
+  // mistaken for a path-segment violation.
   const queryIndex = value.indexOf("?");
   const fragmentIndex = value.indexOf("#");
   const pathEnd = [queryIndex, fragmentIndex]
     .filter((index) => index >= 0)
     .reduce((earliest, index) => Math.min(earliest, index), value.length);
   const path = value.slice(0, pathEnd);
+  // Only the first slash-delimited segment is restricted; later segments may
+  // contain colons under the generic URI grammar.
   const firstSegment = path.split("/", 1)[0] ?? "";
   return firstSegment.includes(":");
 }
@@ -111,6 +126,8 @@ function relativeFirstPathSegmentContainsColon(value: string): boolean {
  * @returns Number of delimiter appearances.
  */
 function countOccurrences(value: string, delimiter: string): number {
+  // Walk code points once and increment exact matches, avoiding the temporary
+  // array allocation of a split-based count.
   let count = 0;
   for (const character of value) {
     if (character === delimiter) {
