@@ -19,6 +19,7 @@ export type { InteractionPhase } from "./interaction-phase.js";
 export type { JsonPrimitive } from "./json-primitive.js";
 export type { JsonValue } from "./json-value.js";
 export type { MediaType } from "./media-type.js";
+export type { ModelDescriptor } from "./model-descriptor.js";
 export type { OpenIdentifier } from "./open-identifier.js";
 export type { ProcessingResult } from "./processing-result.js";
 export type { RawPayload } from "./raw-payload.js";
