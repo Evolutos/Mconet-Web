@@ -72,8 +72,14 @@ export function isMessageEntry(value: unknown): value is MessageEntry {
   );
 }
 
-/** Captures own descriptors for a non-array object without invoking accessors. */
-function getRecordDescriptors(value: unknown): Record<string, PropertyDescriptor> | undefined {
+/**
+ * Captures own descriptors for a non-array object without invoking accessors.
+ *
+ * @internal Shared by adjacent Message validators; not exported by the package entry.
+ */
+export function getRecordDescriptors(
+  value: unknown,
+): Record<string, PropertyDescriptor> | undefined {
   if (typeof value !== "object" || value === null) {
     return undefined;
   }
@@ -87,8 +93,12 @@ function getRecordDescriptors(value: unknown): Record<string, PropertyDescriptor
   }
 }
 
-/** Checks that a property descriptor stores a value rather than an accessor. */
-function isDataDescriptor(
+/**
+ * Checks that a property descriptor stores a value rather than an accessor.
+ *
+ * @internal Shared by adjacent Message validators; not exported by the package entry.
+ */
+export function isDataDescriptor(
   descriptor: PropertyDescriptor | undefined,
 ): descriptor is PropertyDescriptor & { readonly value: unknown } {
   // The key remains present for a stored undefined value but not an accessor.
@@ -175,8 +185,12 @@ function isRawPayloadValue(value: unknown): boolean {
   }
 }
 
-/** Validates a dense ordered array of local relation descriptions. */
-function isMessageRelationArray(value: unknown): boolean {
+/**
+ * Validates a dense ordered array of local relation descriptions.
+ *
+ * @internal Shared by adjacent Message validators; not exported by the package entry.
+ */
+export function isMessageRelationArray(value: unknown): boolean {
   const descriptors = getDenseArrayDescriptors(value);
   if (descriptors === undefined) {
     return false;
@@ -216,8 +230,12 @@ function isMessageRelationValue(value: unknown): boolean {
   );
 }
 
-/** Returns indexed data descriptors for a dense ordinary array. */
-function getDenseArrayDescriptors(
+/**
+ * Returns indexed data descriptors for a dense ordinary array.
+ *
+ * @internal Shared by adjacent Message validators; not exported by the package entry.
+ */
+export function getDenseArrayDescriptors(
   value: unknown,
 ): readonly (PropertyDescriptor & { readonly value: unknown })[] | undefined {
   try {

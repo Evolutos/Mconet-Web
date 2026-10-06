@@ -7,6 +7,7 @@ export { isInteractionResourceLimits } from "./interaction-resource-limits.js";
 export { isModelDescriptor } from "./model-descriptor.js";
 export { isModelTarget } from "./model-target.js";
 export { isMessageEntry } from "./message-entry.js";
+export { isMessageGroup } from "./message-group.js";
 export { isMessageRole } from "./message-role.js";
 export { isTextMessageContent } from "./text-message-content.js";
 export { createDefaultCompatibilityPolicy } from "./create-default-compatibility-policy.js";
