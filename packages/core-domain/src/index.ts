@@ -46,4 +46,5 @@ export type { ResolvedInteractionResourceLimits } from "./resolved-interaction-r
 export type { ServiceAccess } from "./service-access.js";
 export type { TextMessageContent } from "./text-message-content.js";
 export type { Timestamp } from "./timestamp.js";
+export type { UnknownMessageContent } from "./unknown-message-content.js";
 export type { UriValue } from "./uri-value.js";
