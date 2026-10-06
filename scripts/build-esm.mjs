@@ -5,6 +5,22 @@ import path from "node:path";
 import process from "node:process";
 import ts from "typescript";
 
+/** Supported command-line switch for diagnostics without JavaScript emit. */
+const typecheckArgument = "--check";
+
+/** User-provided command-line arguments, excluding Node.js and script paths. */
+const commandArguments = process.argv.slice(2);
+
+if (
+  commandArguments.length > 1 ||
+  (commandArguments.length === 1 && commandArguments[0] !== typecheckArgument)
+) {
+  throw new Error(`Usage: node scripts/build-esm.mjs [${typecheckArgument}]`);
+}
+
+/** Whether this invocation must validate types without changing build output. */
+const typecheckOnly = commandArguments[0] === typecheckArgument;
+
 /** Workspace root resolved independently from the caller's current directory. */
 const workspaceRoot = path.resolve(import.meta.dirname, "..");
 
@@ -92,17 +108,19 @@ function assertNoDiagnostics(diagnostics, packageRole) {
   }
 
   const formatted = ts.formatDiagnosticsWithColorAndContext(diagnostics, diagnosticHost);
-  throw new Error(`ESM build failed for '${packageRole}'.\n${formatted}`);
+  const operationName = typecheckOnly ? "Typecheck" : "ESM build";
+  throw new Error(`${operationName} failed for '${packageRole}'.\n${formatted}`);
 }
 
 /**
- * Type-checks and emits one package into its package-local `dist` directory.
+ * Type-checks one package and optionally emits its package-local ESM output.
  *
  * @param {string} packageRole Workspace package role.
  * @param {readonly string[]} sourceFiles Absolute package source file paths.
  * @param {ts.CompilerOptions} buildOptions Shared JavaScript emit options.
+ * @param {boolean} shouldEmit Whether validated source should be emitted.
  */
-async function buildPackage(packageRole, sourceFiles, buildOptions) {
+async function buildPackage(packageRole, sourceFiles, buildOptions, shouldEmit) {
   const packageRoot = path.join(packagesRoot, packageRole);
   const sourceRoot = path.join(packageRoot, "src");
   const outputRoot = path.join(packageRoot, "dist");
@@ -116,11 +134,15 @@ async function buildPackage(packageRole, sourceFiles, buildOptions) {
     rootDir: sourceRoot,
   };
 
-  // Remove only this reviewed package output so stale modules cannot survive.
-  await fs.rm(outputRoot, { force: true, recursive: true });
-
   const program = ts.createProgram({ options: compilerOptions, rootNames: [...sourceFiles] });
   assertNoDiagnostics(ts.getPreEmitDiagnostics(program), packageRole);
+
+  if (!shouldEmit) {
+    return;
+  }
+
+  // Remove only this reviewed package output so stale modules cannot survive.
+  await fs.rm(outputRoot, { force: true, recursive: true });
 
   const emitResult = program.emit();
   assertNoDiagnostics(emitResult.diagnostics, packageRole);
@@ -147,11 +169,12 @@ async function main() {
   const packageBuilds = [...sourcesByPackage.entries()]
     .sort(([leftRole], [rightRole]) => leftRole.localeCompare(rightRole))
     .map(([packageRole, sourceFiles]) =>
-      buildPackage(packageRole, sourceFiles.sort(), buildConfig.options),
+      buildPackage(packageRole, sourceFiles.sort(), buildConfig.options, !typecheckOnly),
     );
   await Promise.all(packageBuilds);
 
-  process.stdout.write(`Built ${packageBuilds.length} ESM package entries.\n`);
+  const completedAction = typecheckOnly ? "Type-checked" : "Built";
+  process.stdout.write(`${completedAction} ${packageBuilds.length} ESM package entries.\n`);
 }
 
 await main();
