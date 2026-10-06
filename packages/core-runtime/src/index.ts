@@ -7,3 +7,4 @@ export { mergeInteractionConfiguration } from "./merge-interaction-configuration
 export type { InteractionOptionsData } from "./interaction-options-data.js";
 export type { ModelClientConfigurationData } from "./model-client-configuration-data.js";
 export type { ResolvedInteractionConfiguration } from "./resolved-interaction-configuration.js";
+export type { SafeConfigurationSnapshot } from "./safe-configuration-snapshot.js";
