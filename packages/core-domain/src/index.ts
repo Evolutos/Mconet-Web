@@ -37,6 +37,7 @@ export type { Authorization } from "./authorization.js";
 export type { Bytes } from "./bytes.js";
 export type { CompatibilityMode } from "./compatibility-mode.js";
 export type { CompatibilityPolicy } from "./compatibility-policy.js";
+export type { ConversationInputNode } from "./conversation-input-node.js";
 export type { Diagnostic } from "./diagnostic.js";
 export type { Duration } from "./duration.js";
 export type { ErrorCategory } from "./error-category.js";
