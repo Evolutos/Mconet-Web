@@ -6,8 +6,9 @@ import type { Extensions } from "./extensions.js";
 import type { JsonValue } from "./json-value.js";
 import type { OpenIdentifier } from "./open-identifier.js";
 import type { TaskGroupNode } from "./task-group-node.js";
-import type { TaskNodeBase } from "./task-node-base.js";
+import type { TaskNode } from "./task-node.js";
 import type { TaskRelation } from "./task-relation.js";
+import type { UnknownTaskNode } from "./unknown-task-node.js";
 
 it("extends only the shared Task-node fields with container structure", () => {
   // Exact equality prevents task-specific payloads, Message data, Artifact data,
@@ -19,13 +20,13 @@ it("extends only the shared Task-node fields with container structure", () => {
     readonly metadata: Readonly<Record<string, JsonValue>>;
     readonly extensions: Extensions;
     readonly composition: "container";
-    readonly children: readonly TaskNodeBase[];
+    readonly children: readonly TaskNode[];
   }>();
 });
 
 it("preserves declared child order and object identity", () => {
-  const firstChild = createBaseChild("task-input", "task.input");
-  const secondChild = createBaseChild("task-configuration", "task.configuration");
+  const firstChild = createUnknownChild("task-input", "task.input");
+  const secondChild = createUnknownChild("task-configuration", "task.configuration");
   const group: TaskGroupNode = {
     id: "task-root",
     kind: "task.root",
@@ -76,7 +77,7 @@ it("requires container composition and an explicit child collection", () => {
   expectTypeOf<{
     readonly id: string;
     readonly kind: "task.root";
-    readonly children: readonly TaskNodeBase[];
+    readonly children: readonly TaskNode[];
     readonly relations: readonly TaskRelation[];
     readonly metadata: Readonly<Record<string, JsonValue>>;
     readonly extensions: Extensions;
@@ -92,7 +93,7 @@ it("requires container composition and an explicit child collection", () => {
 });
 
 it("prevents structure replacement and child collection mutation", () => {
-  const proveReadonly = (group: TaskGroupNode, child: TaskNodeBase): void => {
+  const proveReadonly = (group: TaskGroupNode, child: TaskNode): void => {
     // Compile representative invalid writes while keeping this helper unreachable
     // from runtime tests and unable to mutate constructed values.
     // @ts-expect-error Group identity cannot be replaced.
@@ -111,12 +112,13 @@ it("prevents structure replacement and child collection mutation", () => {
 });
 
 /** Creates one minimal package-internal child shape for group ordering tests. */
-function createBaseChild(id: string, kind: OpenIdentifier): TaskNodeBase {
-  // Every required base field is explicit; the helper adds no composition,
-  // payload, validation, or behavior belonging to later concrete node types.
+function createUnknownChild(id: string, kind: OpenIdentifier): UnknownTaskNode {
+  // Every required shared field and leaf discriminator is explicit; the helper
+  // adds no raw payload, validation, or execution behavior.
   return {
     id,
     kind,
+    composition: "leaf",
     relations: [],
     metadata: {},
     extensions: {},
@@ -124,7 +126,7 @@ function createBaseChild(id: string, kind: OpenIdentifier): TaskNodeBase {
 }
 
 /** Returns one stable child ID without altering group collection order. */
-function readTaskNodeId(node: TaskNodeBase): string {
+function readTaskNodeId(node: TaskNode): string {
   // Identity is observed exactly as supplied and is neither normalized nor
   // resolved against a TaskDocument at this type-contract boundary.
   return node.id;
