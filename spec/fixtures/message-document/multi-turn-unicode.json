@@ -1,0 +1,189 @@
+{
+  "version": "1.0",
+  "purpose": "context",
+  "root": {
+    "id": "conversation-root",
+    "kind": "message.root",
+    "composition": "container",
+    "children": [
+      {
+        "id": "turn-system",
+        "kind": "message.entry",
+        "role": {
+          "id": "message.system",
+          "semantic": "system",
+          "rawValue": "system",
+          "extensions": {}
+        },
+        "content": [
+          {
+            "id": "content-system",
+            "kind": "content.text",
+            "text": "你是 Mconet 助手。",
+            "metadata": {
+              "language": "zh-CN"
+            },
+            "extensions": {}
+          }
+        ],
+        "relations": [],
+        "metadata": {
+          "turn": 0
+        },
+        "extensions": {}
+      },
+      {
+        "id": "turn-user-1",
+        "kind": "message.entry",
+        "role": {
+          "id": "message.user",
+          "semantic": "user",
+          "rawValue": "human",
+          "extensions": {}
+        },
+        "content": [
+          {
+            "id": "content-user-1",
+            "kind": "content.text",
+            "text": "第一轮：你好，世界 👋🏽\n请保留换行。",
+            "metadata": {
+              "language": "zh-CN"
+            },
+            "extensions": {}
+          }
+        ],
+        "relations": [],
+        "metadata": {
+          "turn": 1
+        },
+        "extensions": {}
+      },
+      {
+        "id": "turn-assistant-1",
+        "kind": "message.entry",
+        "role": {
+          "id": "message.assistant",
+          "semantic": "assistant",
+          "rawValue": "assistant",
+          "extensions": {}
+        },
+        "content": [
+          {
+            "id": "content-assistant-1",
+            "kind": "content.text",
+            "text": "已保留：café / café / 日本語。",
+            "metadata": {
+              "language": "mixed"
+            },
+            "extensions": {}
+          }
+        ],
+        "relations": [],
+        "metadata": {
+          "turn": 2
+        },
+        "extensions": {}
+      },
+      {
+        "id": "turn-user-2",
+        "kind": "message.entry",
+        "role": {
+          "id": "message.user",
+          "semantic": "user",
+          "rawValue": "human",
+          "extensions": {}
+        },
+        "content": [
+          {
+            "id": "content-user-2",
+            "kind": "content.text",
+            "text": "第二轮：请计算 2 × 3。",
+            "metadata": {
+              "language": "zh-CN"
+            },
+            "extensions": {}
+          }
+        ],
+        "relations": [],
+        "metadata": {
+          "turn": 3
+        },
+        "extensions": {}
+      },
+      {
+        "id": "turn-assistant-2",
+        "kind": "message.entry",
+        "role": {
+          "id": "message.assistant",
+          "semantic": "assistant",
+          "rawValue": "assistant",
+          "extensions": {}
+        },
+        "content": [
+          {
+            "id": "content-assistant-2-answer",
+            "kind": "content.text",
+            "text": "答案是 6。",
+            "metadata": {
+              "language": "zh-CN"
+            },
+            "extensions": {}
+          },
+          {
+            "id": "content-assistant-2-status",
+            "kind": "content.text",
+            "text": "状态：完成 ✅",
+            "metadata": {
+              "language": "zh-CN"
+            },
+            "extensions": {}
+          }
+        ],
+        "relations": [],
+        "metadata": {
+          "turn": 4
+        },
+        "extensions": {}
+      }
+    ],
+    "relations": [
+      {
+        "sourceId": "turn-system",
+        "targetId": "turn-user-1",
+        "type": "message.precedes",
+        "metadata": {}
+      },
+      {
+        "sourceId": "turn-user-1",
+        "targetId": "turn-assistant-1",
+        "type": "message.precedes",
+        "metadata": {}
+      },
+      {
+        "sourceId": "turn-assistant-1",
+        "targetId": "turn-user-2",
+        "type": "message.precedes",
+        "metadata": {}
+      },
+      {
+        "sourceId": "turn-user-2",
+        "targetId": "turn-assistant-2",
+        "type": "message.precedes",
+        "metadata": {}
+      }
+    ],
+    "metadata": {
+      "turnCount": 5
+    },
+    "extensions": {}
+  },
+  "metadata": {
+    "fixture": "multi-turn-unicode"
+  },
+  "extensions": {
+    "mconet.fixture": {
+      "preserveOrder": true,
+      "preserveUnicode": true
+    }
+  }
+}
