@@ -47,7 +47,11 @@ importers:
 
   packages/core-domain: {}
 
-  packages/core-runtime: {}
+  packages/core-runtime:
+    dependencies:
+      '@evolutos/mconet-core-domain':
+        specifier: workspace:*
+        version: link:../core-domain
 
   packages/core-spi:
     dependencies:
