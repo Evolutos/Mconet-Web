@@ -61,6 +61,7 @@ export type { MessageGroup } from "./message-group.js";
 export type { MessageRelation } from "./message-relation.js";
 export type { MessageRole } from "./message-role.js";
 export type { ModelDescriptor } from "./model-descriptor.js";
+export type { ModelTaskRequest } from "./model-task-request.js";
 export type { ModelTarget } from "./model-target.js";
 export type { OpenIdentifier } from "./open-identifier.js";
 export type { ProcessingResult } from "./processing-result.js";
