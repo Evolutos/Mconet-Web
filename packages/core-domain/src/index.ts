@@ -44,5 +44,6 @@ export type { RawPayload } from "./raw-payload.js";
 export type { RecoveryHint } from "./recovery-hint.js";
 export type { ResolvedInteractionResourceLimits } from "./resolved-interaction-resource-limits.js";
 export type { ServiceAccess } from "./service-access.js";
+export type { TextMessageContent } from "./text-message-content.js";
 export type { Timestamp } from "./timestamp.js";
 export type { UriValue } from "./uri-value.js";
