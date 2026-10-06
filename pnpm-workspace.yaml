@@ -1,0 +1,5 @@
+# Copyright © 2026 Mcont.
+# Discover SDK packages and runnable examples without creating either in this step.
+packages:
+  - "packages/*"
+  - "examples/*"
