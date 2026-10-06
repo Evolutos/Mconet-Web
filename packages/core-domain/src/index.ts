@@ -24,6 +24,7 @@ export { SecretValue } from "./secret-value.js";
 export { serializeModelInteractionError } from "./serialize-model-interaction-error.js";
 export { parseTimestamp } from "./timestamp.js";
 export { isUriValue } from "./uri-value.js";
+export type { ArtifactKind } from "./artifact-kind.js";
 export type { Authorization } from "./authorization.js";
 export type { Bytes } from "./bytes.js";
 export type { CompatibilityMode } from "./compatibility-mode.js";
