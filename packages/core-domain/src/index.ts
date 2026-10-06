@@ -18,5 +18,6 @@ export type { JsonValue } from "./json-value.js";
 export type { MediaType } from "./media-type.js";
 export type { OpenIdentifier } from "./open-identifier.js";
 export type { RawPayload } from "./raw-payload.js";
+export type { RecoveryHint } from "./recovery-hint.js";
 export type { Timestamp } from "./timestamp.js";
 export type { UriValue } from "./uri-value.js";
