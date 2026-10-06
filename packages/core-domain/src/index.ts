@@ -42,6 +42,7 @@ export type { Diagnostic } from "./diagnostic.js";
 export type { Duration } from "./duration.js";
 export type { ErrorCategory } from "./error-category.js";
 export type { Extensions } from "./extensions.js";
+export type { GenerationParameters } from "./generation-parameters.js";
 export type { HeaderField } from "./header-field.js";
 export type { HeaderFields } from "./header-fields.js";
 export type { InlineArtifactSource } from "./inline-artifact-source.js";
