@@ -4,6 +4,7 @@
 export { isOpenIdentifier } from "./open-identifier.js";
 export { isDuration } from "./duration.js";
 export { parseTimestamp } from "./timestamp.js";
+export { isUriValue } from "./uri-value.js";
 export type { Bytes } from "./bytes.js";
 export type { Duration } from "./duration.js";
 export type { Extensions } from "./extensions.js";
