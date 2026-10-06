@@ -4,6 +4,7 @@
 export { isOpenIdentifier } from "./open-identifier.js";
 export { isDuration } from "./duration.js";
 export { parseMediaType } from "./media-type.js";
+export { isRawPayloadWithinSizeLimit } from "./raw-payload.js";
 export { parseTimestamp } from "./timestamp.js";
 export { isUriValue } from "./uri-value.js";
 export type { Bytes } from "./bytes.js";

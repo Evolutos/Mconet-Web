@@ -28,3 +28,27 @@ export interface RawPayload {
   /** JSON-compatible metadata that does not duplicate executable behavior. */
   readonly metadata: Readonly<Record<string, JsonValue>>;
 }
+
+/**
+ * Determines whether retained raw payload bytes satisfy a positive size limit.
+ *
+ * The limit applies to the visible {@link Bytes} view, not its backing buffer.
+ * A truncated payload remains valid when its retained bytes fit the limit;
+ * truncation records source completeness and never exempts bytes from the cap.
+ * Invalid limits return `false` instead of weakening the resource boundary.
+ *
+ * @param payload Raw payload whose retained bytes are measured.
+ * @param maxBytes Maximum permitted retained bytes as a positive safe integer.
+ * @returns Whether the limit is valid and the retained bytes do not exceed it.
+ */
+export function isRawPayloadWithinSizeLimit(payload: RawPayload, maxBytes: number): boolean {
+  // Resource limits must be exact, positive JSON-safe integers so every
+  // supported runtime applies the same finite boundary.
+  if (!Number.isSafeInteger(maxBytes) || maxBytes <= 0) {
+    return false;
+  }
+
+  // byteLength measures only the supplied Uint8Array view. The truncated flag
+  // describes omitted source data and therefore does not alter this comparison.
+  return payload.bytes.byteLength <= maxBytes;
+}
