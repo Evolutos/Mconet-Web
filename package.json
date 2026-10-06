@@ -11,6 +11,7 @@
   "copyright": "Copyright © 2026 Mcont",
   "license": "UNLICENSED",
   "scripts": {
+    "format:check": "prettier --check .",
     "lint": "eslint . --max-warnings 0"
   },
   "packageManager": "pnpm@11.19.0",
@@ -22,6 +23,7 @@
     "@eslint/js": "10.0.1",
     "@types/node": "20.19.43",
     "eslint": "10.12.0",
+    "prettier": "3.9.9",
     "typescript": "6.0.3",
     "typescript-eslint": "8.71.1"
   }

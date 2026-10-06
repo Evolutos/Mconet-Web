@@ -38,18 +38,18 @@ packages/<package-role> → @evolutos/mconet-<package-role>
 
 Examples:
 
-| Workspace directory | Package name |
-|---|---|
-| `packages/core-domain` | `@evolutos/mconet-core-domain` |
-| `packages/core-spi` | `@evolutos/mconet-core-spi` |
-| `packages/core-runtime` | `@evolutos/mconet-core-runtime` |
-| `packages/codec-json` | `@evolutos/mconet-codec-json` |
-| `packages/auth-basic` | `@evolutos/mconet-auth-basic` |
-| `packages/transport-fetch-browser` | `@evolutos/mconet-transport-fetch-browser` |
-| `packages/transport-fetch-node` | `@evolutos/mconet-transport-fetch-node` |
+| Workspace directory                      | Package name                                     |
+| ---------------------------------------- | ------------------------------------------------ |
+| `packages/core-domain`                   | `@evolutos/mconet-core-domain`                   |
+| `packages/core-spi`                      | `@evolutos/mconet-core-spi`                      |
+| `packages/core-runtime`                  | `@evolutos/mconet-core-runtime`                  |
+| `packages/codec-json`                    | `@evolutos/mconet-codec-json`                    |
+| `packages/auth-basic`                    | `@evolutos/mconet-auth-basic`                    |
+| `packages/transport-fetch-browser`       | `@evolutos/mconet-transport-fetch-browser`       |
+| `packages/transport-fetch-node`          | `@evolutos/mconet-transport-fetch-node`          |
 | `packages/integration-openai-compatible` | `@evolutos/mconet-integration-openai-compatible` |
-| `packages/client` | `@evolutos/mconet-client` |
-| `packages/testing` | `@evolutos/mconet-testing` |
+| `packages/client`                        | `@evolutos/mconet-client`                        |
+| `packages/testing`                       | `@evolutos/mconet-testing`                       |
 
 ## Example package names
 

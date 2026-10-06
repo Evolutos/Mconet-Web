@@ -1,0 +1,6 @@
+# Copyright © 2026 Mcont.
+# Ignore generated dependencies, build reports, outputs, and the pnpm-managed lockfile.
+**/coverage/
+**/dist/
+**/node_modules/
+pnpm-lock.yaml
