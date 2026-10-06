@@ -35,6 +35,7 @@ export type { MediaType } from "./media-type.js";
 export type { MessageContent } from "./message-content.js";
 export type { MessageContentKind } from "./message-content-kind.js";
 export type { MessageEntry } from "./message-entry.js";
+export type { MessageGroup } from "./message-group.js";
 export type { MessageRelation } from "./message-relation.js";
 export type { MessageRole } from "./message-role.js";
 export type { ModelDescriptor } from "./model-descriptor.js";
