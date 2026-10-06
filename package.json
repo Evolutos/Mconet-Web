@@ -11,6 +11,7 @@
   "copyright": "Copyright © 2026 Mcont",
   "license": "UNLICENSED",
   "scripts": {
+    "build": "node scripts/build-esm.mjs",
     "check:boundaries": "node scripts/check-boundaries.mjs",
     "format:check": "prettier --check .",
     "lint": "eslint . --max-warnings 0",

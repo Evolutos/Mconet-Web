@@ -1,0 +1,14 @@
+// Copyright © 2026 Mcont.
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    // The package build emits standards-based ESM while declarations remain a
+    // separate concern for the following atomic implementation step.
+    "declaration": false,
+    "inlineSources": true,
+    "noEmit": false,
+    "removeComments": false,
+    "sourceMap": true
+  },
+  "include": ["packages/*/src/**/*.ts"]
+}
