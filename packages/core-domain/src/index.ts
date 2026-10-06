@@ -43,6 +43,7 @@ export type { Diagnostic } from "./diagnostic.js";
 export type { Duration } from "./duration.js";
 export type { ErrorCategory } from "./error-category.js";
 export type { Extensions } from "./extensions.js";
+export type { FinishReason } from "./finish-reason.js";
 export type { GenerationParameters } from "./generation-parameters.js";
 export type { GenerationParametersNode } from "./generation-parameters-node.js";
 export type { HeaderField } from "./header-field.js";
