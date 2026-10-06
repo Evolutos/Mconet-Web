@@ -26,6 +26,7 @@ export { parseTimestamp } from "./timestamp.js";
 export { isUriValue } from "./uri-value.js";
 export type { ArtifactDescriptor } from "./artifact-descriptor.js";
 export type { ArtifactKind } from "./artifact-kind.js";
+export type { ArtifactMetadata } from "./artifact-metadata.js";
 export type { ArtifactSource } from "./artifact-source.js";
 export type { Authorization } from "./authorization.js";
 export type { Bytes } from "./bytes.js";
