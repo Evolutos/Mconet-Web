@@ -1,0 +1,12 @@
+{
+  "headers": [],
+  "query": [],
+  "extensions": {},
+  "futureOption": {
+    "attempts": 0,
+    "enabled": false,
+    "labels": [],
+    "settings": {}
+  },
+  "futureNullable": null
+}

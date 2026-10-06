@@ -1,0 +1,35 @@
+{
+  "endpoint": {
+    "kind": "absolute",
+    "value": "HTTPS://[2001:db8::1]:443/v1/models?region=global"
+  },
+  "headers": [
+    {
+      "name": "x-feature",
+      "value": "alpha"
+    },
+    {
+      "name": "x-feature",
+      "value": "beta"
+    }
+  ],
+  "query": [
+    {
+      "name": "Filter[Name]",
+      "value": "café & tea"
+    },
+    {
+      "name": "Filter[Name]",
+      "value": ""
+    }
+  ],
+  "apiVersion": "",
+  "projectId": "project-a",
+  "tenantId": "tenant-a",
+  "extensions": {
+    "vendor.routing": {
+      "region": "global",
+      "enabled": false
+    }
+  }
+}
