@@ -9,5 +9,6 @@
     "emitDeclarationOnly": true,
     "noEmit": false
   },
-  "include": ["packages/*/src/**/*.ts"]
+  "include": ["packages/*/src/**/*.ts"],
+  "exclude": ["packages/*/src/**/*.spec.ts", "packages/*/src/**/*.test.ts"]
 }
