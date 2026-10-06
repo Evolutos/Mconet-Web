@@ -18,6 +18,7 @@
     "format:check": "prettier --check .",
     "lint": "eslint . --max-warnings 0",
     "test": "vitest run --config vitest.workspace.ts",
+    "test:contract": "vitest run --config vitest.contract.ts",
     "test:coverage": "vitest run --coverage --config vitest.workspace.ts",
     "typecheck": "node scripts/build-esm.mjs --check"
   },
