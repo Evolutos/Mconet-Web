@@ -1,0 +1,11 @@
+// Copyright © 2026 Mcont.
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    // The browser transport needs standard ECMAScript, browser platform APIs,
+    // and iterable DOM collections, but no package-provided ambient globals.
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "types": []
+  },
+  "include": ["packages/transport-fetch-browser/src/**/*.ts"]
+}
