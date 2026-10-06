@@ -17,6 +17,7 @@
     "check:boundaries": "node scripts/check-boundaries.mjs",
     "format:check": "prettier --check .",
     "lint": "eslint . --max-warnings 0",
+    "package:check": "pnpm build && node scripts/pack-workspace.mjs",
     "test": "vitest run --config vitest.workspace.ts",
     "test:contract": "vitest run --config vitest.contract.ts",
     "test:conformance": "vitest run --config vitest.conformance.ts",

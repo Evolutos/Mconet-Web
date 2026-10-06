@@ -3,3 +3,5 @@
 coverage/
 # Package build outputs are reproducible and must not be committed.
 **/dist/
+# Package verification tarballs are reproducible and must not be committed.
+.artifacts/
