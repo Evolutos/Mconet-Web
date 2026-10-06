@@ -6,6 +6,7 @@ export { isDuration } from "./duration.js";
 export { isInteractionResourceLimits } from "./interaction-resource-limits.js";
 export { isModelDescriptor } from "./model-descriptor.js";
 export { isModelTarget } from "./model-target.js";
+export { isMessageRole } from "./message-role.js";
 export { createDefaultCompatibilityPolicy } from "./create-default-compatibility-policy.js";
 export { parseMediaType } from "./media-type.js";
 export { isRawPayloadWithinSizeLimit } from "./raw-payload.js";
