@@ -23,6 +23,8 @@ importers:
 
   packages/core-domain: {}
 
+  packages/core-runtime: {}
+
   packages/core-spi: {}
 
 packages:
