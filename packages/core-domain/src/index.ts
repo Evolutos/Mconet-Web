@@ -17,6 +17,7 @@ export { isUriValue } from "./uri-value.js";
 export type { Authorization } from "./authorization.js";
 export type { Bytes } from "./bytes.js";
 export type { CompatibilityMode } from "./compatibility-mode.js";
+export type { CompatibilityPolicy } from "./compatibility-policy.js";
 export type { Diagnostic } from "./diagnostic.js";
 export type { Duration } from "./duration.js";
 export type { ErrorCategory } from "./error-category.js";
