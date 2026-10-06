@@ -2,7 +2,6 @@
 
 # Versioning Strategy
 
-- 状态：S0 版本策略基线
 - 适用范围：Mconet Web SDK 的全部公开 workspace package
 - 版本模型：Lockstep Semantic Versioning
 
@@ -18,7 +17,7 @@
 
 采用 lockstep 的原因：
 
-- R1 的组件通过显式 type contract、Schema、错误语义和固定 Runtime 管线共同形成一个兼容单元；
+- 已实现的组件通过显式 type contract、Schema、错误语义和固定 Runtime 管线共同形成一个兼容单元；
 - 单包行为变化可能影响其他包的可连接性，即使 TypeScript 签名未变化；
 - 使用者可以从任意 package 版本直接识别整套 SDK 的协议基线；
 - 发布验证、Golden Fixture、API snapshot 和 tarball consumer 只需对应一个 release identifier。
@@ -37,13 +36,13 @@
 
 版本提升按最高影响级别决定；一次 release 同时包含 patch、minor 和 major 变化时，只提升 major。
 
-## R1 与预发布版本
+## 稳定版本与预发布版本
 
 - 仓库骨架和未发布实现保持 `0.0.0` 与 `private: true`，不代表可消费版本。
-- R1 的第一个稳定公开版本目标为 `1.0.0`。
+- 第一个稳定公开版本目标为 `1.0.0`。
 - 稳定前的可安装验证版本使用 `1.0.0-alpha.N`、`1.0.0-beta.N`、`1.0.0-rc.N`。
-- `alpha` 可包含尚未完成的 R1 行为，只用于受控开发验证。
-- `beta` 必须完成 R1 Scope 支持项，但允许根据测试修正尚未冻结的兼容细节。
+- `alpha` 可包含尚未完成的计划内行为，只用于受控开发验证。
+- `beta` 必须完成 Text Unary Scope 支持项，但允许根据测试修正尚未冻结的兼容细节。
 - `rc` 必须通过 Release Gate，除阻断发布的修复外不得增加范围。
 - 预发布版本不使用 `latest` dist-tag；只有正式稳定版本可以成为 `latest`。
 
@@ -57,7 +56,7 @@
 - 公开类型、函数、类、构造器、常量和其泛型约束；
 - 参数、返回值、readonly/optional 语义与判别联合分支；
 - Runtime pipeline 的可观察顺序、组件优先级、资源所有权和取消/超时语义；
-- R1 Scope、Task/Message/Artifact 数据约束和兼容模式行为；
+- Text Unary Scope、Task/Message/Artifact 数据约束和兼容模式行为；
 - JSON Schema、Golden Fixture、序列化格式、默认值与资源限制；
 - 稳定 Error category、code、phase、恢复提示和安全脱敏行为；
 - SPI 方法、type contract、capability、Resolver 匹配和 Contract Suite；
@@ -90,7 +89,7 @@ README 措辞、内部文件路径、未导出的实现、测试工具内部结�
 
 - 增加新的可选能力、公开函数或独立 package；
 - 为现有接口增加真正可选且具有稳定默认行为的字段；
-- 增加新的 Task、MessageContent、InteractionMode 或 Transport 插件，而不改变 R1 分支语义；
+- 增加新的 Task、MessageContent、InteractionMode 或 Transport 插件，而不改变已发布分支语义；
 - 增加新的稳定 error code，用于区分过去归入更宽泛错误的全新场景；
 - 增加新的条件导出或显式 subpath，不改变现有解析结果；
 - 扩大已验证的运行环境范围；

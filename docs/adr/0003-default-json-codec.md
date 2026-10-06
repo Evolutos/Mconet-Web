@@ -1,15 +1,15 @@
 <!-- Copyright © 2026 Mcont. -->
 
-# ADR 0003: Use JSON as the Default R1 Wire Codec
+# ADR 0003: Use JSON as the Default Wire Codec
 
 - Status: Accepted
 - Decision date: 2026-10-06
-- Scope: R1 payload encoding, success/error decoding, media-type validation, and default composition
+- Scope: payload encoding, success/error decoding, media-type validation, and default composition
 - Owner: Mcont
 
 ## Context
 
-R1 supports one complete text-unary interaction path in modern browsers, Web Workers, and Node.js 20+. The default OpenAI-compatible integration uses JSON request and response payloads over an HTTP/HTTPS byte transport.
+The supported text-unary interaction path runs in modern browsers, Web Workers, and Node.js 20+. The default OpenAI-compatible integration uses JSON request and response payloads over an HTTP/HTTPS byte transport.
 
 The architecture separates protocol mapping, payload encoding, transport, authorization, and response parsing. Without an explicit codec decision, these responsibilities can collapse into one provider-specific HTTP client:
 
@@ -20,11 +20,11 @@ The architecture separates protocol mapping, payload encoding, transport, author
 - browser and Node implementations could use different text encodings or error behavior;
 - malformed or oversized payloads could leak complete response bodies into errors.
 
-R1 needs a default that works without explicit codec injection while preserving the SPI boundary for future wire formats.
+The SDK needs a default that works without explicit codec injection while preserving the SPI boundary for future wire formats.
 
 ## Decision
 
-R1 uses JSON encoded as UTF-8 bytes as its default wire format. The default factory explicitly composes the JSON codec package; Core depends only on codec SPI contracts and does not import the concrete JSON implementation.
+The SDK uses JSON encoded as UTF-8 bytes as its default wire format. The default factory explicitly composes the JSON codec package; Core depends only on codec SPI contracts and does not import the concrete JSON implementation.
 
 The default path is:
 
@@ -76,9 +76,9 @@ Transport sends and receives bytes. It owns bounded response collection and HTTP
 
 Runtime selects and validates the encoder and both response decoders before I/O. It validates the actual response media type against the preselected decoder, invokes the decoder selected for the transport outcome, and passes the decoded payload to the Adapter.
 
-## R1 JSON value contract
+## JSON value contract
 
-The encoder accepts only values that satisfy the reviewed R1 JSON payload contract. At minimum, the data model is composed from:
+The encoder accepts only values that satisfy the reviewed JSON payload contract. At minimum, the data model is composed from:
 
 ```ts
 type JsonPrimitive = string | number | boolean | null;
@@ -105,7 +105,7 @@ Detailed optional-field, empty-collection, number-range, object-key, and canonic
 
 ```text
 validate ErasedRuntimeValue type/schema contract
-→ validate R1 JSON value recursively
+→ validate JSON value recursively
 → serialize JSON text
 → encode text as UTF-8
 → return { kind: "bytes", bytes }
@@ -138,7 +138,7 @@ The decoder must reject:
 - invalid UTF-8 rather than replacing invalid byte sequences;
 - an empty or whitespace-only body where a JSON payload is required;
 - malformed JSON or trailing non-whitespace data;
-- decoded values outside the R1 JSON type contract;
+- decoded values outside the JSON type contract;
 - payloads that exceed the applicable response or codec limit.
 
 JSON `null` is a valid JSON value at the codec boundary. Whether a particular protocol success or error schema permits `null` is decided by the Adapter's payload contract, not by generic JSON syntax handling.
@@ -156,7 +156,7 @@ application/*+json
 
 Type and subtype matching is case-insensitive. Syntactically valid parameters such as `charset=utf-8` are permitted; parameters do not change the required UTF-8 byte decoding. Unsupported charsets are incompatible rather than being decoded with a platform-specific fallback.
 
-Missing, malformed, or incompatible Content-Type fails media-type validation before JSON parsing in the R1 default path. The runtime does not sniff a body that claims another media type and does not use Content-Type to discover or replace a decoder after the response arrives.
+Missing, malformed, or incompatible Content-Type fails media-type validation before JSON parsing in the default path. The runtime does not sniff a body that claims another media type and does not use Content-Type to discover or replace a decoder after the response arrives.
 
 Request plans for the default JSON path must declare a compatible JSON media type. The codec cannot rewrite a non-JSON protocol plan into JSON.
 
@@ -194,7 +194,7 @@ InteractionOptions
 
 An explicit encoder or decoder that does not satisfy the plan, type contract, or required capabilities fails before credential access and network I/O. The runtime must not fall back to the default JSON codec.
 
-Future Protobuf, XML, CBOR, multipart, or streaming codecs can be delivered as independent packages after their body kinds and lifecycle semantics are designed. They do not change the R1 `{ kind: "bytes" }` branch or cause Core to depend on JSON.
+Future Protobuf, XML, CBOR, multipart, or streaming codecs can be delivered as independent packages after their body kinds and lifecycle semantics are designed. They do not change the published `{ kind: "bytes" }` branch or cause Core to depend on JSON.
 
 ## Security and determinism
 
@@ -236,9 +236,9 @@ Rejected because replacement can change field names, signatures, identifiers, an
 
 Rejected because payloads can contain prompts, personal data, provider details, or secrets, and because copying complete bodies defeats bounded diagnostic behavior.
 
-### Make a binary codec the R1 default
+### Make a binary codec the default
 
-Rejected because the R1 integration and ecosystem contract are JSON-based. Additional codecs remain possible through the existing SPI once their requirements are implemented.
+Rejected because the implemented integration and ecosystem contract are JSON-based. Additional codecs remain possible through the existing SPI once their requirements are implemented.
 
 ## Consequences
 
@@ -255,7 +255,7 @@ Costs and trade-offs:
 
 - payloads require runtime validation before native JSON serialization;
 - strict UTF-8 and media-type handling may reject permissive provider behavior;
-- decoding requires a bounded in-memory string for R1 unary JSON;
+- decoding requires a bounded in-memory string for unary JSON;
 - success and error decoder metadata is duplicated intentionally;
 - default factories must explicitly compose the JSON package.
 
@@ -277,4 +277,4 @@ This ADR is satisfied only when all applicable checks pass:
 - Golden Fixtures produce equivalent decoded values in Browser, Worker, and Node-supported environments;
 - package and bundle checks prove no Node-only primitive leaks into the browser codec path.
 
-Any proposal to change the R1 default wire format, accept lossy JavaScript values, use non-UTF-8 default decoding, move JSON behavior into Transport or Adapter, or select decoders after I/O requires a new ADR that supersedes this decision.
+Any proposal to change the default wire format, accept lossy JavaScript values, use non-UTF-8 default decoding, move JSON behavior into Transport or Adapter, or select decoders after I/O requires a new ADR that supersedes this decision.

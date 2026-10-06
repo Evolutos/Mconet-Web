@@ -218,7 +218,7 @@ Rejected because it relies on side effects, prevents reliable tree-shaking, chan
 
 ### Runtime plugin discovery or hot loading
 
-Rejected for R1 because it requires a trust model, lifecycle management, asynchronous discovery, compatibility negotiation, and failure semantics that are outside the text-unary scope. Explicit dynamic `import()` followed by instance injection remains an application concern, subject to the same immutable composition boundary.
+Rejected for the current functional scope because it requires a trust model, lifecycle management, asynchronous discovery, compatibility negotiation, and failure semantics that are outside the text-unary scope. Explicit dynamic `import()` followed by instance injection remains an application concern, subject to the same immutable composition boundary.
 
 ### Silent fallback after incompatible override
 

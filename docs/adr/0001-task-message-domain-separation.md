@@ -236,6 +236,6 @@ This ADR is satisfied only when all applicable checks pass:
 - Message validators reject Task, access, protocol, and provider fields when schemas are closed for those structures.
 - Task and Message type-level tests prove that their roots, nodes, relations, and content cannot be interchanged.
 - dependency-boundary checks reject reverse Message-to-Task imports and Transport imports from either domain.
-- R1 scope validation rejects unsupported Task and Message content before credential resolution and network I/O.
+- scope validation rejects unsupported Task and Message content before credential resolution and network I/O.
 
 Any proposal to add a shared semantic base, move task configuration into Message, promote messages onto `ModelRequest`, or reverse the dependency direction requires a new ADR that supersedes this decision.
