@@ -1,0 +1,46 @@
+# Copyright © 2026 Mcont.
+
+name: Dependency Audit
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  schedule:
+    # Recheck the unchanged lockfile as the advisory database evolves.
+    - cron: "23 3 * * 1"
+
+# Dependency auditing only reads repository contents and registry advisories.
+permissions:
+  contents: read
+
+jobs:
+  dependency-audit:
+    name: Dependency Audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      # Read the exact pnpm version from the root packageManager field.
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 20.19.0
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      # Audit the exact dependency graph represented by the committed lockfile.
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Audit locked dependencies
+        run: pnpm security:audit
