@@ -44,6 +44,7 @@ export type { Extensions } from "./extensions.js";
 export type { HeaderField } from "./header-field.js";
 export type { HeaderFields } from "./header-fields.js";
 export type { InlineArtifactSource } from "./inline-artifact-source.js";
+export type { InteractionMode } from "./interaction-mode.js";
 export type { InteractionPhase } from "./interaction-phase.js";
 export type { InteractionResourceLimits } from "./interaction-resource-limits.js";
 export type { JsonPrimitive } from "./json-primitive.js";
