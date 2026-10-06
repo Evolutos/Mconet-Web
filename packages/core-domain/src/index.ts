@@ -4,6 +4,7 @@
 export { isOpenIdentifier } from "./open-identifier.js";
 export { isDuration } from "./duration.js";
 export { isModelDescriptor } from "./model-descriptor.js";
+export { isModelTarget } from "./model-target.js";
 export { parseMediaType } from "./media-type.js";
 export { isRawPayloadWithinSizeLimit } from "./raw-payload.js";
 export { ModelInteractionError } from "./model-interaction-error.js";

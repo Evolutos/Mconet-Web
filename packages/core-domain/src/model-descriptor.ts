@@ -166,12 +166,14 @@ function isArrayValue(value: unknown): value is readonly unknown[] {
  * Validates a runtime value as a plain JSON object record.
  *
  * @param value Candidate record value.
- * @param ancestors Objects on the active traversal path for cycle detection.
+ * @param ancestors Objects on the active traversal path for cycle detection; a
+ * new traversal set is created when another core-domain validator starts here.
  * @returns Whether the value is an ordinary JSON-compatible record.
+ * @internal Shared by core-domain validators but not re-exported by the package entry.
  */
-function isJsonRecord(
+export function isJsonRecord(
   value: unknown,
-  ancestors: Set<object>,
+  ancestors: Set<object> = new Set<object>(),
 ): value is Readonly<Record<string, JsonValue>> {
   // Arrays have their own ordered validation path; null and primitives cannot
   // satisfy the declared map contract.
