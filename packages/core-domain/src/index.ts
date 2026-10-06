@@ -19,6 +19,7 @@ export type { Diagnostic } from "./diagnostic.js";
 export type { Duration } from "./duration.js";
 export type { ErrorCategory } from "./error-category.js";
 export type { Extensions } from "./extensions.js";
+export type { HeaderField } from "./header-field.js";
 export type { InteractionPhase } from "./interaction-phase.js";
 export type { JsonPrimitive } from "./json-primitive.js";
 export type { JsonValue } from "./json-value.js";
