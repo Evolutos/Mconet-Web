@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.evolutos.com/mconet/model/descriptor",
+  "title": "Mconet ModelDescriptor",
+  "description": "Language-neutral model description containing a protocol-facing name, optional descriptive context, JSON metadata, and namespaced extensions.",
+  "$comment": "Copyright © 2026 Mcont. The model name is preserved as a string and does not select a protocol or imply family or version semantics.",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Protocol-facing model name preserved without normalization."
+    },
+    "displayName": {
+      "type": "string",
+      "description": "Optional human-readable model label."
+    },
+    "family": {
+      "$ref": "#/$defs/openIdentifier",
+      "description": "Optional open model-family identifier."
+    },
+    "version": {
+      "type": "string",
+      "description": "Optional provider-defined model version."
+    },
+    "metadata": {
+      "$ref": "#/$defs/jsonRecord",
+      "description": "Always-present platform-neutral descriptive metadata."
+    },
+    "extensions": {
+      "$ref": "#/$defs/jsonRecord",
+      "description": "Always-present namespaced extension data."
+    }
+  },
+  "required": ["name", "metadata", "extensions"],
+  "additionalProperties": true,
+  "$defs": {
+    "openIdentifier": {
+      "description": "Unicode-friendly open identifier with non-empty period-delimited segments.",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^(?!.*[\\s\\p{C}])(?!\\.)(?!.*\\.\\.)(?!.*\\.$).+$"
+    },
+    "jsonPrimitive": {
+      "description": "Primitive value represented directly by JSON.",
+      "oneOf": [
+        { "type": "string" },
+        { "type": "number" },
+        { "type": "boolean" },
+        { "type": "null" }
+      ]
+    },
+    "jsonValue": {
+      "description": "Recursive language-neutral JSON value.",
+      "oneOf": [
+        { "$ref": "#/$defs/jsonPrimitive" },
+        {
+          "type": "array",
+          "items": { "$ref": "#/$defs/jsonValue" }
+        },
+        { "$ref": "#/$defs/jsonRecord" }
+      ]
+    },
+    "jsonRecord": {
+      "description": "String-keyed JSON object whose values remain recursively JSON-compatible.",
+      "type": "object",
+      "additionalProperties": { "$ref": "#/$defs/jsonValue" }
+    }
+  }
+}
