@@ -1,0 +1,17 @@
+{
+  "name": "@evolutos/mconet-transport-fetch-node",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Node.js Fetch transport for the Mconet Web SDK.",
+  "type": "module",
+  "sideEffects": false,
+  "author": {
+    "name": "Mcont",
+    "email": "Mcont@gmail.com"
+  },
+  "copyright": "Copyright © 2026 Mcont",
+  "license": "UNLICENSED",
+  "engines": {
+    "node": ">=20"
+  }
+}

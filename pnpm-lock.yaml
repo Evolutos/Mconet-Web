@@ -33,6 +33,8 @@ importers:
 
   packages/transport-fetch-browser: {}
 
+  packages/transport-fetch-node: {}
+
 packages:
 
   '@cacheable/memory@2.2.0':
