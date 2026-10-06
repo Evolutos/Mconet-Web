@@ -69,6 +69,7 @@ export type { ModelTarget } from "./model-target.js";
 export type { OpenIdentifier } from "./open-identifier.js";
 export type { OutputStatus } from "./output-status.js";
 export type { ProcessingResult } from "./processing-result.js";
+export type { ProtocolState } from "./protocol-state.js";
 export type { QueryField } from "./query-field.js";
 export type { QueryFields } from "./query-fields.js";
 export type { RawPayload } from "./raw-payload.js";
