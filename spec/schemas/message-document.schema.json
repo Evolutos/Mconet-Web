@@ -1,0 +1,210 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.evolutos.com/mconet/message/document",
+  "title": "Mconet MessageDocument",
+  "description": "Language-neutral message document containing an ordered recursive tree of groups and entries with roles, content, relations, metadata, and namespaced extensions.",
+  "$comment": "Copyright © 2026 Mcont. This Schema validates the complete structural tree. Document-wide identity uniqueness, cycle detection, and relation endpoint resolution remain semantic invariants enforced by the MessageDocument runtime validator.",
+  "type": "object",
+  "properties": {
+    "version": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "\\S",
+      "description": "Opaque nonblank message schema version preserved without normalization."
+    },
+    "purpose": {
+      "$ref": "#/$defs/openIdentifier",
+      "description": "Standard or integration-defined reason this document exists."
+    },
+    "root": {
+      "$ref": "#/$defs/messageRoot",
+      "description": "Required root container with the exact message.root kind."
+    },
+    "metadata": {
+      "$ref": "#/$defs/jsonRecord",
+      "description": "Always-present JSON-compatible document metadata."
+    },
+    "extensions": {
+      "$ref": "#/$defs/jsonRecord",
+      "description": "Always-present namespaced extension data."
+    }
+  },
+  "required": ["version", "purpose", "root", "metadata", "extensions"],
+  "additionalProperties": true,
+  "$defs": {
+    "messageRoot": {
+      "description": "Top-level message container distinguished from nested groups by its exact kind.",
+      "allOf": [
+        { "$ref": "#/$defs/messageGroup" },
+        {
+          "type": "object",
+          "properties": {
+            "kind": { "const": "message.root" }
+          },
+          "required": ["kind"]
+        }
+      ]
+    },
+    "messageGroup": {
+      "description": "Ordered message-tree container whose children are groups or leaf entries.",
+      "type": "object",
+      "properties": {
+        "id": { "$ref": "#/$defs/openIdentifier" },
+        "kind": {
+          "allOf": [{ "$ref": "#/$defs/openIdentifier" }, { "not": { "const": "message.entry" } }]
+        },
+        "composition": { "const": "container" },
+        "children": {
+          "type": "array",
+          "items": {
+            "oneOf": [{ "$ref": "#/$defs/messageGroup" }, { "$ref": "#/$defs/messageEntry" }]
+          }
+        },
+        "relations": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/messageRelation" }
+        },
+        "metadata": { "$ref": "#/$defs/jsonRecord" },
+        "extensions": { "$ref": "#/$defs/jsonRecord" },
+        "role": false,
+        "content": false
+      },
+      "required": ["id", "kind", "composition", "children", "relations", "metadata", "extensions"],
+      "additionalProperties": true
+    },
+    "messageEntry": {
+      "description": "Leaf message element containing one role and a non-empty ordered content collection.",
+      "type": "object",
+      "properties": {
+        "id": { "$ref": "#/$defs/openIdentifier" },
+        "kind": { "const": "message.entry" },
+        "role": { "$ref": "#/$defs/messageRole" },
+        "content": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "oneOf": [
+              { "$ref": "#/$defs/textMessageContent" },
+              { "$ref": "#/$defs/unknownMessageContent" }
+            ]
+          }
+        },
+        "relations": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/messageRelation" }
+        },
+        "metadata": { "$ref": "#/$defs/jsonRecord" },
+        "extensions": { "$ref": "#/$defs/jsonRecord" },
+        "children": false
+      },
+      "required": ["id", "kind", "role", "content", "relations", "metadata", "extensions"],
+      "additionalProperties": true
+    },
+    "messageRole": {
+      "description": "Open participant role with optional normalized and source-protocol values.",
+      "type": "object",
+      "properties": {
+        "id": { "$ref": "#/$defs/openIdentifier" },
+        "semantic": { "type": "string" },
+        "rawValue": { "type": "string" },
+        "extensions": { "$ref": "#/$defs/jsonRecord" }
+      },
+      "required": ["id", "extensions"],
+      "additionalProperties": true
+    },
+    "textMessageContent": {
+      "description": "Plain text content preserving exact text and ordered content identity.",
+      "type": "object",
+      "properties": {
+        "id": { "$ref": "#/$defs/openIdentifier" },
+        "kind": { "const": "content.text" },
+        "text": { "type": "string" },
+        "metadata": { "$ref": "#/$defs/jsonRecord" },
+        "extensions": { "$ref": "#/$defs/jsonRecord" },
+        "composition": false,
+        "children": false,
+        "role": false,
+        "content": false
+      },
+      "required": ["id", "kind", "text", "metadata", "extensions"],
+      "additionalProperties": true
+    },
+    "unknownMessageContent": {
+      "description": "Integration-defined or future content retained without semantic coercion.",
+      "type": "object",
+      "properties": {
+        "id": { "$ref": "#/$defs/openIdentifier" },
+        "kind": {
+          "allOf": [{ "$ref": "#/$defs/openIdentifier" }, { "not": { "const": "content.text" } }]
+        },
+        "raw": { "$ref": "#/$defs/rawPayload" },
+        "metadata": { "$ref": "#/$defs/jsonRecord" },
+        "extensions": { "$ref": "#/$defs/jsonRecord" },
+        "composition": false,
+        "children": false,
+        "role": false,
+        "content": false
+      },
+      "required": ["id", "kind", "metadata", "extensions"],
+      "additionalProperties": true
+    },
+    "rawPayload": {
+      "description": "Optional bounded source payload retained for unknown content.",
+      "$comment": "The bytes carrier is intentionally unconstrained here because its in-memory representation is runtime-specific; the Web runtime requires Uint8Array and size policy is enforced separately.",
+      "type": "object",
+      "properties": {
+        "mediaType": { "type": "string" },
+        "schemaId": { "type": "string" },
+        "bytes": true,
+        "truncated": { "type": "boolean" },
+        "metadata": { "$ref": "#/$defs/jsonRecord" }
+      },
+      "required": ["bytes", "truncated", "metadata"],
+      "additionalProperties": true
+    },
+    "messageRelation": {
+      "description": "Ordered directed relation whose endpoints are resolved within the containing document.",
+      "type": "object",
+      "properties": {
+        "sourceId": { "$ref": "#/$defs/openIdentifier" },
+        "targetId": { "$ref": "#/$defs/openIdentifier" },
+        "type": { "$ref": "#/$defs/openIdentifier" },
+        "metadata": { "$ref": "#/$defs/jsonRecord" }
+      },
+      "required": ["sourceId", "targetId", "type", "metadata"],
+      "additionalProperties": true
+    },
+    "openIdentifier": {
+      "description": "Unicode-friendly open identifier with non-empty period-delimited segments.",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^(?!.*[\\s\\p{C}])(?!\\.)(?!.*\\.\\.)(?!.*\\.$).+$"
+    },
+    "jsonPrimitive": {
+      "description": "Primitive value represented directly by JSON.",
+      "oneOf": [
+        { "type": "string" },
+        { "type": "number" },
+        { "type": "boolean" },
+        { "type": "null" }
+      ]
+    },
+    "jsonValue": {
+      "description": "Recursive language-neutral JSON value.",
+      "oneOf": [
+        { "$ref": "#/$defs/jsonPrimitive" },
+        {
+          "type": "array",
+          "items": { "$ref": "#/$defs/jsonValue" }
+        },
+        { "$ref": "#/$defs/jsonRecord" }
+      ]
+    },
+    "jsonRecord": {
+      "description": "String-keyed JSON object whose values remain recursively JSON-compatible.",
+      "type": "object",
+      "additionalProperties": { "$ref": "#/$defs/jsonValue" }
+    }
+  }
+}
