@@ -1,6 +1,7 @@
 // Copyright © 2026 Mcont.
 
 /** Public data contracts and behavior used by Mconet runtime orchestration. */
+export { composeAbortSignals } from "./compose-abort-signals.js";
 export { createDeadlineSignal } from "./create-deadline-signal.js";
 export { mergeInteractionConfiguration } from "./merge-interaction-configuration.js";
 export type { InteractionOptionsData } from "./interaction-options-data.js";
