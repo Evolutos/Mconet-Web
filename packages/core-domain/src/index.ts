@@ -80,7 +80,7 @@ export type { RawPayload } from "./raw-payload.js";
 export type { RecoveryHint } from "./recovery-hint.js";
 export type { ResolvedInteractionResourceLimits } from "./resolved-interaction-resource-limits.js";
 export type { ServiceAccess } from "./service-access.js";
-export type { TaskDescriptor } from "./task-descriptor.js";
+export { isTaskDescriptor, type TaskDescriptor } from "./task-descriptor.js";
 export type { TaskDocument } from "./task-document.js";
 export type { TaskGroupNode } from "./task-group-node.js";
 export type { TaskNode } from "./task-node.js";
