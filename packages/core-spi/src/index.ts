@@ -22,6 +22,7 @@ export type { InteractionMonitor } from "./interaction-monitor.js";
 export type { MessageMappingResult } from "./message-mapping-result.js";
 export type { ModelIntegrationMatch } from "./model-integration-match.js";
 export type { ModelIntegrationPlan } from "./model-integration-plan.js";
+export type { ModelIntegrationResolver } from "./model-integration-resolver.js";
 export type { ModelTargetMatch } from "./model-target-match.js";
 export type { MonitoringEvent } from "./monitoring-event.js";
 export type { MonitoringOptions } from "./monitoring-options.js";
