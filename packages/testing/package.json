@@ -9,6 +9,10 @@
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
     },
+    "./authorization-handler-contract": {
+      "types": "./dist/authorization-handler-contract.d.ts",
+      "default": "./dist/authorization-handler-contract.js"
+    },
     "./payload-decoder-contract": {
       "types": "./dist/payload-decoder-contract.d.ts",
       "default": "./dist/payload-decoder-contract.js"
