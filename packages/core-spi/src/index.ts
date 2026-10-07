@@ -2,6 +2,7 @@
 
 /** Public contracts shared by replaceable Mconet behavior implementations. */
 export type { AuthorizationContext } from "./authorization-context.js";
+export type { BytesTransportBody } from "./bytes-transport-body.js";
 export type { CapabilityRequirement } from "./capability-requirement.js";
 export type { CapabilityResolution } from "./capability-resolution.js";
 export type { ComponentDescriptor } from "./component-descriptor.js";
