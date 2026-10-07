@@ -40,6 +40,7 @@ const buildConfigPath = path.join(workspaceRoot, "tsconfig.build.json");
 const environmentConfigByPackage = new Map([
   ["core-runtime", "tsconfig.web-platform.json"],
   ["core-spi", "tsconfig.web-platform.json"],
+  ["testing", "tsconfig.web-platform.json"],
   ["transport-fetch-browser", "tsconfig.browser.json"],
   ["transport-fetch-node", "tsconfig.node.json"],
 ]);

@@ -18,6 +18,7 @@ const declarationConfigPath = path.join(workspaceRoot, "tsconfig.declarations.js
 const environmentConfigByPackage = new Map([
   ["core-runtime", "tsconfig.web-platform.json"],
   ["core-spi", "tsconfig.web-platform.json"],
+  ["testing", "tsconfig.web-platform.json"],
   ["transport-fetch-browser", "tsconfig.browser.json"],
   ["transport-fetch-node", "tsconfig.node.json"],
 ]);
