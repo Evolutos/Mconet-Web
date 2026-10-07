@@ -1,0 +1,755 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.evolutos.com/mconet/model/output",
+  "title": "Mconet ModelOutput",
+  "description": "Language-neutral assembled model output containing the retained request target, task result, protocol facts, Runtime diagnostics, and namespaced extensions.",
+  "$comment": "Copyright © 2026 Mcont. This self-contained Schema validates serializable assembled output data. Runtime remains the only ModelOutput construction boundary; document-wide identities, relation endpoints, and Artifact ID uniqueness remain semantic invariants enforced by dedicated validators.",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Optional Runtime-assigned output identity."
+    },
+    "target": {
+      "$ref": "#/$defs/modelTarget",
+      "description": "Exact target retained from the originating request."
+    },
+    "resolvedModel": {
+      "$ref": "#/$defs/modelDescriptor",
+      "description": "Optional actual model identity reported by the service."
+    },
+    "status": {
+      "$ref": "#/$defs/openIdentifier",
+      "description": "Required standard or integration-defined output status."
+    },
+    "result": {
+      "$ref": "#/$defs/modelTaskResult",
+      "description": "Task-neutral result with its result-local Artifact scope."
+    },
+    "stopReason": {
+      "$ref": "#/$defs/openIdentifier",
+      "description": "Optional exact protocol-reported finish reason."
+    },
+    "usage": {
+      "$ref": "#/$defs/tokenUsage",
+      "description": "Optional service-reported token accounting."
+    },
+    "diagnostics": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/diagnostic" },
+      "description": "Ordered Runtime-owned technical observations."
+    },
+    "protocolState": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/protocolState" },
+      "description": "Ordered service and protocol continuation facts."
+    },
+    "extensions": {
+      "$ref": "#/$defs/jsonRecord",
+      "description": "Always-present namespaced assembled-output extension data."
+    }
+  },
+  "required": ["target", "status", "result", "diagnostics", "protocolState", "extensions"],
+  "additionalProperties": true,
+  "$defs": {
+    "modelTarget": {
+      "description": "Request-retained target with independent service, protocol, and model identity.",
+      "type": "object",
+      "properties": {
+        "serviceId": { "$ref": "#/$defs/openIdentifier" },
+        "protocolId": { "$ref": "#/$defs/openIdentifier" },
+        "model": { "$ref": "#/$defs/modelDescriptor" },
+        "deploymentId": { "type": "string" },
+        "extensions": { "$ref": "#/$defs/jsonRecord" }
+      },
+      "required": ["serviceId", "protocolId", "model", "extensions"],
+      "additionalProperties": true
+    },
+    "modelDescriptor": {
+      "description": "Open model description without service or protocol inference.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "displayName": { "type": "string" },
+        "family": { "$ref": "#/$defs/openIdentifier" },
+        "version": { "type": "string" },
+        "metadata": { "$ref": "#/$defs/jsonRecord" },
+        "extensions": { "$ref": "#/$defs/jsonRecord" }
+      },
+      "required": ["name", "metadata", "extensions"],
+      "additionalProperties": true
+    },
+    "modelTaskResult": {
+      "description": "Standard conversation result or an integration-defined open task result.",
+      "oneOf": [
+        { "$ref": "#/$defs/conversationTaskResult" },
+        { "$ref": "#/$defs/openModelTaskResult" }
+      ]
+    },
+    "conversationTaskResult": {
+      "description": "Current text-conversation result with a complete output MessageDocument.",
+      "type": "object",
+      "properties": {
+        "descriptor": { "$ref": "#/$defs/conversationTaskDescriptor" },
+        "document": { "$ref": "#/$defs/taskDocument" },
+        "messages": { "$ref": "#/$defs/outputMessageDocument" },
+        "artifacts": { "$ref": "#/$defs/artifactCatalog" },
+        "metadata": { "$ref": "#/$defs/jsonRecord" },
+        "extensions": { "$ref": "#/$defs/jsonRecord" }
+      },
+      "required": ["descriptor", "document", "messages", "artifacts", "metadata", "extensions"],
+      "additionalProperties": true
+    },
+    "openModelTaskResult": {
+      "description": "Integration-defined result kept structurally open while excluding the standard conversation identity.",
+      "type": "object",
+      "properties": {
+        "descriptor": { "$ref": "#/$defs/openTaskDescriptor" },
+        "document": { "$ref": "#/$defs/taskDocument" },
+        "artifacts": { "$ref": "#/$defs/artifactCatalog" },
+        "metadata": { "$ref": "#/$defs/jsonRecord" },
+        "extensions": { "$ref": "#/$defs/jsonRecord" }
+      },
+      "required": ["descriptor", "document", "artifacts", "metadata", "extensions"],
+      "additionalProperties": true
+    },
+    "conversationTaskDescriptor": {
+      "description": "Fixed conversation-generation result identity with optional Schema references.",
+      "type": "object",
+      "properties": {
+        "type": { "const": "conversation.generate" },
+        "version": { "$ref": "#/$defs/nonblankString" },
+        "inputSchemaId": { "type": "string" },
+        "outputSchemaId": { "type": "string" },
+        "metadata": { "$ref": "#/$defs/jsonRecord" },
+        "extensions": { "$ref": "#/$defs/jsonRecord" }
+      },
+      "required": ["type", "metadata", "extensions"],
+      "additionalProperties": true
+    },
+    "openTaskDescriptor": {
+      "description": "Open task-result identity that cannot absorb malformed standard conversation results.",
+      "type": "object",
+      "properties": {
+        "type": {
+          "allOf": [
+            { "$ref": "#/$defs/openIdentifier" },
+            { "not": { "const": "conversation.generate" } }
+          ]
+        },
+        "version": { "$ref": "#/$defs/nonblankString" },
+        "inputSchemaId": { "type": "string" },
+        "outputSchemaId": { "type": "string" },
+        "metadata": { "$ref": "#/$defs/jsonRecord" },
+        "extensions": { "$ref": "#/$defs/jsonRecord" }
+      },
+      "required": ["type", "metadata", "extensions"],
+      "additionalProperties": true
+    },
+    "tokenUsage": {
+      "description": "Optional independently reported non-negative token counts.",
+      "type": "object",
+      "properties": {
+        "inputTokens": { "$ref": "#/$defs/tokenCount" },
+        "outputTokens": { "$ref": "#/$defs/tokenCount" },
+        "totalTokens": { "$ref": "#/$defs/tokenCount" },
+        "extensions": { "$ref": "#/$defs/jsonRecord" }
+      },
+      "required": ["extensions"],
+      "additionalProperties": true
+    },
+    "tokenCount": {
+      "description": "Canonical non-negative safe integer token count.",
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "diagnostic": {
+      "description": "Runtime-owned serializable technical observation.",
+      "type": "object",
+      "properties": {
+        "code": { "type": "string" },
+        "severity": { "enum": ["info", "warning", "error"] },
+        "phase": { "$ref": "#/$defs/openIdentifier" },
+        "message": { "type": "string" },
+        "path": { "type": "string" },
+        "serviceId": { "$ref": "#/$defs/openIdentifier" },
+        "details": { "$ref": "#/$defs/jsonValue" }
+      },
+      "required": ["code", "severity", "phase", "message"],
+      "additionalProperties": true
+    },
+    "protocolState": {
+      "description": "Opaque protocol state with all owner identities and one portable value.",
+      "type": "object",
+      "properties": {
+        "serviceId": { "$ref": "#/$defs/openIdentifier" },
+        "protocolId": { "$ref": "#/$defs/openIdentifier" },
+        "stateType": { "$ref": "#/$defs/openIdentifier" },
+        "stateValue": { "$ref": "#/$defs/jsonValue" }
+      },
+      "required": ["serviceId", "protocolId", "stateType", "stateValue"],
+      "additionalProperties": true
+    },
+    "taskDocument": {
+      "description": "Complete generic Task result document.",
+      "type": "object",
+      "properties": {
+        "version": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "root": { "$ref": "#/$defs/taskRoot" },
+        "metadata": { "$ref": "#/$defs/jsonRecord" },
+        "extensions": { "$ref": "#/$defs/jsonRecord" }
+      },
+      "required": ["version", "root", "metadata", "extensions"],
+      "additionalProperties": true
+    },
+    "taskRoot": {
+      "description": "Top-level Task container with the exact task.root kind.",
+      "allOf": [
+        { "$ref": "#/$defs/taskGroup" },
+        {
+          "type": "object",
+          "properties": { "kind": { "const": "task.root" } },
+          "required": ["kind"]
+        }
+      ]
+    },
+    "taskNode": {
+      "description": "One recursive generic Task node.",
+      "oneOf": [
+        { "$ref": "#/$defs/taskGroup" },
+        { "$ref": "#/$defs/conversationInputNode" },
+        { "$ref": "#/$defs/generationParametersNode" },
+        { "$ref": "#/$defs/unknownTaskNode" }
+      ]
+    },
+    "taskGroup": {
+      "description": "Ordered Task container without typed leaf payloads.",
+      "type": "object",
+      "properties": {
+        "id": { "$ref": "#/$defs/nonblankString" },
+        "kind": {
+          "allOf": [
+            { "$ref": "#/$defs/openIdentifier" },
+            { "not": { "enum": ["task.input.conversation", "task.configuration"] } }
+          ]
+        },
+        "composition": { "const": "container" },
+        "children": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/taskNode" }
+        },
+        "relations": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/taskRelation" }
+        },
+        "metadata": { "$ref": "#/$defs/jsonRecord" },
+        "extensions": { "$ref": "#/$defs/jsonRecord" },
+        "messages": false,
+        "parameters": false,
+        "raw": false
+      },
+      "required": ["id", "kind", "composition", "children", "relations", "metadata", "extensions"],
+      "additionalProperties": true
+    },
+    "conversationInputNode": {
+      "description": "Conversation input leaf preserved inside a generic result document.",
+      "type": "object",
+      "properties": {
+        "id": { "$ref": "#/$defs/nonblankString" },
+        "kind": { "const": "task.input.conversation" },
+        "composition": { "const": "leaf" },
+        "messages": { "$ref": "#/$defs/messageDocument" },
+        "relations": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/taskRelation" }
+        },
+        "metadata": { "$ref": "#/$defs/jsonRecord" },
+        "extensions": { "$ref": "#/$defs/jsonRecord" },
+        "children": false,
+        "parameters": false,
+        "raw": false
+      },
+      "required": ["id", "kind", "composition", "messages", "relations", "metadata", "extensions"],
+      "additionalProperties": true
+    },
+    "generationParametersNode": {
+      "description": "Generation-configuration leaf retained in a generic result document.",
+      "type": "object",
+      "properties": {
+        "id": { "$ref": "#/$defs/nonblankString" },
+        "kind": { "const": "task.configuration" },
+        "composition": { "const": "leaf" },
+        "parameters": { "$ref": "#/$defs/generationParameters" },
+        "relations": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/taskRelation" }
+        },
+        "metadata": { "$ref": "#/$defs/jsonRecord" },
+        "extensions": { "$ref": "#/$defs/jsonRecord" },
+        "children": false,
+        "messages": false,
+        "raw": false
+      },
+      "required": [
+        "id",
+        "kind",
+        "composition",
+        "parameters",
+        "relations",
+        "metadata",
+        "extensions"
+      ],
+      "additionalProperties": true
+    },
+    "unknownTaskNode": {
+      "description": "Integration-defined or future Task leaf retained without coercion.",
+      "type": "object",
+      "properties": {
+        "id": { "$ref": "#/$defs/nonblankString" },
+        "kind": {
+          "allOf": [
+            { "$ref": "#/$defs/openIdentifier" },
+            { "not": { "enum": ["task.input.conversation", "task.configuration"] } }
+          ]
+        },
+        "composition": { "const": "leaf" },
+        "raw": { "$ref": "#/$defs/rawPayload" },
+        "relations": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/taskRelation" }
+        },
+        "metadata": { "$ref": "#/$defs/jsonRecord" },
+        "extensions": { "$ref": "#/$defs/jsonRecord" },
+        "children": false,
+        "messages": false,
+        "parameters": false
+      },
+      "required": ["id", "kind", "composition", "relations", "metadata", "extensions"],
+      "additionalProperties": true
+    },
+    "generationParameters": {
+      "description": "Generic protocol-neutral generation parameter storage.",
+      "type": "object",
+      "properties": {
+        "temperature": { "type": "number" },
+        "topP": { "type": "number" },
+        "maxOutputTokens": { "type": "number" },
+        "stop": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "seed": { "type": "number" }
+      },
+      "additionalProperties": true
+    },
+    "taskRelation": {
+      "description": "Directed relation resolved within one TaskDocument.",
+      "type": "object",
+      "properties": {
+        "sourceId": { "$ref": "#/$defs/nonblankString" },
+        "targetId": { "$ref": "#/$defs/nonblankString" },
+        "type": { "$ref": "#/$defs/openIdentifier" },
+        "metadata": { "$ref": "#/$defs/jsonRecord" }
+      },
+      "required": ["sourceId", "targetId", "type", "metadata"],
+      "additionalProperties": true
+    },
+    "messageDocument": {
+      "description": "Generic MessageDocument retained by a Task input node.",
+      "type": "object",
+      "properties": {
+        "version": { "$ref": "#/$defs/nonblankString" },
+        "purpose": { "$ref": "#/$defs/openIdentifier" },
+        "root": { "$ref": "#/$defs/messageRoot" },
+        "metadata": { "$ref": "#/$defs/jsonRecord" },
+        "extensions": { "$ref": "#/$defs/jsonRecord" }
+      },
+      "required": ["version", "purpose", "root", "metadata", "extensions"],
+      "additionalProperties": true
+    },
+    "outputMessageDocument": {
+      "description": "Current text-only conversation output MessageDocument.",
+      "type": "object",
+      "properties": {
+        "version": { "$ref": "#/$defs/nonblankString" },
+        "purpose": { "const": "output" },
+        "root": { "$ref": "#/$defs/outputMessageRoot" },
+        "metadata": { "$ref": "#/$defs/jsonRecord" },
+        "extensions": { "$ref": "#/$defs/jsonRecord" }
+      },
+      "required": ["version", "purpose", "root", "metadata", "extensions"],
+      "additionalProperties": true
+    },
+    "messageRoot": {
+      "description": "Generic Message root container with the exact message.root kind.",
+      "allOf": [
+        { "$ref": "#/$defs/messageGroup" },
+        {
+          "type": "object",
+          "properties": { "kind": { "const": "message.root" } },
+          "required": ["kind"]
+        }
+      ]
+    },
+    "outputMessageRoot": {
+      "description": "Text-output Message root container.",
+      "allOf": [
+        { "$ref": "#/$defs/outputMessageGroup" },
+        {
+          "type": "object",
+          "properties": { "kind": { "const": "message.root" } },
+          "required": ["kind"]
+        }
+      ]
+    },
+    "messageGroup": {
+      "description": "Generic ordered Message container.",
+      "type": "object",
+      "properties": {
+        "id": { "$ref": "#/$defs/openIdentifier" },
+        "kind": {
+          "allOf": [{ "$ref": "#/$defs/openIdentifier" }, { "not": { "const": "message.entry" } }]
+        },
+        "composition": { "const": "container" },
+        "children": {
+          "type": "array",
+          "items": {
+            "oneOf": [{ "$ref": "#/$defs/messageGroup" }, { "$ref": "#/$defs/messageEntry" }]
+          }
+        },
+        "relations": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/messageRelation" }
+        },
+        "metadata": { "$ref": "#/$defs/jsonRecord" },
+        "extensions": { "$ref": "#/$defs/jsonRecord" },
+        "role": false,
+        "content": false
+      },
+      "required": ["id", "kind", "composition", "children", "relations", "metadata", "extensions"],
+      "additionalProperties": true
+    },
+    "outputMessageGroup": {
+      "description": "Ordered text-output Message container.",
+      "type": "object",
+      "properties": {
+        "id": { "$ref": "#/$defs/openIdentifier" },
+        "kind": {
+          "allOf": [{ "$ref": "#/$defs/openIdentifier" }, { "not": { "const": "message.entry" } }]
+        },
+        "composition": { "const": "container" },
+        "children": {
+          "type": "array",
+          "items": {
+            "oneOf": [
+              { "$ref": "#/$defs/outputMessageGroup" },
+              { "$ref": "#/$defs/outputMessageEntry" }
+            ]
+          }
+        },
+        "relations": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/messageRelation" }
+        },
+        "metadata": { "$ref": "#/$defs/jsonRecord" },
+        "extensions": { "$ref": "#/$defs/jsonRecord" },
+        "role": false,
+        "content": false
+      },
+      "required": ["id", "kind", "composition", "children", "relations", "metadata", "extensions"],
+      "additionalProperties": true
+    },
+    "messageEntry": {
+      "description": "Generic Message entry with known or unknown content.",
+      "type": "object",
+      "properties": {
+        "id": { "$ref": "#/$defs/openIdentifier" },
+        "kind": { "const": "message.entry" },
+        "role": { "$ref": "#/$defs/messageRole" },
+        "content": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "oneOf": [
+              { "$ref": "#/$defs/textMessageContent" },
+              { "$ref": "#/$defs/unknownMessageContent" }
+            ]
+          }
+        },
+        "relations": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/messageRelation" }
+        },
+        "metadata": { "$ref": "#/$defs/jsonRecord" },
+        "extensions": { "$ref": "#/$defs/jsonRecord" },
+        "children": false
+      },
+      "required": ["id", "kind", "role", "content", "relations", "metadata", "extensions"],
+      "additionalProperties": true
+    },
+    "outputMessageEntry": {
+      "description": "Current output Message entry containing only text content.",
+      "type": "object",
+      "properties": {
+        "id": { "$ref": "#/$defs/openIdentifier" },
+        "kind": { "const": "message.entry" },
+        "role": { "$ref": "#/$defs/messageRole" },
+        "content": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/textMessageContent" }
+        },
+        "relations": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/messageRelation" }
+        },
+        "metadata": { "$ref": "#/$defs/jsonRecord" },
+        "extensions": { "$ref": "#/$defs/jsonRecord" },
+        "children": false
+      },
+      "required": ["id", "kind", "role", "content", "relations", "metadata", "extensions"],
+      "additionalProperties": true
+    },
+    "messageRole": {
+      "description": "Open Message participant role.",
+      "type": "object",
+      "properties": {
+        "id": { "$ref": "#/$defs/openIdentifier" },
+        "semantic": { "type": "string" },
+        "rawValue": { "type": "string" },
+        "extensions": { "$ref": "#/$defs/jsonRecord" }
+      },
+      "required": ["id", "extensions"],
+      "additionalProperties": true
+    },
+    "textMessageContent": {
+      "description": "Plain text Message content preserved exactly.",
+      "type": "object",
+      "properties": {
+        "id": { "$ref": "#/$defs/openIdentifier" },
+        "kind": { "const": "content.text" },
+        "text": { "type": "string" },
+        "metadata": { "$ref": "#/$defs/jsonRecord" },
+        "extensions": { "$ref": "#/$defs/jsonRecord" },
+        "composition": false,
+        "children": false,
+        "role": false,
+        "content": false
+      },
+      "required": ["id", "kind", "text", "metadata", "extensions"],
+      "additionalProperties": true
+    },
+    "unknownMessageContent": {
+      "description": "Integration-defined Message content retained in generic Task documents.",
+      "type": "object",
+      "properties": {
+        "id": { "$ref": "#/$defs/openIdentifier" },
+        "kind": {
+          "allOf": [{ "$ref": "#/$defs/openIdentifier" }, { "not": { "const": "content.text" } }]
+        },
+        "raw": { "$ref": "#/$defs/rawPayload" },
+        "metadata": { "$ref": "#/$defs/jsonRecord" },
+        "extensions": { "$ref": "#/$defs/jsonRecord" },
+        "composition": false,
+        "children": false,
+        "role": false,
+        "content": false
+      },
+      "required": ["id", "kind", "metadata", "extensions"],
+      "additionalProperties": true
+    },
+    "messageRelation": {
+      "description": "Directed relation resolved within one MessageDocument.",
+      "type": "object",
+      "properties": {
+        "sourceId": { "$ref": "#/$defs/openIdentifier" },
+        "targetId": { "$ref": "#/$defs/openIdentifier" },
+        "type": { "$ref": "#/$defs/openIdentifier" },
+        "metadata": { "$ref": "#/$defs/jsonRecord" }
+      },
+      "required": ["sourceId", "targetId", "type", "metadata"],
+      "additionalProperties": true
+    },
+    "artifactCatalog": {
+      "description": "Result-local ordered Artifact collection.",
+      "type": "object",
+      "properties": {
+        "artifacts": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/artifact" }
+        }
+      },
+      "required": ["artifacts"],
+      "additionalProperties": true
+    },
+    "artifact": {
+      "description": "One result-local Artifact with open classification and source.",
+      "type": "object",
+      "properties": {
+        "id": { "$ref": "#/$defs/openIdentifier" },
+        "kind": { "$ref": "#/$defs/artifactKind" },
+        "mediaType": { "$ref": "#/$defs/mediaTypeString" },
+        "source": { "$ref": "#/$defs/artifactSource" },
+        "descriptor": { "$ref": "#/$defs/artifactDescriptor" },
+        "metadata": { "$ref": "#/$defs/jsonRecord" },
+        "extensions": { "$ref": "#/$defs/jsonRecord" }
+      },
+      "required": ["id", "kind", "source", "metadata", "extensions"],
+      "additionalProperties": true
+    },
+    "artifactKind": {
+      "description": "Open Artifact classification.",
+      "type": "object",
+      "properties": {
+        "id": { "$ref": "#/$defs/openIdentifier" },
+        "semantic": { "type": "string" },
+        "extensions": { "$ref": "#/$defs/jsonRecord" }
+      },
+      "required": ["id", "extensions"],
+      "additionalProperties": true
+    },
+    "artifactSource": {
+      "description": "Known Artifact sources plus integration-defined open sources.",
+      "oneOf": [
+        { "$ref": "#/$defs/inlineArtifactSource" },
+        { "$ref": "#/$defs/uriArtifactSource" },
+        { "$ref": "#/$defs/unknownArtifactSource" }
+      ]
+    },
+    "inlineArtifactSource": {
+      "description": "Inline byte source with a runtime-specific byte carrier.",
+      "$comment": "The Web runtime requires Uint8Array. The language-neutral Schema intentionally leaves bytes unconstrained.",
+      "type": "object",
+      "properties": {
+        "kind": { "const": "artifact.source.inline" },
+        "bytes": true
+      },
+      "required": ["kind", "bytes"],
+      "additionalProperties": true
+    },
+    "uriArtifactSource": {
+      "description": "Absolute or relative URI Artifact source.",
+      "type": "object",
+      "properties": {
+        "kind": { "const": "artifact.source.uri" },
+        "uri": { "$ref": "#/$defs/uriValue" }
+      },
+      "required": ["kind", "uri"],
+      "additionalProperties": true
+    },
+    "unknownArtifactSource": {
+      "description": "Integration-defined Artifact source.",
+      "type": "object",
+      "properties": {
+        "kind": {
+          "allOf": [
+            { "$ref": "#/$defs/openIdentifier" },
+            { "not": { "enum": ["artifact.source.inline", "artifact.source.uri"] } }
+          ]
+        }
+      },
+      "required": ["kind"],
+      "additionalProperties": true
+    },
+    "artifactDescriptor": {
+      "description": "Open Artifact modality description.",
+      "type": "object",
+      "properties": {
+        "kind": { "$ref": "#/$defs/openIdentifier" }
+      },
+      "required": ["kind"],
+      "additionalProperties": true
+    },
+    "mediaTypeString": {
+      "description": "HTTP-style media type string with optional parameters.",
+      "type": "string",
+      "pattern": "^[ \\t]*[!#$%&'*+\\-.^_`|~A-Za-z0-9]+/[!#$%&'*+\\-.^_`|~A-Za-z0-9]+(?:[ \\t]*;[ \\t]*[!#$%&'*+\\-.^_`|~A-Za-z0-9]+=(?:[!#$%&'*+\\-.^_`|~A-Za-z0-9]+|\"(?:[\\t\\x20-\\x21\\x23-\\x5B\\x5D-\\x7E]|\\\\[\\t\\x20-\\x7E])*\"))*[ \\t]*$"
+    },
+    "uriValue": {
+      "oneOf": [{ "$ref": "#/$defs/absoluteUriValue" }, { "$ref": "#/$defs/relativeUriValue" }]
+    },
+    "absoluteUriValue": {
+      "type": "object",
+      "properties": {
+        "kind": { "const": "absolute" },
+        "value": {
+          "type": "string",
+          "format": "uri",
+          "pattern": "^[A-Za-z][A-Za-z0-9+.-]*:"
+        }
+      },
+      "required": ["kind", "value"],
+      "additionalProperties": true
+    },
+    "relativeUriValue": {
+      "type": "object",
+      "properties": {
+        "kind": { "const": "relative" },
+        "value": {
+          "type": "string",
+          "format": "uri-reference",
+          "not": { "pattern": "^[^/?#]*:" }
+        }
+      },
+      "required": ["kind", "value"],
+      "additionalProperties": true
+    },
+    "rawPayload": {
+      "description": "Optional bounded source payload retained for unknown Task or Message data.",
+      "$comment": "The Web runtime requires Uint8Array for bytes; size policy remains outside Schema validation.",
+      "type": "object",
+      "properties": {
+        "mediaType": { "type": "string" },
+        "schemaId": { "type": "string" },
+        "bytes": true,
+        "truncated": { "type": "boolean" },
+        "metadata": { "$ref": "#/$defs/jsonRecord" }
+      },
+      "required": ["bytes", "truncated", "metadata"],
+      "additionalProperties": true
+    },
+    "nonblankString": {
+      "description": "Opaque string containing at least one non-whitespace character.",
+      "type": "string",
+      "minLength": 1,
+      "pattern": "\\S"
+    },
+    "openIdentifier": {
+      "description": "Unicode-friendly open identifier with non-empty period-delimited segments.",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^(?!.*[\\s\\p{C}])(?!\\.)(?!.*\\.\\.)(?!.*\\.$).+$"
+    },
+    "jsonPrimitive": {
+      "description": "Primitive value represented directly by JSON.",
+      "oneOf": [
+        { "type": "string" },
+        { "type": "number" },
+        { "type": "boolean" },
+        { "type": "null" }
+      ]
+    },
+    "jsonValue": {
+      "description": "Recursive language-neutral JSON value.",
+      "oneOf": [
+        { "$ref": "#/$defs/jsonPrimitive" },
+        {
+          "type": "array",
+          "items": { "$ref": "#/$defs/jsonValue" }
+        },
+        { "$ref": "#/$defs/jsonRecord" }
+      ]
+    },
+    "jsonRecord": {
+      "description": "String-keyed JSON object whose values remain recursively JSON-compatible.",
+      "type": "object",
+      "additionalProperties": { "$ref": "#/$defs/jsonValue" }
+    }
+  }
+}
