@@ -5,6 +5,7 @@ export { composeAbortSignals } from "./compose-abort-signals.js";
 export { createSafeConfigurationSnapshot } from "./create-safe-configuration-snapshot.js";
 export { createDeadlineSignal } from "./create-deadline-signal.js";
 export { mergeInteractionConfiguration } from "./merge-interaction-configuration.js";
+export { resolveSingleComponent } from "./resolve-single-component.js";
 export type { InteractionOptionsData } from "./interaction-options-data.js";
 export type { ModelClientConfigurationData } from "./model-client-configuration-data.js";
 export type { ResolvedInteractionConfiguration } from "./resolved-interaction-configuration.js";
