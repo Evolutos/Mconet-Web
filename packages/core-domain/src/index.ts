@@ -19,6 +19,7 @@ export { validateTextMessageContentSupport } from "./validate-text-message-conte
 export { validateEmptyArtifactCatalogSupport } from "./validate-empty-artifact-catalog-support.js";
 export { validateConversationTaskTypeSupport } from "./validate-conversation-task-type-support.js";
 export { validateUnaryInteractionModeSupport } from "./validate-unary-interaction-mode-support.js";
+export { validateConversationTaskNodeSupport } from "./validate-conversation-task-node-support.js";
 export { createDefaultCompatibilityPolicy } from "./create-default-compatibility-policy.js";
 export { parseMediaType } from "./media-type.js";
 export { projectConversationText } from "./project-conversation-text.js";
