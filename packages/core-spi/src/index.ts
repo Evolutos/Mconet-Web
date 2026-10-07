@@ -13,6 +13,7 @@ export type { ComponentOwnership } from "./component-ownership.js";
 export type { ComponentTypeContract } from "./component-type-contract.js";
 export type { CredentialContext } from "./credential-context.js";
 export type { CredentialSource } from "./credential-source.js";
+export type { EncoderSelection } from "./encoder-selection.js";
 export type { ErasedRuntimeValue } from "./erased-runtime-value.js";
 export type { InteractionMonitor } from "./interaction-monitor.js";
 export type { MessageMappingResult } from "./message-mapping-result.js";
