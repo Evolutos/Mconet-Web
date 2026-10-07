@@ -6,6 +6,7 @@ export { isDuration } from "./duration.js";
 export { isInteractionResourceLimits } from "./interaction-resource-limits.js";
 export { isModelDescriptor } from "./model-descriptor.js";
 export { isModelTarget } from "./model-target.js";
+export { ModelRequestBuilder } from "./model-request-builder.js";
 export { ConversationTaskBuilder } from "./conversation-task-builder.js";
 export { MessageDocumentBuilder } from "./message-document-builder.js";
 export { isMessageDocument } from "./message-document.js";
