@@ -64,7 +64,11 @@ importers:
 
   packages/integration-openai-compatible: {}
 
-  packages/testing: {}
+  packages/testing:
+    dependencies:
+      '@evolutos/mconet-core-domain':
+        specifier: workspace:*
+        version: link:../core-domain
 
   packages/transport-fetch-browser: {}
 
