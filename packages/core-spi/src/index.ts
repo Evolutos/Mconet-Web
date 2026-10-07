@@ -35,6 +35,7 @@ export type { PlannedComponentSelection } from "./planned-component-selection.js
 export type { ProtocolExecutionPlan } from "./protocol-execution-plan.js";
 export type { ProtocolRequestPlan } from "./protocol-request-plan.js";
 export type { RuntimeComponent } from "./runtime-component.js";
+export type { RuntimeComponents } from "./runtime-components.js";
 export type { SelectedComponent } from "./selected-component.js";
 export type { ServiceAccessResolver } from "./service-access-resolver.js";
 export type { TaskMatch } from "./task-match.js";
