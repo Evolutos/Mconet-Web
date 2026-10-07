@@ -17,6 +17,10 @@
       "types": "./dist/authorization-handler-resolver-contract.d.ts",
       "default": "./dist/authorization-handler-resolver-contract.js"
     },
+    "./interaction-monitor-contract": {
+      "types": "./dist/interaction-monitor-contract.d.ts",
+      "default": "./dist/interaction-monitor-contract.js"
+    },
     "./model-integration-resolver-contract": {
       "types": "./dist/model-integration-resolver-contract.d.ts",
       "default": "./dist/model-integration-resolver-contract.js"
