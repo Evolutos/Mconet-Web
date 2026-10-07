@@ -3,8 +3,8 @@
 /**
  * Public module boundary for the Mconet JSON codec.
  *
- * Encoding and decoding behavior is introduced only after the corresponding
- * service provider contracts are complete. This empty export creates no codec
- * behavior, runtime dependency, or unsupported wire-format commitment.
+ * The JSON payload type is available before encoding and decoding behavior so
+ * protocol adapters can align their erased values without importing an
+ * implementation, runtime validator, Schema library, or wire-format component.
  */
-export {};
+export type { JsonPayload } from "./json-payload.js";

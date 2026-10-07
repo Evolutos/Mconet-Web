@@ -43,7 +43,11 @@ importers:
 
   packages/client: {}
 
-  packages/codec-json: {}
+  packages/codec-json:
+    dependencies:
+      '@evolutos/mconet-core-domain':
+        specifier: workspace:*
+        version: link:../core-domain
 
   packages/core-domain: {}
 

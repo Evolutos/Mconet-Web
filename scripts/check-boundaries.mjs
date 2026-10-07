@@ -33,7 +33,7 @@ const allowedDependencies = new Map([
       "transport-fetch-browser",
     ]),
   ],
-  ["codec-json", new Set(["core-spi"])],
+  ["codec-json", new Set(["core-domain", "core-spi"])],
   ["core-domain", new Set()],
   ["core-runtime", new Set(["core-domain", "core-spi"])],
   ["core-spi", new Set(["core-domain"])],
