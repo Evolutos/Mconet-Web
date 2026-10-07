@@ -81,7 +81,7 @@ export type { RecoveryHint } from "./recovery-hint.js";
 export type { ResolvedInteractionResourceLimits } from "./resolved-interaction-resource-limits.js";
 export type { ServiceAccess } from "./service-access.js";
 export { isTaskDescriptor, type TaskDescriptor } from "./task-descriptor.js";
-export type { TaskDocument } from "./task-document.js";
+export { isTaskDocument, type TaskDocument } from "./task-document.js";
 export type { TaskGroupNode } from "./task-group-node.js";
 export { isTaskNode, type TaskNode } from "./task-node.js";
 export type { TaskRelation } from "./task-relation.js";
