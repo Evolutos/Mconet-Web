@@ -13,6 +13,10 @@
       "types": "./dist/authorization-handler-contract.d.ts",
       "default": "./dist/authorization-handler-contract.js"
     },
+    "./model-integration-resolver-contract": {
+      "types": "./dist/model-integration-resolver-contract.d.ts",
+      "default": "./dist/model-integration-resolver-contract.js"
+    },
     "./payload-decoder-contract": {
       "types": "./dist/payload-decoder-contract.d.ts",
       "default": "./dist/payload-decoder-contract.js"
