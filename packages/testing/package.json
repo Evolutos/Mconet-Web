@@ -20,6 +20,10 @@
     "./task-protocol-adapter-contract": {
       "types": "./dist/task-protocol-adapter-contract.d.ts",
       "default": "./dist/task-protocol-adapter-contract.js"
+    },
+    "./transport-contract": {
+      "types": "./dist/transport-contract.d.ts",
+      "default": "./dist/transport-contract.js"
     }
   },
   "files": [
