@@ -30,6 +30,7 @@ export type { PlannedComponentSelection } from "./planned-component-selection.js
 export type { RuntimeComponent } from "./runtime-component.js";
 export type { SelectedComponent } from "./selected-component.js";
 export type { ServiceAccessResolver } from "./service-access-resolver.js";
+export type { TaskMatch } from "./task-match.js";
 export type { Transport } from "./transport.js";
 export type { TransportBody } from "./transport-body.js";
 export type { TransportContext } from "./transport-context.js";
