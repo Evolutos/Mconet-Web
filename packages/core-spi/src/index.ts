@@ -13,6 +13,7 @@ export type { ErasedRuntimeValue } from "./erased-runtime-value.js";
 export type { MessageMappingResult } from "./message-mapping-result.js";
 export { narrowErasedRuntimeValue } from "./narrow-erased-runtime-value.js";
 export type { RuntimeComponent } from "./runtime-component.js";
+export type { Transport } from "./transport.js";
 export type { TransportBody } from "./transport-body.js";
 export type { TransportContext } from "./transport-context.js";
 export type { TransportOutcome } from "./transport-outcome.js";
