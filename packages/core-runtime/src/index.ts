@@ -2,6 +2,7 @@
 
 /** Public data contracts and behavior used by Mconet runtime orchestration. */
 export { composeAbortSignals } from "./compose-abort-signals.js";
+export { createDirectModelIntegrationPlan } from "./create-direct-model-integration-plan.js";
 export { createSafeConfigurationSnapshot } from "./create-safe-configuration-snapshot.js";
 export { createDeadlineSignal } from "./create-deadline-signal.js";
 export { mergeInteractionConfiguration } from "./merge-interaction-configuration.js";
