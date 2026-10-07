@@ -9,6 +9,10 @@
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
     },
+    "./payload-decoder-contract": {
+      "types": "./dist/payload-decoder-contract.d.ts",
+      "default": "./dist/payload-decoder-contract.js"
+    },
     "./payload-encoder-contract": {
       "types": "./dist/payload-encoder-contract.d.ts",
       "default": "./dist/payload-encoder-contract.js"
