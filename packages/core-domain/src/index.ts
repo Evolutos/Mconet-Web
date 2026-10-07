@@ -83,7 +83,7 @@ export type { ServiceAccess } from "./service-access.js";
 export { isTaskDescriptor, type TaskDescriptor } from "./task-descriptor.js";
 export type { TaskDocument } from "./task-document.js";
 export type { TaskGroupNode } from "./task-group-node.js";
-export type { TaskNode } from "./task-node.js";
+export { isTaskNode, type TaskNode } from "./task-node.js";
 export type { TaskRelation } from "./task-relation.js";
 export type { TextMessageContent } from "./text-message-content.js";
 export type { Timestamp } from "./timestamp.js";
