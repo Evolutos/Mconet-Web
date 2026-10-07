@@ -15,6 +15,7 @@ export type { CredentialSource } from "./credential-source.js";
 export type { ErasedRuntimeValue } from "./erased-runtime-value.js";
 export type { MessageMappingResult } from "./message-mapping-result.js";
 export { narrowErasedRuntimeValue } from "./narrow-erased-runtime-value.js";
+export type { PayloadDecoder } from "./payload-decoder.js";
 export type { PayloadEncoder } from "./payload-encoder.js";
 export type { RuntimeComponent } from "./runtime-component.js";
 export type { Transport } from "./transport.js";
