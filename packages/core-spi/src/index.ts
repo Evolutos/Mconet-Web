@@ -11,6 +11,7 @@ export type { CodecContext } from "./codec-context.js";
 export type { ComponentDescriptor } from "./component-descriptor.js";
 export type { ComponentOwnership } from "./component-ownership.js";
 export type { ComponentRole } from "./component-role.js";
+export type { ComponentSelectionResolution } from "./component-selection-resolution.js";
 export type { ComponentTypeContract } from "./component-type-contract.js";
 export type { CredentialContext } from "./credential-context.js";
 export type { CredentialSource } from "./credential-source.js";
