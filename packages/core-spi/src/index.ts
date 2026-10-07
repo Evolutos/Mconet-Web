@@ -32,6 +32,7 @@ export { narrowErasedRuntimeValue } from "./narrow-erased-runtime-value.js";
 export type { PayloadDecoder } from "./payload-decoder.js";
 export type { PayloadEncoder } from "./payload-encoder.js";
 export type { PlannedComponentSelection } from "./planned-component-selection.js";
+export type { ProtocolExecutionPlan } from "./protocol-execution-plan.js";
 export type { RuntimeComponent } from "./runtime-component.js";
 export type { SelectedComponent } from "./selected-component.js";
 export type { ServiceAccessResolver } from "./service-access-resolver.js";
