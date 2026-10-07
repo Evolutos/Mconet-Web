@@ -1,0 +1,332 @@
+{
+  "target": {
+    "serviceId": "gateway.service",
+    "protocolId": "openai.chat.completions",
+    "model": {
+      "name": "vendor/model-v2",
+      "displayName": "Vendor 文本模型",
+      "family": "vendor.text",
+      "version": "2026-10-07",
+      "metadata": {
+        "contextWindow": 128000,
+        "multimodal": false,
+        "aliases": ["vendor-model-latest", null]
+      },
+      "extensions": {
+        "vendor.model": {
+          "capability": "text"
+        }
+      }
+    },
+    "deploymentId": "deployment-blue",
+    "extensions": {
+      "vendor.routing": {
+        "regions": ["global", "asia"],
+        "weight": 0
+      }
+    }
+  },
+  "task": {
+    "descriptor": {
+      "type": "conversation.generate",
+      "metadata": {},
+      "extensions": {}
+    },
+    "document": {
+      "version": "1.0",
+      "root": {
+        "id": "request-root",
+        "kind": "task.root",
+        "composition": "container",
+        "children": [
+          {
+            "id": "conversation-input",
+            "kind": "task.input.conversation",
+            "composition": "leaf",
+            "messages": {
+              "version": "1.0",
+              "purpose": "input",
+              "root": {
+                "id": "conversation-root",
+                "kind": "message.root",
+                "composition": "container",
+                "children": [
+                  {
+                    "id": "turn-system",
+                    "kind": "message.entry",
+                    "role": {
+                      "id": "message.system",
+                      "semantic": "system",
+                      "rawValue": "system",
+                      "extensions": {}
+                    },
+                    "content": [
+                      {
+                        "id": "content-system",
+                        "kind": "content.text",
+                        "text": "你是 Mconet 助手。",
+                        "metadata": {
+                          "language": "zh-CN"
+                        },
+                        "extensions": {}
+                      }
+                    ],
+                    "relations": [],
+                    "metadata": {
+                      "turn": 0
+                    },
+                    "extensions": {}
+                  },
+                  {
+                    "id": "turn-user-1",
+                    "kind": "message.entry",
+                    "role": {
+                      "id": "message.user",
+                      "semantic": "user",
+                      "rawValue": "human",
+                      "extensions": {}
+                    },
+                    "content": [
+                      {
+                        "id": "content-user-1",
+                        "kind": "content.text",
+                        "text": "第一轮：你好，世界 👋🏽\n请保留换行。",
+                        "metadata": {
+                          "language": "zh-CN"
+                        },
+                        "extensions": {}
+                      }
+                    ],
+                    "relations": [],
+                    "metadata": {
+                      "turn": 1
+                    },
+                    "extensions": {}
+                  },
+                  {
+                    "id": "turn-assistant-1",
+                    "kind": "message.entry",
+                    "role": {
+                      "id": "message.assistant",
+                      "semantic": "assistant",
+                      "rawValue": "assistant",
+                      "extensions": {}
+                    },
+                    "content": [
+                      {
+                        "id": "content-assistant-1",
+                        "kind": "content.text",
+                        "text": "已保留：café / café / 日本語。",
+                        "metadata": {
+                          "language": "mixed"
+                        },
+                        "extensions": {}
+                      }
+                    ],
+                    "relations": [],
+                    "metadata": {
+                      "turn": 2
+                    },
+                    "extensions": {}
+                  },
+                  {
+                    "id": "turn-user-2",
+                    "kind": "message.entry",
+                    "role": {
+                      "id": "message.user",
+                      "semantic": "user",
+                      "rawValue": "human",
+                      "extensions": {}
+                    },
+                    "content": [
+                      {
+                        "id": "content-user-2",
+                        "kind": "content.text",
+                        "text": "第二轮：请计算 2 × 3。",
+                        "metadata": {
+                          "language": "zh-CN"
+                        },
+                        "extensions": {}
+                      }
+                    ],
+                    "relations": [],
+                    "metadata": {
+                      "turn": 3
+                    },
+                    "extensions": {}
+                  },
+                  {
+                    "id": "turn-assistant-2",
+                    "kind": "message.entry",
+                    "role": {
+                      "id": "message.assistant",
+                      "semantic": "assistant",
+                      "rawValue": "assistant",
+                      "extensions": {}
+                    },
+                    "content": [
+                      {
+                        "id": "content-assistant-2-answer",
+                        "kind": "content.text",
+                        "text": "答案是 6。",
+                        "metadata": {
+                          "language": "zh-CN"
+                        },
+                        "extensions": {}
+                      },
+                      {
+                        "id": "content-assistant-2-status",
+                        "kind": "content.text",
+                        "text": "状态：完成 ✅",
+                        "metadata": {
+                          "language": "zh-CN"
+                        },
+                        "extensions": {}
+                      }
+                    ],
+                    "relations": [],
+                    "metadata": {
+                      "turn": 4
+                    },
+                    "extensions": {}
+                  }
+                ],
+                "relations": [
+                  {
+                    "sourceId": "turn-system",
+                    "targetId": "turn-user-1",
+                    "type": "message.precedes",
+                    "metadata": {}
+                  },
+                  {
+                    "sourceId": "turn-user-1",
+                    "targetId": "turn-assistant-1",
+                    "type": "message.precedes",
+                    "metadata": {}
+                  },
+                  {
+                    "sourceId": "turn-assistant-1",
+                    "targetId": "turn-user-2",
+                    "type": "message.precedes",
+                    "metadata": {}
+                  },
+                  {
+                    "sourceId": "turn-user-2",
+                    "targetId": "turn-assistant-2",
+                    "type": "message.precedes",
+                    "metadata": {}
+                  }
+                ],
+                "metadata": {
+                  "turnCount": 5
+                },
+                "extensions": {}
+              },
+              "metadata": {
+                "fixture": "multi-turn-unicode"
+              },
+              "extensions": {
+                "mconet.fixture": {
+                  "preserveOrder": true,
+                  "preserveUnicode": true
+                }
+              }
+            },
+            "relations": [
+              {
+                "sourceId": "conversation-input",
+                "targetId": "generation-parameters",
+                "type": "task.configured_by",
+                "metadata": {}
+              }
+            ],
+            "metadata": {
+              "sequence": 1
+            },
+            "extensions": {}
+          },
+          {
+            "id": "generation-parameters",
+            "kind": "task.configuration",
+            "composition": "leaf",
+            "parameters": {
+              "temperature": 0.25,
+              "topP": 0.9,
+              "maxOutputTokens": 512,
+              "stop": ["<END>", "停止", "🛑"],
+              "seed": 42
+            },
+            "relations": [],
+            "metadata": {
+              "sequence": 2
+            },
+            "extensions": {}
+          }
+        ],
+        "relations": [],
+        "metadata": {
+          "case": "ordered-conversation"
+        },
+        "extensions": {}
+      },
+      "metadata": {
+        "locale": "zh-CN"
+      },
+      "extensions": {
+        "vendor.document": true
+      }
+    },
+    "artifacts": {
+      "artifacts": []
+    },
+    "metadata": {
+      "taskLabel": "conversation"
+    },
+    "extensions": {
+      "vendor.task": true
+    }
+  },
+  "serviceAccess": {
+    "endpoint": {
+      "kind": "absolute",
+      "value": "HTTPS://[2001:db8::1]:443/v1/models?region=global"
+    },
+    "headers": [
+      {
+        "name": "x-feature",
+        "value": "alpha"
+      },
+      {
+        "name": "x-feature",
+        "value": "beta"
+      }
+    ],
+    "query": [
+      {
+        "name": "Filter[Name]",
+        "value": "café & tea"
+      },
+      {
+        "name": "Filter[Name]",
+        "value": ""
+      }
+    ],
+    "apiVersion": "",
+    "projectId": "project-a",
+    "tenantId": "tenant-a",
+    "extensions": {
+      "vendor.routing": {
+        "region": "global",
+        "enabled": false
+      }
+    }
+  },
+  "metadata": {
+    "traceLabel": "conversation-order"
+  },
+  "extensions": {
+    "vendor.request": {
+      "enabled": true
+    }
+  }
+}
