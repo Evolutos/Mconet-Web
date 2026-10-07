@@ -20,6 +20,7 @@ export type { EncoderSelection } from "./encoder-selection.js";
 export type { ErasedRuntimeValue } from "./erased-runtime-value.js";
 export type { InteractionExecutionComponents } from "./interaction-execution-components.js";
 export type { InteractionMonitor } from "./interaction-monitor.js";
+export type { InteractionOptions } from "./interaction-options.js";
 export type { MessageMappingResult } from "./message-mapping-result.js";
 export type { MessageRequestMapper } from "./message-request-mapper.js";
 export type { MessageResponseMapper } from "./message-response-mapper.js";
