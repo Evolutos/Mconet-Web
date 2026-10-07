@@ -1,6 +1,7 @@
 // Copyright © 2026 Mcont.
 
 /** Public module boundary for reusable Mconet contract testing utilities. */
+export { assertSecretAbsent } from "./assert-secret-absent.js";
 export { areJsonValuesCanonicallyEqual } from "./canonical-json-comparator.js";
 export type { Clock } from "./clock.js";
 export { ControllableAbortSignal } from "./controllable-abort-signal.js";
