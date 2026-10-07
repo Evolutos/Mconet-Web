@@ -4,6 +4,7 @@
 export { areJsonValuesCanonicallyEqual } from "./canonical-json-comparator.js";
 export type { Clock } from "./clock.js";
 export { ControllableAbortSignal } from "./controllable-abort-signal.js";
+export { ControllableDeadlineSignal } from "./controllable-deadline-signal.js";
 export { DeterministicIdGenerator } from "./deterministic-id-generator.js";
 export { FakeClock } from "./fake-clock.js";
 export type { IdGenerator } from "./id-generator.js";
