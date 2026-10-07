@@ -1,0 +1,387 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.evolutos.com/mconet/task/document",
+  "title": "Mconet TaskDocument",
+  "description": "Language-neutral Task document containing an ordered recursive tree of groups, conversation inputs, generation configuration, and preserved unknown leaves.",
+  "$comment": "Copyright © 2026 Mcont. This Schema validates the complete serializable tree shape. Document-wide identity uniqueness, cycle detection, and relation endpoint resolution remain semantic invariants enforced by the TaskDocument runtime validator; generation parameter ranges remain owned by the dedicated validator.",
+  "type": "object",
+  "properties": {
+    "version": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "\\S",
+      "description": "Opaque nonblank Task schema version preserved without normalization."
+    },
+    "root": {
+      "$ref": "#/$defs/taskRoot",
+      "description": "Required root container with the exact task.root kind."
+    },
+    "metadata": {
+      "$ref": "#/$defs/jsonRecord",
+      "description": "Always-present JSON-compatible document metadata."
+    },
+    "extensions": {
+      "$ref": "#/$defs/jsonRecord",
+      "description": "Always-present namespaced extension data."
+    }
+  },
+  "required": ["version", "root", "metadata", "extensions"],
+  "additionalProperties": true,
+  "$defs": {
+    "taskRoot": {
+      "description": "Top-level Task container distinguished from nested groups by its exact kind.",
+      "allOf": [
+        { "$ref": "#/$defs/taskGroup" },
+        {
+          "type": "object",
+          "properties": {
+            "kind": { "const": "task.root" }
+          },
+          "required": ["kind"]
+        }
+      ]
+    },
+    "taskGroup": {
+      "description": "Ordered Task-tree container whose children are concrete TaskNode variants.",
+      "type": "object",
+      "properties": {
+        "id": { "$ref": "#/$defs/nonblankString" },
+        "kind": {
+          "allOf": [
+            { "$ref": "#/$defs/openIdentifier" },
+            {
+              "not": {
+                "enum": ["task.input.conversation", "task.configuration"]
+              }
+            }
+          ]
+        },
+        "composition": { "const": "container" },
+        "children": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/taskNode" }
+        },
+        "relations": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/taskRelation" }
+        },
+        "metadata": { "$ref": "#/$defs/jsonRecord" },
+        "extensions": { "$ref": "#/$defs/jsonRecord" },
+        "messages": false,
+        "parameters": false,
+        "raw": false
+      },
+      "required": ["id", "kind", "composition", "children", "relations", "metadata", "extensions"],
+      "additionalProperties": true
+    },
+    "taskNode": {
+      "description": "One recursive container or concrete leaf Task node.",
+      "oneOf": [
+        { "$ref": "#/$defs/taskGroup" },
+        { "$ref": "#/$defs/conversationInputNode" },
+        { "$ref": "#/$defs/generationParametersNode" },
+        { "$ref": "#/$defs/unknownTaskNode" }
+      ]
+    },
+    "conversationInputNode": {
+      "description": "Conversation input leaf retaining one complete input MessageDocument.",
+      "type": "object",
+      "properties": {
+        "id": { "$ref": "#/$defs/nonblankString" },
+        "kind": { "const": "task.input.conversation" },
+        "composition": { "const": "leaf" },
+        "messages": { "$ref": "#/$defs/messageDocument" },
+        "relations": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/taskRelation" }
+        },
+        "metadata": { "$ref": "#/$defs/jsonRecord" },
+        "extensions": { "$ref": "#/$defs/jsonRecord" },
+        "children": false,
+        "parameters": false,
+        "raw": false
+      },
+      "required": ["id", "kind", "composition", "messages", "relations", "metadata", "extensions"],
+      "additionalProperties": true
+    },
+    "generationParametersNode": {
+      "description": "Generation-configuration leaf retaining protocol-neutral parameter storage.",
+      "type": "object",
+      "properties": {
+        "id": { "$ref": "#/$defs/nonblankString" },
+        "kind": { "const": "task.configuration" },
+        "composition": { "const": "leaf" },
+        "parameters": { "$ref": "#/$defs/generationParameters" },
+        "relations": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/taskRelation" }
+        },
+        "metadata": { "$ref": "#/$defs/jsonRecord" },
+        "extensions": { "$ref": "#/$defs/jsonRecord" },
+        "children": false,
+        "messages": false,
+        "raw": false
+      },
+      "required": [
+        "id",
+        "kind",
+        "composition",
+        "parameters",
+        "relations",
+        "metadata",
+        "extensions"
+      ],
+      "additionalProperties": true
+    },
+    "unknownTaskNode": {
+      "description": "Integration-defined or future Task leaf retained without semantic coercion.",
+      "type": "object",
+      "properties": {
+        "id": { "$ref": "#/$defs/nonblankString" },
+        "kind": {
+          "allOf": [
+            { "$ref": "#/$defs/openIdentifier" },
+            {
+              "not": {
+                "enum": ["task.input.conversation", "task.configuration"]
+              }
+            }
+          ]
+        },
+        "composition": { "const": "leaf" },
+        "raw": { "$ref": "#/$defs/rawPayload" },
+        "relations": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/taskRelation" }
+        },
+        "metadata": { "$ref": "#/$defs/jsonRecord" },
+        "extensions": { "$ref": "#/$defs/jsonRecord" },
+        "children": false,
+        "messages": false,
+        "parameters": false
+      },
+      "required": ["id", "kind", "composition", "relations", "metadata", "extensions"],
+      "additionalProperties": true
+    },
+    "generationParameters": {
+      "description": "Protocol-neutral generation parameter storage; semantic numeric and sequence ranges are validated separately.",
+      "type": "object",
+      "properties": {
+        "temperature": { "type": "number" },
+        "topP": { "type": "number" },
+        "maxOutputTokens": { "type": "number" },
+        "stop": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "seed": { "type": "number" }
+      },
+      "additionalProperties": true
+    },
+    "taskRelation": {
+      "description": "Ordered directed relation whose endpoints are resolved within the containing TaskDocument.",
+      "type": "object",
+      "properties": {
+        "sourceId": { "$ref": "#/$defs/nonblankString" },
+        "targetId": { "$ref": "#/$defs/nonblankString" },
+        "type": { "$ref": "#/$defs/openIdentifier" },
+        "metadata": { "$ref": "#/$defs/jsonRecord" }
+      },
+      "required": ["sourceId", "targetId", "type", "metadata"],
+      "additionalProperties": true
+    },
+    "messageDocument": {
+      "description": "Versioned Message-domain tree retained by a conversation input leaf.",
+      "type": "object",
+      "properties": {
+        "version": { "$ref": "#/$defs/nonblankString" },
+        "purpose": { "$ref": "#/$defs/openIdentifier" },
+        "root": { "$ref": "#/$defs/messageRoot" },
+        "metadata": { "$ref": "#/$defs/jsonRecord" },
+        "extensions": { "$ref": "#/$defs/jsonRecord" }
+      },
+      "required": ["version", "purpose", "root", "metadata", "extensions"],
+      "additionalProperties": true
+    },
+    "messageRoot": {
+      "description": "Message root container with the exact message.root kind.",
+      "allOf": [
+        { "$ref": "#/$defs/messageGroup" },
+        {
+          "type": "object",
+          "properties": {
+            "kind": { "const": "message.root" }
+          },
+          "required": ["kind"]
+        }
+      ]
+    },
+    "messageGroup": {
+      "description": "Ordered Message container containing nested groups or entries.",
+      "type": "object",
+      "properties": {
+        "id": { "$ref": "#/$defs/openIdentifier" },
+        "kind": {
+          "allOf": [{ "$ref": "#/$defs/openIdentifier" }, { "not": { "const": "message.entry" } }]
+        },
+        "composition": { "const": "container" },
+        "children": {
+          "type": "array",
+          "items": {
+            "oneOf": [{ "$ref": "#/$defs/messageGroup" }, { "$ref": "#/$defs/messageEntry" }]
+          }
+        },
+        "relations": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/messageRelation" }
+        },
+        "metadata": { "$ref": "#/$defs/jsonRecord" },
+        "extensions": { "$ref": "#/$defs/jsonRecord" },
+        "role": false,
+        "content": false
+      },
+      "required": ["id", "kind", "composition", "children", "relations", "metadata", "extensions"],
+      "additionalProperties": true
+    },
+    "messageEntry": {
+      "description": "Leaf Message element containing one role and ordered non-empty content.",
+      "type": "object",
+      "properties": {
+        "id": { "$ref": "#/$defs/openIdentifier" },
+        "kind": { "const": "message.entry" },
+        "role": { "$ref": "#/$defs/messageRole" },
+        "content": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "oneOf": [
+              { "$ref": "#/$defs/textMessageContent" },
+              { "$ref": "#/$defs/unknownMessageContent" }
+            ]
+          }
+        },
+        "relations": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/messageRelation" }
+        },
+        "metadata": { "$ref": "#/$defs/jsonRecord" },
+        "extensions": { "$ref": "#/$defs/jsonRecord" },
+        "children": false
+      },
+      "required": ["id", "kind", "role", "content", "relations", "metadata", "extensions"],
+      "additionalProperties": true
+    },
+    "messageRole": {
+      "description": "Open Message participant role.",
+      "type": "object",
+      "properties": {
+        "id": { "$ref": "#/$defs/openIdentifier" },
+        "semantic": { "type": "string" },
+        "rawValue": { "type": "string" },
+        "extensions": { "$ref": "#/$defs/jsonRecord" }
+      },
+      "required": ["id", "extensions"],
+      "additionalProperties": true
+    },
+    "textMessageContent": {
+      "description": "Plain text Message content preserved exactly.",
+      "type": "object",
+      "properties": {
+        "id": { "$ref": "#/$defs/openIdentifier" },
+        "kind": { "const": "content.text" },
+        "text": { "type": "string" },
+        "metadata": { "$ref": "#/$defs/jsonRecord" },
+        "extensions": { "$ref": "#/$defs/jsonRecord" },
+        "composition": false,
+        "children": false,
+        "role": false,
+        "content": false
+      },
+      "required": ["id", "kind", "text", "metadata", "extensions"],
+      "additionalProperties": true
+    },
+    "unknownMessageContent": {
+      "description": "Integration-defined or future Message content retained without coercion.",
+      "type": "object",
+      "properties": {
+        "id": { "$ref": "#/$defs/openIdentifier" },
+        "kind": {
+          "allOf": [{ "$ref": "#/$defs/openIdentifier" }, { "not": { "const": "content.text" } }]
+        },
+        "raw": { "$ref": "#/$defs/rawPayload" },
+        "metadata": { "$ref": "#/$defs/jsonRecord" },
+        "extensions": { "$ref": "#/$defs/jsonRecord" },
+        "composition": false,
+        "children": false,
+        "role": false,
+        "content": false
+      },
+      "required": ["id", "kind", "metadata", "extensions"],
+      "additionalProperties": true
+    },
+    "messageRelation": {
+      "description": "Directed relation resolved within one MessageDocument.",
+      "type": "object",
+      "properties": {
+        "sourceId": { "$ref": "#/$defs/openIdentifier" },
+        "targetId": { "$ref": "#/$defs/openIdentifier" },
+        "type": { "$ref": "#/$defs/openIdentifier" },
+        "metadata": { "$ref": "#/$defs/jsonRecord" }
+      },
+      "required": ["sourceId", "targetId", "type", "metadata"],
+      "additionalProperties": true
+    },
+    "rawPayload": {
+      "description": "Optional bounded source payload retained for unknown Task or Message data.",
+      "$comment": "The bytes carrier is intentionally unconstrained because its in-memory representation is runtime-specific; the Web runtime requires Uint8Array and size policy is enforced separately.",
+      "type": "object",
+      "properties": {
+        "mediaType": { "type": "string" },
+        "schemaId": { "type": "string" },
+        "bytes": true,
+        "truncated": { "type": "boolean" },
+        "metadata": { "$ref": "#/$defs/jsonRecord" }
+      },
+      "required": ["bytes", "truncated", "metadata"],
+      "additionalProperties": true
+    },
+    "nonblankString": {
+      "description": "Opaque string containing at least one non-whitespace character.",
+      "type": "string",
+      "minLength": 1,
+      "pattern": "\\S"
+    },
+    "openIdentifier": {
+      "description": "Unicode-friendly open identifier with non-empty period-delimited segments.",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^(?!.*[\\s\\p{C}])(?!\\.)(?!.*\\.\\.)(?!.*\\.$).+$"
+    },
+    "jsonPrimitive": {
+      "description": "Primitive value represented directly by JSON.",
+      "oneOf": [
+        { "type": "string" },
+        { "type": "number" },
+        { "type": "boolean" },
+        { "type": "null" }
+      ]
+    },
+    "jsonValue": {
+      "description": "Recursive language-neutral JSON value.",
+      "oneOf": [
+        { "$ref": "#/$defs/jsonPrimitive" },
+        {
+          "type": "array",
+          "items": { "$ref": "#/$defs/jsonValue" }
+        },
+        { "$ref": "#/$defs/jsonRecord" }
+      ]
+    },
+    "jsonRecord": {
+      "description": "String-keyed JSON object whose values remain recursively JSON-compatible.",
+      "type": "object",
+      "additionalProperties": { "$ref": "#/$defs/jsonValue" }
+    }
+  }
+}
