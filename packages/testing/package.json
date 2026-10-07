@@ -8,6 +8,10 @@
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
+    },
+    "./task-protocol-adapter-contract": {
+      "types": "./dist/task-protocol-adapter-contract.d.ts",
+      "default": "./dist/task-protocol-adapter-contract.js"
     }
   },
   "files": [
@@ -26,5 +30,8 @@
   "dependencies": {
     "@evolutos/mconet-core-domain": "workspace:*",
     "@evolutos/mconet-core-spi": "workspace:*"
+  },
+  "peerDependencies": {
+    "vitest": "^4.1.11"
   }
 }
