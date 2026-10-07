@@ -17,6 +17,7 @@ export { validateTextMessageContentSupport } from "./validate-text-message-conte
 export { validateEmptyArtifactCatalogSupport } from "./validate-empty-artifact-catalog-support.js";
 export { createDefaultCompatibilityPolicy } from "./create-default-compatibility-policy.js";
 export { parseMediaType } from "./media-type.js";
+export { projectConversationText } from "./project-conversation-text.js";
 export { isRawPayloadWithinSizeLimit } from "./raw-payload.js";
 export { resolveInteractionResourceLimits } from "./resolve-interaction-resource-limits.js";
 export { isServiceAccess } from "./service-access.js";
