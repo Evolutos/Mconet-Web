@@ -70,6 +70,7 @@ export type { ModelTaskRequest } from "./model-task-request.js";
 export type { ModelTarget } from "./model-target.js";
 export type { OpenIdentifier } from "./open-identifier.js";
 export type { OutputStatus } from "./output-status.js";
+export type { ParsedTaskResponse } from "./parsed-task-response.js";
 export type { ProcessingResult } from "./processing-result.js";
 export type { ProtocolState } from "./protocol-state.js";
 export type { QueryField } from "./query-field.js";
