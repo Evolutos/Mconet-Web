@@ -4,6 +4,7 @@
 export { assertSecretAbsent } from "./assert-secret-absent.js";
 export { areJsonValuesCanonicallyEqual } from "./canonical-json-comparator.js";
 export type { Clock } from "./clock.js";
+export { ComponentCallRecorder } from "./component-call-recorder.js";
 export { ControllableAbortSignal } from "./controllable-abort-signal.js";
 export { ControllableDeadlineSignal } from "./controllable-deadline-signal.js";
 export { DeterministicIdGenerator } from "./deterministic-id-generator.js";
