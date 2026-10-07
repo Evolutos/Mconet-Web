@@ -8,3 +8,4 @@ export { ControllableDeadlineSignal } from "./controllable-deadline-signal.js";
 export { DeterministicIdGenerator } from "./deterministic-id-generator.js";
 export { FakeClock } from "./fake-clock.js";
 export type { IdGenerator } from "./id-generator.js";
+export { loadJsonFixture } from "./load-json-fixture.js";

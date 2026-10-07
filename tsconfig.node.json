@@ -2,8 +2,8 @@
 {
   "extends": "./tsconfig.base.json",
   "compilerOptions": {
-    // The Node.js transport receives standard ECMAScript APIs and the pinned
-    // Node 20 ambient surface without inheriting browser DOM globals.
+    // Node-only packages receive standard ECMAScript APIs and the pinned Node 20
+    // ambient surface without inheriting browser DOM globals.
     "lib": ["ES2022"],
     "types": ["node"]
   },

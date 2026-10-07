@@ -14,11 +14,11 @@ const packagesRoot = path.join(workspaceRoot, "packages");
 /** Shared configuration that owns declaration emit settings. */
 const declarationConfigPath = path.join(workspaceRoot, "tsconfig.declarations.json");
 
-/** Explicit type environments for shared Web contracts and platform transports. */
+/** Explicit type environments for Web contracts, Node test utilities, and transports. */
 const environmentConfigByPackage = new Map([
   ["core-runtime", "tsconfig.web-platform.json"],
   ["core-spi", "tsconfig.web-platform.json"],
-  ["testing", "tsconfig.web-platform.json"],
+  ["testing", "tsconfig.node.json"],
   ["transport-fetch-browser", "tsconfig.browser.json"],
   ["transport-fetch-node", "tsconfig.node.json"],
 ]);
