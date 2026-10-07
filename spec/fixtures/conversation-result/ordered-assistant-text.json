@@ -1,0 +1,238 @@
+{
+  "id": "output-fixture-1",
+  "target": {
+    "serviceId": "gateway.service",
+    "protocolId": "openai.chat.completions",
+    "model": {
+      "name": "vendor/model-v2",
+      "displayName": "Vendor 文本模型",
+      "family": "vendor.text",
+      "version": "2026-10-07",
+      "metadata": {
+        "contextWindow": 128000,
+        "multimodal": false,
+        "aliases": ["vendor-model-latest", null]
+      },
+      "extensions": {
+        "vendor.model": {
+          "capability": "text"
+        }
+      }
+    },
+    "deploymentId": "deployment-blue",
+    "extensions": {
+      "vendor.routing": {
+        "regions": ["global", "asia"],
+        "weight": 0
+      }
+    }
+  },
+  "resolvedModel": {
+    "name": "vendor/model-v2-resolved",
+    "displayName": "Resolved Fixture Model",
+    "family": "vendor.text",
+    "version": "2026-10-01",
+    "metadata": {
+      "contextWindow": 128000
+    },
+    "extensions": {
+      "vendor.revision": "stable"
+    }
+  },
+  "status": "completed",
+  "result": {
+    "descriptor": {
+      "type": "conversation.generate",
+      "metadata": {},
+      "extensions": {}
+    },
+    "document": {
+      "version": "1.0",
+      "root": {
+        "id": "result-root",
+        "kind": "task.root",
+        "composition": "container",
+        "children": [],
+        "relations": [],
+        "metadata": {},
+        "extensions": {}
+      },
+      "metadata": {
+        "providerRequestId": "request-123"
+      },
+      "extensions": {}
+    },
+    "messages": {
+      "version": "1.0",
+      "purpose": "output",
+      "root": {
+        "id": "result-messages",
+        "kind": "message.root",
+        "composition": "container",
+        "children": [
+          {
+            "id": "primary",
+            "kind": "message.result",
+            "composition": "container",
+            "children": [
+              {
+                "id": "entry-assistant-1",
+                "kind": "message.entry",
+                "role": {
+                  "id": "message.assistant",
+                  "extensions": {}
+                },
+                "content": [
+                  {
+                    "id": "content-assistant-1a",
+                    "kind": "content.text",
+                    "text": "你好，",
+                    "metadata": {},
+                    "extensions": {}
+                  },
+                  {
+                    "id": "content-assistant-1b",
+                    "kind": "content.text",
+                    "text": "世界 🌍",
+                    "metadata": {},
+                    "extensions": {}
+                  }
+                ],
+                "relations": [],
+                "metadata": {
+                  "sequence": 1
+                },
+                "extensions": {}
+              },
+              {
+                "id": "entry-user-ignored",
+                "kind": "message.entry",
+                "role": {
+                  "id": "message.user",
+                  "extensions": {}
+                },
+                "content": [
+                  {
+                    "id": "content-user-ignored",
+                    "kind": "content.text",
+                    "text": "不得进入结果文本",
+                    "metadata": {},
+                    "extensions": {}
+                  }
+                ],
+                "relations": [],
+                "metadata": {
+                  "sequence": 2
+                },
+                "extensions": {}
+              }
+            ],
+            "relations": [],
+            "metadata": {},
+            "extensions": {}
+          },
+          {
+            "id": "follow-up",
+            "kind": "message.result",
+            "composition": "container",
+            "children": [
+              {
+                "id": "entry-assistant-2",
+                "kind": "message.entry",
+                "role": {
+                  "id": "message.assistant",
+                  "extensions": {}
+                },
+                "content": [
+                  {
+                    "id": "content-assistant-2",
+                    "kind": "content.text",
+                    "text": "\n第二行 é",
+                    "metadata": {},
+                    "extensions": {}
+                  }
+                ],
+                "relations": [],
+                "metadata": {
+                  "sequence": 3
+                },
+                "extensions": {}
+              }
+            ],
+            "relations": [],
+            "metadata": {},
+            "extensions": {}
+          }
+        ],
+        "relations": [],
+        "metadata": {
+          "entryCount": 3
+        },
+        "extensions": {}
+      },
+      "metadata": {
+        "locale": "zh-CN"
+      },
+      "extensions": {
+        "vendor.messageFormat": "segments"
+      }
+    },
+    "artifacts": {
+      "artifacts": []
+    },
+    "metadata": {
+      "providerRequestId": "request-123"
+    },
+    "extensions": {
+      "vendor.choiceIndex": 0
+    }
+  },
+  "stopReason": "stop",
+  "usage": {
+    "inputTokens": 37,
+    "outputTokens": 12,
+    "totalTokens": 49,
+    "extensions": {
+      "vendor.cachedInputTokens": 8
+    }
+  },
+  "diagnostics": [
+    {
+      "code": "response.compatibility",
+      "severity": "info",
+      "phase": "response_parsing",
+      "message": "Response used compatible mapping.",
+      "path": "/choices/0/message",
+      "serviceId": "gateway.service",
+      "details": {
+        "mode": "compatible"
+      }
+    },
+    {
+      "code": "response.metadata",
+      "severity": "warning",
+      "phase": "response_parsing",
+      "message": "Provider metadata was retained."
+    }
+  ],
+  "protocolState": [
+    {
+      "serviceId": "gateway.service",
+      "protocolId": "openai.chat.completions",
+      "stateType": "state.response_id",
+      "stateValue": "response-123"
+    },
+    {
+      "serviceId": "gateway.service",
+      "protocolId": "openai.chat.completions",
+      "stateType": "state.region",
+      "stateValue": {
+        "name": "east",
+        "priority": 1
+      }
+    }
+  ],
+  "extensions": {
+    "vendor.responseFingerprint": "fp_fixture"
+  }
+}
