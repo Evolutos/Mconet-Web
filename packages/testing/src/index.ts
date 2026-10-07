@@ -12,6 +12,7 @@ export { FakeClock } from "./fake-clock.js";
 export type { IdGenerator } from "./id-generator.js";
 export { loadJsonFixture } from "./load-json-fixture.js";
 export { MockTransport } from "./mock-transport.js";
+export { RecordingMonitor } from "./recording-monitor.js";
 export { RecordingTransport } from "./recording-transport.js";
 export { StubAuthorizationHandler } from "./stub-authorization-handler.js";
 export { StubCredentialSource } from "./stub-credential-source.js";
