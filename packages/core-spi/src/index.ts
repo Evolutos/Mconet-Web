@@ -41,6 +41,7 @@ export type { TransportBody } from "./transport-body.js";
 export type { TransportContext } from "./transport-context.js";
 export type { TransportOutcome } from "./transport-outcome.js";
 export type { TransportRequest } from "./transport-request.js";
+export type { TransportRequestPlan } from "./transport-request-plan.js";
 export type { TransportResponseMetadata } from "./transport-response-metadata.js";
 export type { TransportResponse } from "./transport-response.js";
 export type { TransportSelection } from "./transport-selection.js";
