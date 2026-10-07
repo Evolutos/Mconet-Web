@@ -7,6 +7,8 @@ import type {
   ComponentSelectionResolution,
 } from "@evolutos/mconet-core-spi";
 
+import { selectionProvidesCapability } from "./selection-provides-capability.js";
+
 /**
  * Resolves every required capability against already selected components.
  *
@@ -59,18 +61,6 @@ export function resolveRequiredCapabilities(
     optionalUnsupported,
     diagnostics,
   });
-}
-
-/** Determines whether any selected descriptor snapshot provides one capability. */
-function selectionProvidesCapability(
-  componentSelection: ComponentSelectionResolution,
-  capabilityId: OpenIdentifier,
-): boolean {
-  // Read the descriptor captured in each selection result, not the component's
-  // live descriptor property, so later implementation changes cannot alter facts.
-  return componentSelection.components.some((selected) =>
-    selected.descriptor.capabilities.has(capabilityId),
-  );
 }
 
 /** Creates the stable failure for one unsupported required capability. */

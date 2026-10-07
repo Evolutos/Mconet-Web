@@ -6,6 +6,7 @@ export { createDirectModelIntegrationPlan } from "./create-direct-model-integrat
 export { createSafeConfigurationSnapshot } from "./create-safe-configuration-snapshot.js";
 export { createDeadlineSignal } from "./create-deadline-signal.js";
 export { mergeInteractionConfiguration } from "./merge-interaction-configuration.js";
+export { resolveCapabilities } from "./resolve-capabilities.js";
 export { resolveRequiredCapabilities } from "./resolve-required-capabilities.js";
 export { resolveSingleComponent } from "./resolve-single-component.js";
 export { selectErrorPayloadDecoder } from "./select-error-payload-decoder.js";
