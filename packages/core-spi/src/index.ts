@@ -20,6 +20,7 @@ export type { EncoderSelection } from "./encoder-selection.js";
 export type { ErasedRuntimeValue } from "./erased-runtime-value.js";
 export type { InteractionMonitor } from "./interaction-monitor.js";
 export type { MessageMappingResult } from "./message-mapping-result.js";
+export type { ModelTargetMatch } from "./model-target-match.js";
 export type { MonitoringEvent } from "./monitoring-event.js";
 export type { MonitoringOptions } from "./monitoring-options.js";
 export { narrowErasedRuntimeValue } from "./narrow-erased-runtime-value.js";
