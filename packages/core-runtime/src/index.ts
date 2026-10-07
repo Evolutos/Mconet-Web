@@ -7,6 +7,7 @@ export { createSafeConfigurationSnapshot } from "./create-safe-configuration-sna
 export { createDeadlineSignal } from "./create-deadline-signal.js";
 export { mergeInteractionConfiguration } from "./merge-interaction-configuration.js";
 export { resolveSingleComponent } from "./resolve-single-component.js";
+export { selectSuccessPayloadDecoder } from "./select-success-payload-decoder.js";
 export type { InteractionOptionsData } from "./interaction-options-data.js";
 export type { ModelClientConfigurationData } from "./model-client-configuration-data.js";
 export type { ResolvedInteractionConfiguration } from "./resolved-interaction-configuration.js";
