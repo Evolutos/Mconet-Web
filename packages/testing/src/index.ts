@@ -13,6 +13,7 @@ export type { IdGenerator } from "./id-generator.js";
 export { loadJsonFixture } from "./load-json-fixture.js";
 export { MockTransport } from "./mock-transport.js";
 export { RecordingTransport } from "./recording-transport.js";
+export { StubAuthorizationHandler } from "./stub-authorization-handler.js";
 export { StubCredentialSource } from "./stub-credential-source.js";
 export { StubMessageRequestMapper } from "./stub-message-request-mapper.js";
 export { StubMessageResponseMapper } from "./stub-message-response-mapper.js";
