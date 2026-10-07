@@ -39,7 +39,10 @@ export type { CompatibilityMode } from "./compatibility-mode.js";
 export type { CompatibilityPolicy } from "./compatibility-policy.js";
 export type { ConversationInputNode } from "./conversation-input-node.js";
 export type { ConversationTaskResult } from "./conversation-task-result.js";
-export type { ConversationTaskRequest } from "./conversation-task-request.js";
+export {
+  isConversationTaskRequest,
+  type ConversationTaskRequest,
+} from "./conversation-task-request.js";
 export type { Diagnostic } from "./diagnostic.js";
 export type { Duration } from "./duration.js";
 export type { ErrorCategory } from "./error-category.js";
