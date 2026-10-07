@@ -88,6 +88,7 @@ export type { QueryFields } from "./query-fields.js";
 export type { RawPayload } from "./raw-payload.js";
 export type { RecoveryHint } from "./recovery-hint.js";
 export type { ResolvedInteractionResourceLimits } from "./resolved-interaction-resource-limits.js";
+export type { ResolvedServiceAccess } from "./resolved-service-access.js";
 export type { ServiceAccess } from "./service-access.js";
 export { isTaskDescriptor, type TaskDescriptor } from "./task-descriptor.js";
 export { isTaskDocument, type TaskDocument } from "./task-document.js";
