@@ -9,5 +9,6 @@ export type { ComponentTypeContract } from "./component-type-contract.js";
 export type { CredentialContext } from "./credential-context.js";
 export type { CredentialSource } from "./credential-source.js";
 export type { ErasedRuntimeValue } from "./erased-runtime-value.js";
+export type { MessageMappingResult } from "./message-mapping-result.js";
 export { narrowErasedRuntimeValue } from "./narrow-erased-runtime-value.js";
 export type { RuntimeComponent } from "./runtime-component.js";
