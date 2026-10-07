@@ -7,6 +7,7 @@ export type { AuthorizationHandlerResolver } from "./authorization-handler-resol
 export type { BytesTransportBody } from "./bytes-transport-body.js";
 export type { CapabilityRequirement } from "./capability-requirement.js";
 export type { CapabilityResolution } from "./capability-resolution.js";
+export type { CodecContext } from "./codec-context.js";
 export type { ComponentDescriptor } from "./component-descriptor.js";
 export type { ComponentTypeContract } from "./component-type-contract.js";
 export type { CredentialContext } from "./credential-context.js";
