@@ -1,6 +1,6 @@
 // Copyright © 2026 Mcont.
 
-import { ModelInteractionError, type MediaType } from "@evolutos/mconet-core-domain";
+import { ModelInteractionError } from "@evolutos/mconet-core-domain";
 import type {
   ComponentRole,
   DecoderSelection,
@@ -9,6 +9,7 @@ import type {
 } from "@evolutos/mconet-core-spi";
 
 import { resolveSingleComponent } from "./resolve-single-component.js";
+import { mediaTypesEqual } from "./media-types-equal.js";
 
 /**
  * Applies the shared deterministic algorithm for one planned Decoder role.
@@ -128,30 +129,6 @@ function matchesDecoderSelection(decoder: PayloadDecoder, selection: DecoderSele
   // Decoder output produces the erased payload expected by the protocol. Only
   // output Schema evidence participates; an input Schema cannot substitute for it.
   return selection.schemaId === undefined || contract.outputSchemaId === selection.schemaId;
-}
-
-/** Compares normalized media types without depending on parameter insertion order. */
-function mediaTypesEqual(left: MediaType, right: MediaType): boolean {
-  // Type and subtype are already normalized by the domain parser. Exact equality
-  // avoids broadening a planned representation through implicit case conversion.
-  if (left.type !== right.type || left.subtype !== right.subtype) {
-    return false;
-  }
-
-  const leftParameterNames = Object.keys(left.parameters);
-  const rightParameterNames = Object.keys(right.parameters);
-  if (leftParameterNames.length !== rightParameterNames.length) {
-    // Different cardinality proves that one representation carries an additional
-    // parameter even if all names on the smaller side happen to match.
-    return false;
-  }
-
-  // Compare own decoded values by name so object insertion order and inherited
-  // properties cannot affect compatibility.
-  return leftParameterNames.every(
-    (name) =>
-      Object.hasOwn(right.parameters, name) && left.parameters[name] === right.parameters[name],
-  );
 }
 
 /** Creates the stable failure for a malformed integration Decoder candidate. */
