@@ -12,4 +12,5 @@ export { FakeClock } from "./fake-clock.js";
 export type { IdGenerator } from "./id-generator.js";
 export { loadJsonFixture } from "./load-json-fixture.js";
 export { StubMessageRequestMapper } from "./stub-message-request-mapper.js";
+export { StubMessageResponseMapper } from "./stub-message-response-mapper.js";
 export { StubTaskProtocolAdapter } from "./stub-task-protocol-adapter.js";
