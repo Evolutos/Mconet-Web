@@ -1,0 +1,555 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.evolutos.com/mconet/model/request",
+  "title": "Mconet ModelRequest",
+  "description": "Language-neutral model interaction request containing an explicit target, supported conversation task, optional non-sensitive service access, metadata, and namespaced extensions.",
+  "$comment": "Copyright © 2026 Mcont. This self-contained Schema validates the current serializable text-conversation request range. Authorization is forbidden because credentials and open authorization descriptions do not enter ordinary JSON serialization. Runtime validators retain graph-wide ID and relation semantics.",
+  "type": "object",
+  "properties": {
+    "target": {
+      "$ref": "#/$defs/modelTarget",
+      "description": "Explicit service, protocol, deployment, and model selection."
+    },
+    "task": {
+      "$ref": "#/$defs/conversationTaskRequest",
+      "description": "Supported conversation-generation task and its request-local scope."
+    },
+    "serviceAccess": {
+      "$ref": "#/$defs/serviceAccess",
+      "description": "Optional non-sensitive unresolved access contribution."
+    },
+    "metadata": {
+      "$ref": "#/$defs/jsonRecord",
+      "description": "Always-present JSON-compatible interaction metadata."
+    },
+    "extensions": {
+      "$ref": "#/$defs/jsonRecord",
+      "description": "Always-present namespaced request extension data."
+    }
+  },
+  "required": ["target", "task", "metadata", "extensions"],
+  "additionalProperties": true,
+  "$defs": {
+    "modelTarget": {
+      "description": "Interaction target with independent service, protocol, and model identity.",
+      "type": "object",
+      "properties": {
+        "serviceId": { "$ref": "#/$defs/openIdentifier" },
+        "protocolId": { "$ref": "#/$defs/openIdentifier" },
+        "model": { "$ref": "#/$defs/modelDescriptor" },
+        "deploymentId": { "type": "string" },
+        "extensions": { "$ref": "#/$defs/jsonRecord" }
+      },
+      "required": ["serviceId", "protocolId", "model", "extensions"],
+      "additionalProperties": true
+    },
+    "modelDescriptor": {
+      "description": "Open model description embedded without service or protocol inference.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "displayName": { "type": "string" },
+        "family": { "$ref": "#/$defs/openIdentifier" },
+        "version": { "type": "string" },
+        "metadata": { "$ref": "#/$defs/jsonRecord" },
+        "extensions": { "$ref": "#/$defs/jsonRecord" }
+      },
+      "required": ["name", "metadata", "extensions"],
+      "additionalProperties": true
+    },
+    "conversationTaskRequest": {
+      "description": "Current supported conversation-generation task request.",
+      "type": "object",
+      "properties": {
+        "descriptor": { "$ref": "#/$defs/conversationTaskDescriptor" },
+        "document": { "$ref": "#/$defs/conversationTaskDocument" },
+        "artifacts": { "$ref": "#/$defs/emptyArtifactCatalog" },
+        "metadata": { "$ref": "#/$defs/jsonRecord" },
+        "extensions": { "$ref": "#/$defs/jsonRecord" }
+      },
+      "required": ["descriptor", "document", "artifacts", "metadata", "extensions"],
+      "additionalProperties": true
+    },
+    "conversationTaskDescriptor": {
+      "description": "Fixed conversation-generation task identity with optional Schema references.",
+      "type": "object",
+      "properties": {
+        "type": { "const": "conversation.generate" },
+        "version": { "$ref": "#/$defs/nonblankString" },
+        "inputSchemaId": { "type": "string" },
+        "outputSchemaId": { "type": "string" },
+        "metadata": { "$ref": "#/$defs/jsonRecord" },
+        "extensions": { "$ref": "#/$defs/jsonRecord" }
+      },
+      "required": ["type", "metadata", "extensions"],
+      "additionalProperties": true
+    },
+    "conversationTaskDocument": {
+      "description": "TaskDocument narrowed to the supported conversation request range and containing at least one conversation input.",
+      "type": "object",
+      "properties": {
+        "version": { "$ref": "#/$defs/nonblankString" },
+        "root": {
+          "allOf": [
+            { "$ref": "#/$defs/taskRoot" },
+            {
+              "type": "object",
+              "properties": {
+                "children": {
+                  "type": "array",
+                  "contains": { "$ref": "#/$defs/conversationBearingNode" },
+                  "minContains": 1
+                }
+              },
+              "required": ["children"]
+            }
+          ]
+        },
+        "metadata": { "$ref": "#/$defs/jsonRecord" },
+        "extensions": { "$ref": "#/$defs/jsonRecord" }
+      },
+      "required": ["version", "root", "metadata", "extensions"],
+      "additionalProperties": true
+    },
+    "taskRoot": {
+      "description": "Top-level Task container with the exact task.root kind.",
+      "allOf": [
+        { "$ref": "#/$defs/taskGroup" },
+        {
+          "type": "object",
+          "properties": { "kind": { "const": "task.root" } },
+          "required": ["kind"]
+        }
+      ]
+    },
+    "taskNode": {
+      "description": "One supported structural Task node.",
+      "oneOf": [
+        { "$ref": "#/$defs/taskGroup" },
+        { "$ref": "#/$defs/conversationInputNode" },
+        { "$ref": "#/$defs/generationParametersNode" },
+        { "$ref": "#/$defs/unknownTaskNode" }
+      ]
+    },
+    "conversationBearingNode": {
+      "description": "Conversation input or nested group containing one at any depth.",
+      "oneOf": [
+        { "$ref": "#/$defs/conversationInputNode" },
+        { "$ref": "#/$defs/conversationBearingGroup" }
+      ]
+    },
+    "conversationBearingGroup": {
+      "description": "Task group whose descendant tree contains a conversation input.",
+      "allOf": [
+        { "$ref": "#/$defs/taskGroup" },
+        {
+          "type": "object",
+          "properties": {
+            "children": {
+              "type": "array",
+              "contains": { "$ref": "#/$defs/conversationBearingNode" },
+              "minContains": 1
+            }
+          },
+          "required": ["children"]
+        }
+      ]
+    },
+    "taskGroup": {
+      "description": "Ordered Task container without typed leaf payloads.",
+      "type": "object",
+      "properties": {
+        "id": { "$ref": "#/$defs/nonblankString" },
+        "kind": {
+          "allOf": [
+            { "$ref": "#/$defs/openIdentifier" },
+            { "not": { "enum": ["task.input.conversation", "task.configuration"] } }
+          ]
+        },
+        "composition": { "const": "container" },
+        "children": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/taskNode" }
+        },
+        "relations": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/taskRelation" }
+        },
+        "metadata": { "$ref": "#/$defs/jsonRecord" },
+        "extensions": { "$ref": "#/$defs/jsonRecord" },
+        "messages": false,
+        "parameters": false,
+        "raw": false
+      },
+      "required": ["id", "kind", "composition", "children", "relations", "metadata", "extensions"],
+      "additionalProperties": true
+    },
+    "conversationInputNode": {
+      "description": "Supported text-only conversation input leaf.",
+      "type": "object",
+      "properties": {
+        "id": { "$ref": "#/$defs/nonblankString" },
+        "kind": { "const": "task.input.conversation" },
+        "composition": { "const": "leaf" },
+        "messages": { "$ref": "#/$defs/inputMessageDocument" },
+        "relations": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/taskRelation" }
+        },
+        "metadata": { "$ref": "#/$defs/jsonRecord" },
+        "extensions": { "$ref": "#/$defs/jsonRecord" },
+        "children": false,
+        "parameters": false,
+        "raw": false
+      },
+      "required": ["id", "kind", "composition", "messages", "relations", "metadata", "extensions"],
+      "additionalProperties": true
+    },
+    "generationParametersNode": {
+      "description": "Supported generation configuration leaf.",
+      "type": "object",
+      "properties": {
+        "id": { "$ref": "#/$defs/nonblankString" },
+        "kind": { "const": "task.configuration" },
+        "composition": { "const": "leaf" },
+        "parameters": { "$ref": "#/$defs/generationParameters" },
+        "relations": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/taskRelation" }
+        },
+        "metadata": { "$ref": "#/$defs/jsonRecord" },
+        "extensions": { "$ref": "#/$defs/jsonRecord" },
+        "children": false,
+        "messages": false,
+        "raw": false
+      },
+      "required": [
+        "id",
+        "kind",
+        "composition",
+        "parameters",
+        "relations",
+        "metadata",
+        "extensions"
+      ],
+      "additionalProperties": true
+    },
+    "unknownTaskNode": {
+      "description": "Structurally preserved unknown leaf retained for the later execution-range gate.",
+      "type": "object",
+      "properties": {
+        "id": { "$ref": "#/$defs/nonblankString" },
+        "kind": {
+          "allOf": [
+            { "$ref": "#/$defs/openIdentifier" },
+            { "not": { "enum": ["task.input.conversation", "task.configuration"] } }
+          ]
+        },
+        "composition": { "const": "leaf" },
+        "raw": { "$ref": "#/$defs/rawPayload" },
+        "relations": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/taskRelation" }
+        },
+        "metadata": { "$ref": "#/$defs/jsonRecord" },
+        "extensions": { "$ref": "#/$defs/jsonRecord" },
+        "children": false,
+        "messages": false,
+        "parameters": false
+      },
+      "required": ["id", "kind", "composition", "relations", "metadata", "extensions"],
+      "additionalProperties": true
+    },
+    "generationParameters": {
+      "description": "Protocol-neutral generation parameters within the current supported request ranges.",
+      "type": "object",
+      "properties": {
+        "temperature": {
+          "type": "number",
+          "minimum": 0
+        },
+        "topP": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "maxOutputTokens": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "stop": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "seed": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        }
+      },
+      "additionalProperties": true
+    },
+    "taskRelation": {
+      "description": "Directed Task relation resolved within the containing document.",
+      "type": "object",
+      "properties": {
+        "sourceId": { "$ref": "#/$defs/nonblankString" },
+        "targetId": { "$ref": "#/$defs/nonblankString" },
+        "type": { "$ref": "#/$defs/openIdentifier" },
+        "metadata": { "$ref": "#/$defs/jsonRecord" }
+      },
+      "required": ["sourceId", "targetId", "type", "metadata"],
+      "additionalProperties": true
+    },
+    "inputMessageDocument": {
+      "description": "Text-only input-purpose MessageDocument supported by conversation requests.",
+      "type": "object",
+      "properties": {
+        "version": { "$ref": "#/$defs/nonblankString" },
+        "purpose": { "const": "input" },
+        "root": { "$ref": "#/$defs/inputMessageRoot" },
+        "metadata": { "$ref": "#/$defs/jsonRecord" },
+        "extensions": { "$ref": "#/$defs/jsonRecord" }
+      },
+      "required": ["version", "purpose", "root", "metadata", "extensions"],
+      "additionalProperties": true
+    },
+    "inputMessageRoot": {
+      "description": "Text-only Message root with exact message.root kind.",
+      "allOf": [
+        { "$ref": "#/$defs/inputMessageGroup" },
+        {
+          "type": "object",
+          "properties": { "kind": { "const": "message.root" } },
+          "required": ["kind"]
+        }
+      ]
+    },
+    "inputMessageGroup": {
+      "description": "Ordered text-only Message input container.",
+      "type": "object",
+      "properties": {
+        "id": { "$ref": "#/$defs/openIdentifier" },
+        "kind": {
+          "allOf": [{ "$ref": "#/$defs/openIdentifier" }, { "not": { "const": "message.entry" } }]
+        },
+        "composition": { "const": "container" },
+        "children": {
+          "type": "array",
+          "items": {
+            "oneOf": [
+              { "$ref": "#/$defs/inputMessageGroup" },
+              { "$ref": "#/$defs/inputMessageEntry" }
+            ]
+          }
+        },
+        "relations": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/messageRelation" }
+        },
+        "metadata": { "$ref": "#/$defs/jsonRecord" },
+        "extensions": { "$ref": "#/$defs/jsonRecord" },
+        "role": false,
+        "content": false
+      },
+      "required": ["id", "kind", "composition", "children", "relations", "metadata", "extensions"],
+      "additionalProperties": true
+    },
+    "inputMessageEntry": {
+      "description": "Input Message leaf containing one or more standard text content values.",
+      "type": "object",
+      "properties": {
+        "id": { "$ref": "#/$defs/openIdentifier" },
+        "kind": { "const": "message.entry" },
+        "role": { "$ref": "#/$defs/messageRole" },
+        "content": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/textMessageContent" }
+        },
+        "relations": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/messageRelation" }
+        },
+        "metadata": { "$ref": "#/$defs/jsonRecord" },
+        "extensions": { "$ref": "#/$defs/jsonRecord" },
+        "children": false
+      },
+      "required": ["id", "kind", "role", "content", "relations", "metadata", "extensions"],
+      "additionalProperties": true
+    },
+    "messageRole": {
+      "description": "Open participant role retained without protocol mapping.",
+      "type": "object",
+      "properties": {
+        "id": { "$ref": "#/$defs/openIdentifier" },
+        "semantic": { "type": "string" },
+        "rawValue": { "type": "string" },
+        "extensions": { "$ref": "#/$defs/jsonRecord" }
+      },
+      "required": ["id", "extensions"],
+      "additionalProperties": true
+    },
+    "textMessageContent": {
+      "description": "Standard text content preserving exact Unicode and line endings.",
+      "type": "object",
+      "properties": {
+        "id": { "$ref": "#/$defs/openIdentifier" },
+        "kind": { "const": "content.text" },
+        "text": { "type": "string" },
+        "metadata": { "$ref": "#/$defs/jsonRecord" },
+        "extensions": { "$ref": "#/$defs/jsonRecord" },
+        "composition": false,
+        "children": false,
+        "role": false,
+        "content": false
+      },
+      "required": ["id", "kind", "text", "metadata", "extensions"],
+      "additionalProperties": true
+    },
+    "messageRelation": {
+      "description": "Directed Message relation resolved within the containing MessageDocument.",
+      "type": "object",
+      "properties": {
+        "sourceId": { "$ref": "#/$defs/openIdentifier" },
+        "targetId": { "$ref": "#/$defs/openIdentifier" },
+        "type": { "$ref": "#/$defs/openIdentifier" },
+        "metadata": { "$ref": "#/$defs/jsonRecord" }
+      },
+      "required": ["sourceId", "targetId", "type", "metadata"],
+      "additionalProperties": true
+    },
+    "emptyArtifactCatalog": {
+      "description": "Explicit empty request-local Artifact scope supported by the current text conversation range.",
+      "type": "object",
+      "properties": {
+        "artifacts": {
+          "type": "array",
+          "maxItems": 0
+        }
+      },
+      "required": ["artifacts"],
+      "additionalProperties": true
+    },
+    "serviceAccess": {
+      "description": "Non-sensitive unresolved service access; authorization is intentionally excluded.",
+      "type": "object",
+      "properties": {
+        "endpoint": { "$ref": "#/$defs/httpEndpoint" },
+        "authorization": false,
+        "headers": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/headerField" }
+        },
+        "query": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/queryField" }
+        },
+        "apiVersion": { "type": "string" },
+        "projectId": { "type": "string" },
+        "tenantId": { "type": "string" },
+        "extensions": { "$ref": "#/$defs/jsonRecord" }
+      },
+      "required": ["headers", "query", "extensions"],
+      "additionalProperties": true
+    },
+    "httpEndpoint": {
+      "description": "Absolute HTTP or HTTPS UriValue without credentials or fragment.",
+      "type": "object",
+      "properties": {
+        "kind": { "const": "absolute" },
+        "value": {
+          "type": "string",
+          "format": "uri",
+          "pattern": "^[Hh][Tt][Tt][Pp][Ss]?://(?![^/?#]*@)(?:\\[[^\\]]+\\](?::[0-9]+)?|[^:/?#]+(?::[0-9]+)?)(?:[/?][^#]*)?$"
+        }
+      },
+      "required": ["kind", "value"],
+      "additionalProperties": true
+    },
+    "headerField": {
+      "description": "One normalized non-sensitive header occurrence.",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[!#$%&'*+\\-.^_`|~0-9a-z]+$"
+        },
+        "value": {
+          "type": "string",
+          "not": { "pattern": "[\\r\\n]" }
+        }
+      },
+      "required": ["name", "value"],
+      "additionalProperties": true
+    },
+    "queryField": {
+      "description": "One case-sensitive query occurrence before encoding.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "value": { "type": "string" }
+      },
+      "required": ["name", "value"],
+      "additionalProperties": true
+    },
+    "rawPayload": {
+      "description": "Optional bounded source payload retained for an unknown Task leaf.",
+      "$comment": "The byte carrier is runtime-specific and therefore remains unconstrained in the language-neutral Schema.",
+      "type": "object",
+      "properties": {
+        "mediaType": { "type": "string" },
+        "schemaId": { "type": "string" },
+        "bytes": true,
+        "truncated": { "type": "boolean" },
+        "metadata": { "$ref": "#/$defs/jsonRecord" }
+      },
+      "required": ["bytes", "truncated", "metadata"],
+      "additionalProperties": true
+    },
+    "nonblankString": {
+      "description": "Opaque string containing at least one non-whitespace character.",
+      "type": "string",
+      "minLength": 1,
+      "pattern": "\\S"
+    },
+    "openIdentifier": {
+      "description": "Unicode-friendly open identifier with non-empty period-delimited segments.",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^(?!.*[\\s\\p{C}])(?!\\.)(?!.*\\.\\.)(?!.*\\.$).+$"
+    },
+    "jsonPrimitive": {
+      "description": "Primitive value represented directly by JSON.",
+      "oneOf": [
+        { "type": "string" },
+        { "type": "number" },
+        { "type": "boolean" },
+        { "type": "null" }
+      ]
+    },
+    "jsonValue": {
+      "description": "Recursive language-neutral JSON value.",
+      "oneOf": [
+        { "$ref": "#/$defs/jsonPrimitive" },
+        {
+          "type": "array",
+          "items": { "$ref": "#/$defs/jsonValue" }
+        },
+        { "$ref": "#/$defs/jsonRecord" }
+      ]
+    },
+    "jsonRecord": {
+      "description": "String-keyed JSON object whose values remain recursively JSON-compatible.",
+      "type": "object",
+      "additionalProperties": { "$ref": "#/$defs/jsonValue" }
+    }
+  }
+}
