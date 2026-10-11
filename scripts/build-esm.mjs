@@ -36,14 +36,16 @@ const buildConfigPath = path.join(workspaceRoot, "tsconfig.build.json");
  * Platform-neutral packages use the pure-core environment by default. Shared
  * Web SPI contracts, the JSON codec, Node test utilities, and platform
  * transports receive only their explicitly reviewed runtime APIs. The JSON
- * codec, basic authorization descriptions, and shared Fetch mapper use the
- * Web platform library because their SPI cancellation signal is AbortSignal.
+ * codec, basic authorization descriptions, the OpenAI-compatible integration,
+ * and the shared Fetch mapper use the Web platform library because their SPI
+ * cancellation signal is AbortSignal.
  */
 const environmentConfigByPackage = new Map([
   ["auth-basic", "tsconfig.web-platform.json"],
   ["codec-json", "tsconfig.web-platform.json"],
   ["core-runtime", "tsconfig.web-platform.json"],
   ["core-spi", "tsconfig.web-platform.json"],
+  ["integration-openai-compatible", "tsconfig.web-platform.json"],
   ["testing", "tsconfig.node.json"],
   ["transport-fetch-shared", "tsconfig.web-platform.json"],
   ["transport-fetch-browser", "tsconfig.browser.json"],
