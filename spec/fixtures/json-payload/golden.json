@@ -1,0 +1,18 @@
+{
+  "kind": "json-payload-golden",
+  "cases": [
+    { "value": null, "json": "null" },
+    { "value": false, "json": "false" },
+    { "value": 0, "json": "0" },
+    { "value": "", "json": "\"\"" },
+    { "value": [], "json": "[]" },
+    { "value": {}, "json": "{}" },
+    { "value": { "b": 1, "a": null }, "json": "{\"b\":1,\"a\":null}" },
+    {
+      "value": { "outer": { "z": true, "y": false } },
+      "json": "{\"outer\":{\"z\":true,\"y\":false}}"
+    },
+    { "value": ["hello", 1, false, null], "json": "[\"hello\",1,false,null]" },
+    { "value": "A𐀀😀", "json": "\"A𐀀😀\"" }
+  ]
+}
