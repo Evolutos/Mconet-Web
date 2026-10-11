@@ -7,6 +7,10 @@ import { createPackageProjects } from "./vitest.projects.js";
 export default defineConfig({
   test: {
     passWithNoTests: true,
-    projects: createPackageProjects(["src/**/*.contract.{spec,test}.ts"], [], "contract"),
+    projects: createPackageProjects(
+      ["src/**/*.contract.{spec,test}.ts"],
+      ["src/**/*.chromium.contract.test.ts"],
+      "contract",
+    ),
   },
 });

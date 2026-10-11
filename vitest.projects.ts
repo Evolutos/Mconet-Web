@@ -28,7 +28,7 @@ const packageRoles = [
  * the published `dist` entry points, so these aliases cannot mask packaging
  * failures.
  */
-const workspaceSourceAliases = Object.freeze(
+export const workspaceSourceAliases = Object.freeze(
   Object.fromEntries(
     // Derive every alias from the reviewed package role list so package discovery
     // and internal test resolution cannot drift into separate naming schemes.

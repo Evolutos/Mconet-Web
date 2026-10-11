@@ -228,9 +228,18 @@ function checkSourceFile(filePath) {
       continue;
     }
 
+    const targetPackage = internalTargetRole(specifier, filePath);
+    // Contract suites live beside the implementation they exercise. A test file
+    // may import the testing package; production source may not.
+    if (
+      targetPackage === "testing" &&
+      (filePath.endsWith(".test.ts") || filePath.endsWith(".spec.ts"))
+    ) {
+      continue;
+    }
+
     // Reject cross-package edges absent from the source role's explicit set;
     // same-package and external imports remain outside this rule.
-    const targetPackage = internalTargetRole(specifier, filePath);
     if (targetPackage && targetPackage !== sourcePackage && !allowedTargets.has(targetPackage)) {
       violations.push(
         `${location}: package '${sourcePackage}' cannot import '${targetPackage}' via '${specifier}'.`,
