@@ -38,19 +38,20 @@ export const defaultAuthorizationHandlerResolverDescriptor: ComponentDescriptor 
 /**
  * Selects an authorization handler by exact support.
  *
- * This step implements the no-match branch. Zero compatible handlers produce a
- * standard authentication error. The resolver does not read credentials, mutate
- * the description, or choose a handler by list order.
+ * Zero compatible handlers produce a standard authentication error. Exactly one
+ * compatible handler is returned by identity. The resolver does not read
+ * credentials, call apply, mutate the description, or choose a handler by list
+ * order.
  */
 export class DefaultAuthorizationHandlerResolver implements AuthorizationHandlerResolver {
   /** Shared descriptor for this builtin resolver. */
   public readonly descriptor = defaultAuthorizationHandlerResolverDescriptor;
 
   /**
-   * Resolves the no-match branch for one authorization description.
+   * Resolves the unique handler for one authorization description.
    *
    * @param input Authorization description and candidate handlers.
-   * @returns This branch does not return a handler.
+   * @returns The single handler whose support check accepted the description.
    * @throws {ModelInteractionError} When no candidate supports the description.
    */
   public resolve(input: {
@@ -62,8 +63,13 @@ export class DefaultAuthorizationHandlerResolver implements AuthorizationHandler
       throw createNoAuthorizationHandlerError();
     }
 
-    // Unique and ambiguous matches are later branches. Reaching either with a
-    // compatible candidate must not silently pick the first handler.
+    const [match] = matches;
+    if (matches.length === 1 && match !== undefined) {
+      return match;
+    }
+
+    // Multiple compatible handlers are a later branch. Reaching that count must
+    // not silently keep the first handler.
     throw new ModelInteractionError({
       message: "Authorization handler selection did not resolve a single handler.",
       category: "invalid_component_configuration",

@@ -50,3 +50,43 @@ it("reports a standard authentication error when no handler matches", () => {
   expect(handlers).toEqual(handlersBefore);
   expect(authorization.kind).toBe("authorization.none");
 });
+
+it("returns the only handler that supports the authorization", () => {
+  const resolver = new DefaultAuthorizationHandlerResolver();
+  let applyCalls = 0;
+  const selected = handlerFor(true, () => {
+    applyCalls += 1;
+  });
+  const handlers = [unsupportedHandler(), selected, unsupportedHandler()];
+
+  expect(resolver.resolve({ authorization, handlers })).toBe(selected);
+  expect(resolver.resolve({ authorization, handlers })).toBe(selected);
+  expect(applyCalls).toBe(0);
+  expect(handlers[1]).toBe(selected);
+});
+
+it("does not keep the first handler when another handler also matches", () => {
+  const resolver = new DefaultAuthorizationHandlerResolver();
+  const first = handlerFor(true, () => undefined);
+  const second = handlerFor(true, () => undefined);
+
+  expect(() => resolver.resolve({ authorization, handlers: [first, second] })).toThrow(
+    ModelInteractionError,
+  );
+});
+
+function handlerFor(supported: boolean, onApply: () => void): AuthorizationHandler {
+  return {
+    descriptor: {
+      name: "candidate-handler",
+      version: "1.0.0",
+      capabilities: new Set(),
+      source: "application",
+    },
+    supports: () => supported,
+    async apply(input) {
+      onApply();
+      return input.request;
+    },
+  };
+}
