@@ -7,6 +7,8 @@
  * normalizes response metadata after a response arrives. Importing it does not
  * read platform globals, open a connection, or send a request.
  */
+export { mapFetchNetworkError } from "./map-fetch-network-error.js";
+export type { FetchNetworkFailureStage } from "./map-fetch-network-error.js";
 export { mapFetchAbortError } from "./map-fetch-abort-error.js";
 export { bridgeDeadlineSignal } from "./bridge-deadline-signal.js";
 export type { DeadlineAbortBridge } from "./bridge-deadline-signal.js";
