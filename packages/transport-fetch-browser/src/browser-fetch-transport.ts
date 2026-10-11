@@ -16,6 +16,7 @@ import {
   mapFetchHeaders,
   mapFetchHttpMethod,
   mapFetchNetworkError,
+  mapFetchQuery,
   mapFetchResponseMediaType,
   mapFetchStatus,
   readBoundedFetchResponseBody,
@@ -38,9 +39,6 @@ import type {
 
 /** Stable code for a browser transport constructed without a Fetch function. */
 const MISSING_FETCH_CODE = "missing_fetch";
-
-/** Stable code for a request that still carries unordered query fields. */
-const UNSUPPORTED_FETCH_QUERY_CODE = "unsupported_fetch_query";
 
 /** Descriptive identity shared by every browser Fetch transport instance. */
 const BROWSER_FETCH_TRANSPORT_DESCRIPTOR: Transport["descriptor"] = Object.freeze({
@@ -151,9 +149,9 @@ export class BrowserFetchTransport implements Transport {
   /**
    * Sends one encoded request through the Fetch function bound to this instance.
    *
-   * Method, URL, headers, and body are validated before the call. Credentials,
-   * redirect mode, and referrer policy come from construction. Query fields are
-   * rejected until they can be merged in order. The caller signal and deadline
+   * Method, URL, headers, query, and body are validated before the call.
+   * Credentials, redirect mode, and referrer policy come from construction.
+   * Duplicate query names stay in caller order. The caller signal and deadline
    * are bridged into one Fetch signal and released when the exchange settles.
    *
    * @param request Encoded transport request.
@@ -165,12 +163,7 @@ export class BrowserFetchTransport implements Transport {
     context: TransportContext,
   ): Promise<TransportResponse> {
     const method = mapFetchHttpMethod(request.method);
-    const url = mapFetchBaseUrl(request.url);
-
-    if (request.query.length > 0) {
-      throw createUnsupportedQueryError();
-    }
-
+    const url = mapFetchQuery(mapFetchBaseUrl(request.url), request.query);
     const headers = mapFetchHeaders(request.headers);
     assertBrowserRequestHeaders(headers);
     const body = mapFetchBody(request.body);
@@ -181,7 +174,7 @@ export class BrowserFetchTransport implements Transport {
       deadline === undefined ? caller.signal : AbortSignal.any([caller.signal, deadline.signal]);
 
     try {
-      const response = await this.#exchange(url.href, method, headers, body, signal);
+      const response = await this.#exchange(url, method, headers, body, signal);
       const visibleHeaders = readVisibleBrowserResponseHeaders(response.headers);
       const mediaType = mapFetchResponseMediaType(visibleHeaders);
       const responseBody = await this.#readBody(response, context.maxResponseBodyBytes, signal);
@@ -316,21 +309,6 @@ export function resolveBrowserFetch(
  *
  * @returns Configuration error that does not include the supplied value.
  */
-/**
- * Creates the error for a request that still has query fields.
- *
- * @returns Request error that does not include the query text.
- */
-function createUnsupportedQueryError(): ModelInteractionError {
-  return new ModelInteractionError({
-    message: "Browser Fetch transport does not accept query fields.",
-    category: "invalid_request",
-    phase: "transport",
-    code: UNSUPPORTED_FETCH_QUERY_CODE,
-    diagnostics: [],
-  });
-}
-
 function createMissingFetchError(): ModelInteractionError {
   return new ModelInteractionError({
     message: "Browser Fetch transport requires a fetch function.",

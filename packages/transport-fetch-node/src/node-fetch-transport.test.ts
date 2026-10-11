@@ -68,25 +68,24 @@ it("sends through the bound fetch function without closing a dispatcher", async 
   expect(transport.boundTo(globalThis.fetch)).toBe(false);
 });
 
-it("rejects query fields before calling fetch", async () => {
-  let fetchCalls = 0;
-  const fetchImplementation: NodeFetch = () => {
-    fetchCalls += 1;
-    return Promise.reject(new Error("fetch called"));
+it("sends duplicate query names in declaration order", async () => {
+  let seenUrl = "";
+  const fetchImplementation: NodeFetch = (input) => {
+    seenUrl = String(input);
+    return Promise.resolve(new Response(null, { status: 200 }));
   };
   const transport = new NodeFetchTransport({ fetch: fetchImplementation });
 
-  const error = await transport
-    .send(
-      { ...request, query: [{ name: "token", value: secretValue }] },
-      { signal: new AbortController().signal, maxResponseBodyBytes: 8 },
-    )
-    .then(
-      () => undefined,
-      (caught: unknown) => caught,
-    );
+  await transport.send(
+    {
+      ...request,
+      query: [
+        { name: "tag", value: "first" },
+        { name: "tag", value: secretValue },
+      ],
+    },
+    { signal: new AbortController().signal, maxResponseBodyBytes: 8 },
+  );
 
-  expect(error).toMatchObject({ code: "unsupported_fetch_query" });
-  expect(String(error)).not.toContain(secretValue);
-  expect(fetchCalls).toBe(0);
+  expect(seenUrl).toBe(`https://example.test/v1?tag=first&tag=${secretValue}`);
 });

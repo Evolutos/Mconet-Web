@@ -23,6 +23,7 @@ export { mapFetchResponseMediaType } from "./map-fetch-response-media-type.js";
 export { mapFetchStatus } from "./map-fetch-status.js";
 export { mapFetchHeaders } from "./map-fetch-headers.js";
 export type { FetchHeaderField } from "./map-fetch-headers.js";
+export { mapFetchQuery } from "./map-fetch-query.js";
 export { mapFetchBaseUrl } from "./map-fetch-base-url.js";
 export type { FetchBaseUrl } from "./map-fetch-base-url.js";
 export { FETCH_HTTP_METHOD, mapFetchHttpMethod } from "./map-fetch-http-method.js";

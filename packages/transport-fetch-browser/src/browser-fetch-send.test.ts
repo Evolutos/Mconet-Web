@@ -63,7 +63,7 @@ it("preserves a response that exceeds the caller byte limit", async () => {
   });
 });
 
-it("rejects a forbidden header and a query before calling fetch", async () => {
+it("rejects a forbidden header before calling fetch", async () => {
   let calls = 0;
   const fetchImplementation: BrowserFetch = () => {
     calls += 1;
@@ -81,21 +81,29 @@ it("rejects a forbidden header and a query before calling fetch", async () => {
       context,
     ),
   ).rejects.toMatchObject({ code: "forbidden_request_header" });
-
-  try {
-    await transport.send(
-      {
-        ...request,
-        query: [{ name: "token", value: secretValue }],
-      },
-      context,
-    );
-  } catch (error) {
-    expect(error).toMatchObject({ code: "unsupported_fetch_query" });
-    expect(String(error)).not.toContain(secretValue);
-  }
-
   expect(calls).toBe(0);
+});
+
+it("sends duplicate query names in declaration order", async () => {
+  let seenUrl = "";
+  const fetchImplementation: BrowserFetch = (input) => {
+    seenUrl = String(input);
+    return Promise.resolve(new Response(null, { status: 200 }));
+  };
+  const transport = new BrowserFetchTransport({ fetch: fetchImplementation });
+
+  await transport.send(
+    {
+      ...request,
+      query: [
+        { name: "tag", value: "first" },
+        { name: "tag", value: secretValue },
+      ],
+    },
+    { signal: new AbortController().signal, maxResponseBodyBytes: 8 },
+  );
+
+  expect(seenUrl).toBe(`https://example.test/v1?tag=first&tag=${secretValue}`);
 });
 
 it("maps an aborted exchange to cancellation without the abort reason", async () => {

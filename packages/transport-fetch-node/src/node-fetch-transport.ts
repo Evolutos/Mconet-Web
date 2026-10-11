@@ -17,6 +17,7 @@ import {
   mapFetchHeaders,
   mapFetchHttpMethod,
   mapFetchNetworkError,
+  mapFetchQuery,
   mapFetchResponseMediaType,
   mapFetchStatus,
   readBoundedFetchResponseBody,
@@ -32,9 +33,6 @@ import type {
 /** Stable code for a Node transport constructed without a Fetch function. */
 const MISSING_FETCH_CODE = "missing_fetch";
 
-/** Stable code for a request that still carries query fields. */
-const UNSUPPORTED_FETCH_QUERY_CODE = "unsupported_fetch_query";
-
 /** Descriptive identity shared by every Node Fetch transport instance. */
 const NODE_FETCH_TRANSPORT_DESCRIPTOR: Transport["descriptor"] = Object.freeze({
   name: "node-fetch-transport",
@@ -48,8 +46,9 @@ const NODE_FETCH_TRANSPORT_DESCRIPTOR: Transport["descriptor"] = Object.freeze({
  *
  * An explicit function is stored by reference. When it is omitted, construction
  * reads `fetch` from the current Node global once. A dispatcher is passed
- * through to Fetch and is not closed. An application-owned dispatcher stays
- * open when the transport is closed. Construction does not call Fetch.
+ * through to Fetch and is not closed by construction or by sending. Closing
+ * the transport releases an SDK-owned dispatcher once and leaves an
+ * application-owned dispatcher open. Construction does not call Fetch.
  */
 export class NodeFetchTransport implements Transport {
   /** Descriptive component facts. The instance adds no request state. */
@@ -63,6 +62,9 @@ export class NodeFetchTransport implements Transport {
 
   /** Who closes the dispatcher. Omitted ownership stays with the caller. */
   readonly #dispatcherOwnership: NodeFetchDispatcherOwnership | undefined;
+
+  /** Whether an SDK-owned dispatcher has already been closed. */
+  #dispatcherReleased = false;
 
   /**
    * Binds an explicit Fetch function, or Node's global Fetch function.
@@ -88,26 +90,35 @@ export class NodeFetchTransport implements Transport {
   }
 
   /**
-   * Leaves an application-owned dispatcher open.
+   * Releases an SDK-owned dispatcher once.
    *
    * A dispatcher supplied by the caller remains the caller's resource, including
-   * when ownership is omitted. This method does not call that dispatcher's
-   * close function.
+   * when ownership is omitted. A second close does not call the dispatcher again.
    *
-   * @returns A settled promise. No dispatcher work is started.
+   * @returns The dispatcher close result for an SDK-owned resource, otherwise
+   * a settled promise.
    */
   public async close(): Promise<void> {
-    if (this.#dispatcherOwnership === "application" || this.#dispatcherOwnership === undefined) {
+    if (
+      this.#dispatcherOwnership !== "sdk" ||
+      this.#dispatcher === undefined ||
+      this.#dispatcherReleased
+    ) {
       return;
     }
+
+    // Record the release before calling close so a failure or an overlapping
+    // call cannot release the same SDK dispatcher twice.
+    this.#dispatcherReleased = true;
+    await this.#dispatcher.close();
   }
 
   /**
    * Sends one encoded request through the Fetch function bound to this instance.
    *
-   * Method, URL, headers, and body are validated before the call. Redirects are
-   * rejected by Fetch instead of followed. Query fields are rejected until they
-   * can be merged in order. The caller signal and deadline are bridged into one
+   * Method, URL, headers, query, and body are validated before the call.
+   * Redirects are rejected by Fetch instead of followed. Duplicate query names
+   * stay in caller order. The caller signal and deadline are bridged into one
    * Fetch signal and released when the exchange settles. The dispatcher is not
    * closed.
    *
@@ -120,12 +131,7 @@ export class NodeFetchTransport implements Transport {
     context: TransportContext,
   ): Promise<TransportResponse> {
     const method = mapFetchHttpMethod(request.method);
-    const url = mapFetchBaseUrl(request.url);
-
-    if (request.query.length > 0) {
-      throw createUnsupportedQueryError();
-    }
-
+    const url = mapFetchQuery(mapFetchBaseUrl(request.url), request.query);
     const headers = mapFetchHeaders(request.headers);
     const body = mapFetchBody(request.body);
     const caller = bridgeCallerAbortSignal(context.signal);
@@ -135,7 +141,7 @@ export class NodeFetchTransport implements Transport {
       deadline === undefined ? caller.signal : AbortSignal.any([caller.signal, deadline.signal]);
 
     try {
-      const response = await this.#exchange(url.href, method, headers, body, signal);
+      const response = await this.#exchange(url, method, headers, body, signal);
       const responseHeaders = readNodeResponseHeaders(response.headers);
       const mediaType = mapFetchResponseMediaType(responseHeaders);
       const responseBody = await this.#readBody(response, context.maxResponseBodyBytes, signal);
@@ -278,21 +284,6 @@ function readNodeResponseHeaders(headers: Headers): HeaderFields {
   });
 
   return Object.freeze(fields);
-}
-
-/**
- * Creates the error for a request that still has query fields.
- *
- * @returns Request error that does not include the query text.
- */
-function createUnsupportedQueryError(): ModelInteractionError {
-  return new ModelInteractionError({
-    message: "Node Fetch transport does not accept query fields.",
-    category: "invalid_request",
-    phase: "transport",
-    code: UNSUPPORTED_FETCH_QUERY_CODE,
-    diagnostics: [],
-  });
 }
 
 /**
