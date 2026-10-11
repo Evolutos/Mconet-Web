@@ -14,6 +14,7 @@ export {
   jsonPayloadEncoderTypeContract,
 } from "./json-payload-encoder-descriptor.js";
 export { JsonPayloadEncoder } from "./json-payload-encoder.js";
+export { jsonSuccessPayloadDecoderDescriptor } from "./json-success-payload-decoder-descriptor.js";
 export { JsonSuccessPayloadDecoder } from "./json-success-payload-decoder.js";
 export { isJsonMediaType } from "./is-json-media-type.js";
 export type { JsonPayload } from "./json-payload.js";

@@ -1,23 +1,13 @@
 // Copyright © 2026 Mcont.
 
-import { ModelInteractionError, type OpenIdentifier } from "@evolutos/mconet-core-domain";
-import type {
-  CodecContext,
-  ComponentDescriptor,
-  ErasedRuntimeValue,
-  PayloadDecoder,
-} from "@evolutos/mconet-core-spi";
+import { ModelInteractionError } from "@evolutos/mconet-core-domain";
+import type { CodecContext, ErasedRuntimeValue, PayloadDecoder } from "@evolutos/mconet-core-spi";
 
 import { collectBoundedBytes } from "./collect-bounded-bytes.js";
+import { jsonSuccessPayloadDecoderDescriptor } from "./json-success-payload-decoder-descriptor.js";
 
 /** Semantic identity of a decoded JSON value. It does not name a model protocol. */
 const JSON_VALUE_TYPE_ID = "json.value";
-
-/** Diagnostic component name. It is not a registry key or selection identity. */
-const JSON_SUCCESS_DECODER_NAME = "json-success-payload-decoder";
-
-/** Descriptive implementation version. It is not the package version. */
-const JSON_SUCCESS_DECODER_VERSION = "1.0.0";
 
 /** Stable code for JSON or UTF-8 text that cannot be decoded. */
 const DESERIALIZATION_ERROR_CODE = "deserialization";
@@ -29,14 +19,6 @@ const CANCELLED_ERROR_CODE = "cancelled";
 const INVALID_BODY_LIMIT_CODE = "invalid_component_configuration";
 
 /**
- * Capability set required by the component descriptor.
- *
- * This decoder declares no capability yet. The set is shared and empty so
- * instances cannot grow independent capability claims.
- */
-const decoderCapabilities: ReadonlySet<OpenIdentifier> = new Set();
-
-/**
  * Decodes one bounded UTF-8 JSON body into an erased JSON value.
  *
  * The decoder accepts any JSON value, including null and empty containers. It
@@ -45,13 +27,8 @@ const decoderCapabilities: ReadonlySet<OpenIdentifier> = new Set();
  * are rejected because JSON text would not preserve them.
  */
 export class JsonSuccessPayloadDecoder implements PayloadDecoder {
-  /** Minimum descriptor required by the runtime component contract. */
-  public readonly descriptor: ComponentDescriptor = {
-    name: JSON_SUCCESS_DECODER_NAME,
-    version: JSON_SUCCESS_DECODER_VERSION,
-    capabilities: decoderCapabilities,
-    source: "builtin",
-  };
+  /** Shared diagnostic metadata. The success payload port stays separate. */
+  public readonly descriptor = jsonSuccessPayloadDecoderDescriptor;
 
   /** Positive safe-integer limit applied before the body is parsed. */
   readonly #maxBodyBytes: number;
