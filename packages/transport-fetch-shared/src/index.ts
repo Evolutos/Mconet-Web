@@ -7,6 +7,8 @@
  * Fetch. Importing it does not read platform globals, open a connection, or
  * send a request.
  */
+export { bridgeDeadlineSignal } from "./bridge-deadline-signal.js";
+export type { DeadlineAbortBridge } from "./bridge-deadline-signal.js";
 export { bridgeCallerAbortSignal } from "./bridge-caller-abort-signal.js";
 export type { CallerAbortBridge } from "./bridge-caller-abort-signal.js";
 export { mapFetchBody } from "./map-fetch-body.js";
