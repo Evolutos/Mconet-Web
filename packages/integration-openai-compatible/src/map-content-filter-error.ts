@@ -36,7 +36,7 @@ export function mapContentFilterError(input: {
   if (!(input.error instanceof OpenAIChatCompletionErrorDTO)) {
     throw new TypeError("Content-filter mapping requires an OpenAIChatCompletionErrorDTO.");
   }
-  if (!isPolicyRejection(input.error)) {
+  if (!matchesContentPolicyError(input.error)) {
     return undefined;
   }
 
@@ -63,10 +63,12 @@ export function mapContentFilterError(input: {
 /**
  * Returns whether the error object names a content policy.
  *
+ * Other branches use this so a policy body is not also classified as generic.
+ *
  * @param error Decoded service error.
  * @returns Whether `code` or `type` is a known policy identifier.
  */
-function isPolicyRejection(error: OpenAIChatCompletionErrorDTO): boolean {
+export function matchesContentPolicyError(error: OpenAIChatCompletionErrorDTO): boolean {
   // Compare identifiers only. Message text can quote a policy term without being one.
   return (
     (typeof error.code === "string" && policyCodes.has(error.code)) ||
