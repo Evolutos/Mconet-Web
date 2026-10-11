@@ -6,6 +6,10 @@
  * Concrete schemes are exported as data descriptions. Handlers and credential
  * sources stay out of this entry until their own steps add them.
  */
+export {
+  ApiKeyHeaderAuthorizationHandler,
+  apiKeyHeaderAuthorizationHandlerDescriptor,
+} from "./api-key-header-authorization-handler.js";
 export { apiKeyHeaderAuthorizationKind } from "./api-key-header-authorization.js";
 export { bearerAuthorizationKind } from "./bearer-authorization.js";
 export { DynamicCredentialSource } from "./dynamic-credential-source.js";
