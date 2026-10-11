@@ -18,6 +18,9 @@ const objectExpectation = "must be an object";
 /** Expectation used when a required wire member is not a JSON string. */
 const stringExpectation = "must be a string";
 
+/** Expectation used when a required count is not a non-negative integer. */
+const nonNegativeIntegerExpectation = "must be a non-negative integer";
+
 /** Failure used when a nested extension value is not portable JSON. */
 const jsonStructureMessage = "value must be a structurally valid JsonValue.";
 
@@ -148,6 +151,40 @@ export function requireString(
     throw invalidProtocolResponse(childPath(path, name), stringExpectation);
   }
   return descriptor.value;
+}
+
+/**
+ * Returns one required, non-null, non-negative integer member.
+ *
+ * Booleans and fractional numbers are different JSON kinds, so they cannot
+ * satisfy a count or choice index. Integers outside the binary64 safe range are
+ * rejected because they cannot round-trip exactly.
+ *
+ * @param document Decoded object that owns the member.
+ * @param name Member name.
+ * @param path JSON Pointer of the object.
+ * @returns The member count.
+ */
+export function requireCount(
+  document: Readonly<Record<string, unknown>>,
+  name: string,
+  path: string,
+): number {
+  const descriptor = Object.getOwnPropertyDescriptor(document, name);
+  const value = descriptor !== undefined && "value" in descriptor ? descriptor.value : undefined;
+  // A missing member, null, boolean, fraction, negative, or unsafe integer all
+  // fail the same rule so the message cannot reveal the observed value.
+  if (
+    descriptor === undefined ||
+    descriptor.enumerable !== true ||
+    typeof value !== "number" ||
+    !Number.isSafeInteger(value) ||
+    value < 0 ||
+    Object.is(value, -0)
+  ) {
+    throw invalidProtocolResponse(childPath(path, name), nonNegativeIntegerExpectation);
+  }
+  return value;
 }
 
 /**
