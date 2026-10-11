@@ -21,6 +21,9 @@ const stringExpectation = "must be a string";
 /** Expectation used when a required count is not a non-negative integer. */
 const nonNegativeIntegerExpectation = "must be a non-negative integer";
 
+/** Expectation used when a required wire member is not a JSON array. */
+const arrayExpectation = "must be an array";
+
 /** Failure used when a nested extension value is not portable JSON. */
 const jsonStructureMessage = "value must be a structurally valid JsonValue.";
 
@@ -183,6 +186,56 @@ export function requireCount(
     Object.is(value, -0)
   ) {
     throw invalidProtocolResponse(childPath(path, name), nonNegativeIntegerExpectation);
+  }
+  return value;
+}
+
+/**
+ * Returns one optional string member, or undefined when absent.
+ *
+ * Absence is allowed, but an explicit null is not: the frozen profile marks
+ * these members optional and not nullable.
+ *
+ * @param document Decoded object that owns the member.
+ * @param name Member name.
+ * @param path JSON Pointer of the object.
+ * @returns The member text, or undefined when the member is absent.
+ */
+export function optionalString(
+  document: Readonly<Record<string, unknown>>,
+  name: string,
+  path: string,
+): string | undefined {
+  if (!Object.hasOwn(document, name)) {
+    return undefined;
+  }
+  return requireString(document, name, path);
+}
+
+/**
+ * Returns one required, non-null array member.
+ *
+ * @param document Decoded object that owns the member.
+ * @param name Member name.
+ * @param path JSON Pointer of the object.
+ * @returns The member array.
+ */
+export function requireArray(
+  document: Readonly<Record<string, unknown>>,
+  name: string,
+  path: string,
+): readonly unknown[] {
+  const descriptor = Object.getOwnPropertyDescriptor(document, name);
+  const value = descriptor !== undefined && "value" in descriptor ? descriptor.value : undefined;
+  // Missing, null, and object members all fail the same array rule. The value
+  // itself is not copied into the message.
+  if (
+    descriptor === undefined ||
+    descriptor.enumerable !== true ||
+    !Array.isArray(value) ||
+    Object.getPrototypeOf(value) !== Array.prototype
+  ) {
+    throw invalidProtocolResponse(childPath(path, name), arrayExpectation);
   }
   return value;
 }
