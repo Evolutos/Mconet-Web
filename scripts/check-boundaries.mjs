@@ -40,7 +40,7 @@ const allowedDependencies = new Map([
   ["integration-openai-compatible", new Set(["core-domain", "core-spi"])],
   ["testing", new Set(["core-domain", "core-runtime", "core-spi"])],
   ["transport-fetch-browser", new Set(["core-domain", "core-spi", "transport-fetch-shared"])],
-  ["transport-fetch-node", new Set(["core-spi"])],
+  ["transport-fetch-node", new Set(["core-domain", "core-spi", "transport-fetch-shared"])],
   ["transport-fetch-shared", new Set(["core-domain", "core-spi"])],
 ]);
 
