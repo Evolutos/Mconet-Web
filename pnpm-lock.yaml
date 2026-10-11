@@ -83,7 +83,11 @@ importers:
         specifier: ^4.1.11
         version: 4.1.11(@types/node@20.19.43)(@vitest/coverage-v8@4.1.11)(vite@8.3.2(@types/node@20.19.43))
 
-  packages/transport-fetch-browser: {}
+  packages/transport-fetch-browser:
+    dependencies:
+      '@evolutos/mconet-core-domain':
+        specifier: workspace:*
+        version: link:../core-domain
 
   packages/transport-fetch-node: {}
 
