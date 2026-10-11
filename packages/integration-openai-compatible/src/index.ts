@@ -3,11 +3,12 @@
 /**
  * Public module boundary for OpenAI-compatible provider integration.
  *
- * Successful response wire values are available beside the message, request,
- * choice, and usage carriers. Role mapping and adapter behavior stay out of
- * this entry until their own steps add them.
+ * Message, request, choice, usage, response, and error wire values are
+ * available. Role mapping and adapter behavior stay out of this entry until
+ * their own steps add them.
  */
 export { OpenAIChatCompletionChoiceDTO } from "./openai-chat-completion-choice-dto.js";
+export { OpenAIChatCompletionErrorDTO } from "./openai-chat-completion-error-dto.js";
 export { OpenAIChatCompletionRequestDTO } from "./openai-chat-completion-request-dto.js";
 export { OpenAIChatCompletionResponseDTO } from "./openai-chat-completion-response-dto.js";
 export { OpenAIChatCompletionUsageDTO } from "./openai-chat-completion-usage-dto.js";
