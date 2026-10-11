@@ -188,6 +188,28 @@ export function requireCount(
 }
 
 /**
+ * Returns one optional non-negative integer member, or undefined when absent.
+ *
+ * Absence is allowed, but an explicit null is not: the frozen profile marks
+ * these members optional and not nullable.
+ *
+ * @param document Decoded object that owns the member.
+ * @param name Member name.
+ * @param path JSON Pointer of the object.
+ * @returns The member count, or undefined when the member is absent.
+ */
+export function optionalCount(
+  document: Readonly<Record<string, unknown>>,
+  name: string,
+  path: string,
+): number | undefined {
+  if (!Object.hasOwn(document, name)) {
+    return undefined;
+  }
+  return requireCount(document, name, path);
+}
+
+/**
  * Copies one portable JSON value so later caller mutation cannot change it.
  *
  * @param value Candidate JSON value.
