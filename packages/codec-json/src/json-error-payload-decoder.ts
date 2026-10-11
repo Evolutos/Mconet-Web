@@ -1,28 +1,9 @@
 // Copyright © 2026 Mcont.
 
-import type { OpenIdentifier } from "@evolutos/mconet-core-domain";
-import type {
-  CodecContext,
-  ComponentDescriptor,
-  ErasedRuntimeValue,
-  PayloadDecoder,
-} from "@evolutos/mconet-core-spi";
+import type { CodecContext, ErasedRuntimeValue, PayloadDecoder } from "@evolutos/mconet-core-spi";
 
+import { jsonErrorPayloadDecoderDescriptor } from "./json-error-payload-decoder-descriptor.js";
 import { JsonSuccessPayloadDecoder } from "./json-success-payload-decoder.js";
-
-/** Diagnostic component name. It is not a registry key or selection identity. */
-const JSON_ERROR_DECODER_NAME = "json-error-payload-decoder";
-
-/** Descriptive implementation version. It is not the package version. */
-const JSON_ERROR_DECODER_VERSION = "1.0.0";
-
-/**
- * Capability set required by the component descriptor.
- *
- * This decoder declares no capability yet. The set is shared and empty so
- * instances cannot grow independent capability claims.
- */
-const decoderCapabilities: ReadonlySet<OpenIdentifier> = new Set();
 
 /**
  * Decodes one bounded JSON error body without retaining a second copy.
@@ -33,13 +14,8 @@ const decoderCapabilities: ReadonlySet<OpenIdentifier> = new Set();
  * descriptor. It does not classify provider errors or attach the body to a failure.
  */
 export class JsonErrorPayloadDecoder implements PayloadDecoder {
-  /** Minimum descriptor required by the runtime component contract. */
-  public readonly descriptor: ComponentDescriptor = {
-    name: JSON_ERROR_DECODER_NAME,
-    version: JSON_ERROR_DECODER_VERSION,
-    capabilities: decoderCapabilities,
-    source: "builtin",
-  };
+  /** Shared diagnostic metadata. The error payload port stays separate. */
+  public readonly descriptor = jsonErrorPayloadDecoderDescriptor;
 
   /** JSON reader whose buffer policy this error decoder does not replace. */
   readonly #jsonDecoder: JsonSuccessPayloadDecoder;

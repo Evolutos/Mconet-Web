@@ -8,6 +8,7 @@
  * themselves.
  */
 export { JsonErrorPayloadDecoder } from "./json-error-payload-decoder.js";
+export { jsonErrorPayloadDecoderDescriptor } from "./json-error-payload-decoder-descriptor.js";
 export {
   jsonPayloadEncoderCapabilityId,
   jsonPayloadEncoderDescriptor,
