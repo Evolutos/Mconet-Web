@@ -3,7 +3,10 @@
 import { expect, it } from "vitest";
 
 import { JsonPayloadEncoder } from "./json-payload-encoder.js";
-import { jsonPayloadEncoderDescriptor } from "./json-payload-encoder-descriptor.js";
+import {
+  jsonPayloadEncoderCapabilityId,
+  jsonPayloadEncoderDescriptor,
+} from "./json-payload-encoder-descriptor.js";
 
 it("publishes one builtin encoder descriptor", () => {
   const first = new JsonPayloadEncoder();
@@ -17,7 +20,9 @@ it("publishes one builtin encoder descriptor", () => {
     version: "1.0.0",
     source: "builtin",
   });
-  expect(jsonPayloadEncoderDescriptor.capabilities.size).toBe(0);
+  expect(jsonPayloadEncoderDescriptor.capabilities).toEqual(
+    new Set([jsonPayloadEncoderCapabilityId]),
+  );
   expect(jsonPayloadEncoderDescriptor.typeContract).toEqual({
     inputTypeId: "json.value",
     inputMediaTypes: [{ type: "application", subtype: "json", parameters: {} }],

@@ -27,7 +27,7 @@ const CANCELLED_ERROR_CODE = "cancelled";
  * arrays, cycles, and non-plain objects fail before any text is produced.
  */
 export class JsonPayloadEncoder implements PayloadEncoder {
-  /** Shared descriptor, including the JSON input port. Encode capability stays separate. */
+  /** Shared descriptor, including the JSON input port and encode capability. */
   public readonly descriptor = jsonPayloadEncoderDescriptor;
 
   /**

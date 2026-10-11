@@ -10,12 +10,19 @@ const JSON_PAYLOAD_ENCODER_NAME = "json-payload-encoder";
 const JSON_PAYLOAD_ENCODER_VERSION = "1.0.0";
 
 /**
- * Capability set required by the encoder descriptor.
+ * Capability identity that means this component can encode a JSON payload.
  *
- * Encode capability is declared in a later step. The set stays shared and empty
- * so instances cannot grow independent capability claims before that declaration.
+ * It is an open identifier, not a component name or a decoder capability.
  */
-const encoderCapabilities: ReadonlySet<OpenIdentifier> = new Set();
+export const jsonPayloadEncoderCapabilityId: OpenIdentifier = "codec.json.encode";
+
+/**
+ * Capability set shared by every encoder descriptor.
+ *
+ * Membership is the only fact capability resolution reads. The set is not a
+ * priority list and it does not select the encoder.
+ */
+const encoderCapabilities: ReadonlySet<OpenIdentifier> = new Set([jsonPayloadEncoderCapabilityId]);
 
 /** Parameter-free JSON media type accepted on the encoder input port. */
 const jsonMediaType: MediaType = {
@@ -42,8 +49,8 @@ export const jsonPayloadEncoderTypeContract: ComponentTypeContract = {
  * Metadata shared by every JSON payload encoder instance.
  *
  * Name, version, and source are diagnostic facts. The type contract is the
- * encoder input port. Encode capability is still absent. This value is not a
- * selectable component id and it does not register the encoder.
+ * encoder input port, and the capability set declares JSON encoding. This value
+ * is not a selectable component id and it does not register the encoder.
  */
 export const jsonPayloadEncoderDescriptor: ComponentDescriptor = {
   name: JSON_PAYLOAD_ENCODER_NAME,
