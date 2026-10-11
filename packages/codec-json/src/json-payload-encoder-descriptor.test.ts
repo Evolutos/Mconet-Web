@@ -12,11 +12,14 @@ it("publishes one builtin encoder descriptor", () => {
   // Instances share the descriptor so name, version, and source cannot drift.
   expect(first.descriptor).toBe(jsonPayloadEncoderDescriptor);
   expect(second.descriptor).toBe(jsonPayloadEncoderDescriptor);
-  expect(jsonPayloadEncoderDescriptor).toEqual({
+  expect(jsonPayloadEncoderDescriptor).toMatchObject({
     name: "json-payload-encoder",
     version: "1.0.0",
-    capabilities: new Set(),
     source: "builtin",
   });
-  expect(jsonPayloadEncoderDescriptor.typeContract).toBeUndefined();
+  expect(jsonPayloadEncoderDescriptor.capabilities.size).toBe(0);
+  expect(jsonPayloadEncoderDescriptor.typeContract).toEqual({
+    inputTypeId: "json.value",
+    inputMediaTypes: [{ type: "application", subtype: "json", parameters: {} }],
+  });
 });
