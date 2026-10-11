@@ -2,8 +2,10 @@
 
 import { ModelInteractionError } from "@evolutos/mconet-core-domain";
 
+import { resolveBrowserCredentials } from "./browser-credentials-policy.js";
 import type {
   BrowserFetch,
+  BrowserFetchCredentials,
   BrowserFetchTransportOptions,
 } from "./browser-fetch-transport-options.js";
 
@@ -25,21 +27,38 @@ export interface BrowserFetchRealm {
  * Browser transport bound to one Fetch function.
  *
  * An explicit function is stored by reference. When it is omitted, construction
- * reads `fetch` from the current global object once. Neither path calls Fetch.
+ * reads `fetch` from the current global object once. The credential mode is
+ * selected during construction and defaults to `omit`. Neither path calls Fetch.
  */
 export class BrowserFetchTransport {
   /** Fetch function bound to this instance. */
   readonly #fetch: BrowserFetch;
 
+  /** Credential mode this instance passes to Fetch. */
+  readonly #credentials: BrowserFetchCredentials;
+
   /**
    * Binds an explicit Fetch function, or the current realm's Fetch function.
    *
-   * @param options Browser transport settings. Only `fetch` is read.
+   * @param options Browser transport settings. Only `fetch` and `credentials` are read.
    */
   public constructor(options: BrowserFetchTransportOptions) {
     // An injected function stays intact. The realm is consulted only when the
     // caller did not supply one, and the function is not wrapped or called.
     this.#fetch = resolveBrowserFetch(options, globalThis);
+    this.#credentials = resolveBrowserCredentials(options);
+  }
+
+  /**
+   * Returns the credential mode this instance will pass to Fetch.
+   *
+   * The mode is the constructor selection. This method does not read cookies
+   * or call Fetch.
+   *
+   * @returns Credential mode bound to this instance.
+   */
+  public credentials(): BrowserFetchCredentials {
+    return this.#credentials;
   }
 
   /**

@@ -26,6 +26,10 @@ it("binds each instance to its own explicit fetch function", () => {
   expect(secondTransport.boundTo(second)).toBe(true);
   expect(secondTransport.boundTo(first)).toBe(false);
   expect(calls).toBe(0);
+  expect(firstTransport.credentials()).toBe("omit");
+  expect(new BrowserFetchTransport({ fetch: first, credentials: "include" }).credentials()).toBe(
+    "include",
+  );
   expect(globalFetchReads(() => new BrowserFetchTransport({ fetch: first }))).toBe(0);
 });
 
