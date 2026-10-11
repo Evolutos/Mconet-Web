@@ -25,6 +25,7 @@ import {
 import type {
   NodeFetch,
   NodeFetchDispatcher,
+  NodeFetchDispatcherOwnership,
   NodeFetchTransportOptions,
 } from "./node-fetch-transport-options.js";
 
@@ -47,7 +48,8 @@ const NODE_FETCH_TRANSPORT_DESCRIPTOR: Transport["descriptor"] = Object.freeze({
  *
  * An explicit function is stored by reference. When it is omitted, construction
  * reads `fetch` from the current Node global once. A dispatcher is passed
- * through to Fetch and is not closed. Construction does not call Fetch.
+ * through to Fetch and is not closed. An application-owned dispatcher stays
+ * open when the transport is closed. Construction does not call Fetch.
  */
 export class NodeFetchTransport implements Transport {
   /** Descriptive component facts. The instance adds no request state. */
@@ -59,14 +61,18 @@ export class NodeFetchTransport implements Transport {
   /** Connection resource passed to Fetch, when the caller supplied one. */
   readonly #dispatcher: NodeFetchDispatcher | undefined;
 
+  /** Who closes the dispatcher. Omitted ownership stays with the caller. */
+  readonly #dispatcherOwnership: NodeFetchDispatcherOwnership | undefined;
+
   /**
    * Binds an explicit Fetch function, or Node's global Fetch function.
    *
-   * @param options Node transport settings. Only `fetch` and `dispatcher` are read.
+   * @param options Node transport settings. Fetch, dispatcher, and ownership are read.
    */
   public constructor(options: NodeFetchTransportOptions = {}) {
     this.#fetch = resolveNodeFetch(options);
     this.#dispatcher = options.dispatcher;
+    this.#dispatcherOwnership = options.dispatcherOwnership;
   }
 
   /**
@@ -79,6 +85,21 @@ export class NodeFetchTransport implements Transport {
    */
   public boundTo(fetchImplementation: NodeFetch): boolean {
     return this.#fetch === fetchImplementation;
+  }
+
+  /**
+   * Leaves an application-owned dispatcher open.
+   *
+   * A dispatcher supplied by the caller remains the caller's resource, including
+   * when ownership is omitted. This method does not call that dispatcher's
+   * close function.
+   *
+   * @returns A settled promise. No dispatcher work is started.
+   */
+  public async close(): Promise<void> {
+    if (this.#dispatcherOwnership === "application" || this.#dispatcherOwnership === undefined) {
+      return;
+    }
   }
 
   /**
