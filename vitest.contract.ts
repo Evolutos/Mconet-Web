@@ -9,7 +9,7 @@ export default defineConfig({
     passWithNoTests: true,
     projects: createPackageProjects(
       ["src/**/*.contract.{spec,test}.ts"],
-      ["src/**/*.chromium.contract.test.ts"],
+      ["src/**/*.chromium.contract.test.ts", "src/**/*.firefox.contract.test.ts"],
       "contract",
     ),
   },

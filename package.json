@@ -24,6 +24,7 @@
     "test": "vitest run --config vitest.workspace.ts",
     "test:contract": "vitest run --config vitest.contract.ts",
     "test:transport-chromium": "vitest run --config vitest.chromium-transport.ts",
+    "test:transport-firefox": "vitest run --config vitest.firefox-transport.ts",
     "test:conformance": "vitest run --config vitest.conformance.ts",
     "test:coverage": "vitest run --coverage --config vitest.workspace.ts",
     "typecheck": "pnpm run build:types && node scripts/build-esm.mjs --check"
