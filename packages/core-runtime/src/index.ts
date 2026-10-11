@@ -7,6 +7,10 @@ export { createInteractionExecutionComponents } from "./create-interaction-execu
 export { createSafeConfigurationSnapshot } from "./create-safe-configuration-snapshot.js";
 export { createDeadlineSignal } from "./create-deadline-signal.js";
 export {
+  DefaultAuthorizationHandlerResolver,
+  defaultAuthorizationHandlerResolverDescriptor,
+} from "./default-authorization-handler-resolver.js";
+export {
   DefaultServiceAccessResolver,
   defaultServiceAccessResolverDescriptor,
 } from "./default-service-access-resolver.js";
