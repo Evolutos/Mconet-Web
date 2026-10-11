@@ -1,6 +1,7 @@
 // Copyright © 2026 Mcont.
 
 /** Public data contracts and behavior used by Mconet runtime orchestration. */
+export { assertSupportedBodySigningMode } from "./assert-supported-body-signing-mode.js";
 export { composeAbortSignals } from "./compose-abort-signals.js";
 export { createDirectModelIntegrationPlan } from "./create-direct-model-integration-plan.js";
 export { createInteractionExecutionComponents } from "./create-interaction-execution-components.js";
