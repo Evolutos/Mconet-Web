@@ -15,6 +15,7 @@ export { readBoundedFetchResponseBody } from "./read-bounded-fetch-response-body
 export { readFetchResponseBody } from "./read-fetch-response-body.js";
 export type { FetchResponseBodySource } from "./read-fetch-response-body.js";
 export { mapFetchBody } from "./map-fetch-body.js";
+export { mapFetchStatus } from "./map-fetch-status.js";
 export { mapFetchHeaders } from "./map-fetch-headers.js";
 export type { FetchHeaderField } from "./map-fetch-headers.js";
 export { mapFetchBaseUrl } from "./map-fetch-base-url.js";
