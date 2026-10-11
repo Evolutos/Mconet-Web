@@ -8,10 +8,13 @@
  * current realm's Fetch function when that option is omitted, and selects a
  * credential mode that defaults to `omit`, and a redirect mode that defaults
  * to `error`, and the referrer policy is `no-referrer`. Forbidden request
- * headers are rejected before Fetch. Importing this module does not read
- * platform globals or call Fetch.
+ * headers are rejected before Fetch. Visible response headers are copied
+ * without inventing hidden ones. Importing this module does not read platform
+ * globals or call Fetch.
  */
 export { assertBrowserRequestHeaders } from "./browser-forbidden-headers.js";
+export { readVisibleBrowserResponseHeaders } from "./read-visible-browser-response-headers.js";
+export type { VisibleResponseHeaderSource } from "./read-visible-browser-response-headers.js";
 export { resolveBrowserCredentials } from "./browser-credentials-policy.js";
 export {
   browserRedirectForwardsAuthorization,
