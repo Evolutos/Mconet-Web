@@ -1,11 +1,11 @@
 // Copyright © 2026 Mcont.
 
 /**
- * Shared Fetch request mapping for the browser and Node transports.
+ * Shared Fetch request and response mapping for the browser and Node transports.
  *
- * The package validates protocol request fields before either platform calls
- * Fetch. Importing it does not read platform globals, open a connection, or
- * send a request.
+ * The package validates protocol fields before either platform calls Fetch and
+ * normalizes response metadata after a response arrives. Importing it does not
+ * read platform globals, open a connection, or send a request.
  */
 export { bridgeDeadlineSignal } from "./bridge-deadline-signal.js";
 export type { DeadlineAbortBridge } from "./bridge-deadline-signal.js";
@@ -15,6 +15,7 @@ export { readBoundedFetchResponseBody } from "./read-bounded-fetch-response-body
 export { readFetchResponseBody } from "./read-fetch-response-body.js";
 export type { FetchResponseBodySource } from "./read-fetch-response-body.js";
 export { mapFetchBody } from "./map-fetch-body.js";
+export { mapFetchResponseMediaType } from "./map-fetch-response-media-type.js";
 export { mapFetchStatus } from "./map-fetch-status.js";
 export { mapFetchHeaders } from "./map-fetch-headers.js";
 export type { FetchHeaderField } from "./map-fetch-headers.js";
