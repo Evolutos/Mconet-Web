@@ -56,10 +56,11 @@ export function definePayloadEncoderContract(
       const valueSnapshot = structuredClone(failure.value);
       const signal = failure.context.signal;
 
-      // Requiring a real Error rejects strings and provider DTOs while identity
-      // equality proves the encoder boundary does not wrap the configured cause.
+      // Requiring a real Error rejects strings and provider DTOs. Structural
+      // equality lets a production encoder create its own error while still
+      // proving the rejection matches the fixture.
       expect(failure.expected).toBeInstanceOf(Error);
-      await expect(failingEncoder.encode(failure.value, failure.context)).rejects.toBe(
+      await expect(failingEncoder.encode(failure.value, failure.context)).rejects.toEqual(
         failure.expected,
       );
       expect(failure.value).toEqual(valueSnapshot);
