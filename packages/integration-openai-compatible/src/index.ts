@@ -10,8 +10,8 @@
  * token-usage mapping, finish-reason mapping, resolved-model mapping, and
  * protocol-id matching, task-type matching, unary mode matching, and
  * chat-completion plan preparation, temperature mapping, top-p mapping, and
- * max-output-token mapping. Stop-sequence mapping stays out of this entry until
- * its own step adds it.
+ * max-output-token mapping, and stop-sequence mapping. Seed mapping stays out
+ * of this entry until its own step adds it.
  */
 export { OpenAIChatCompletionChoiceDTO } from "./openai-chat-completion-choice-dto.js";
 export { OpenAIChatCompletionErrorDTO } from "./openai-chat-completion-error-dto.js";
@@ -47,6 +47,8 @@ export {
   mapSystemMessageRoleToWire,
   mapSystemWireRoleToDomain,
 } from "./map-system-message-role.js";
+export { mapStopSequencesToWire } from "./map-stop-sequences.js";
+export type { MappedStopSequences } from "./map-stop-sequences.js";
 export { mapTextMessageContentToWire, mapWireTextToDomain } from "./map-text-message-content.js";
 export { mapTemperatureToWire } from "./map-temperature.js";
 export type { MappedTemperature } from "./map-temperature.js";
