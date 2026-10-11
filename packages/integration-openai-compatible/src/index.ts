@@ -3,8 +3,8 @@
 /**
  * Public module boundary for OpenAI-compatible provider integration.
  *
- * Provider mapping is introduced only after the required domain and service
- * provider contracts are complete. This empty export creates no wire-format,
- * endpoint, authentication, or provider-error behavior.
+ * The chat message wire value is the first protocol carrier. Role mapping,
+ * request assembly, and adapter behavior stay out of this entry until their
+ * own steps add them.
  */
-export {};
+export { OpenAIChatMessageDTO } from "./openai-chat-message-dto.js";

@@ -82,7 +82,11 @@ importers:
         specifier: workspace:*
         version: link:../core-domain
 
-  packages/integration-openai-compatible: {}
+  packages/integration-openai-compatible:
+    dependencies:
+      '@evolutos/mconet-core-domain':
+        specifier: workspace:*
+        version: link:../core-domain
 
   packages/testing:
     dependencies:
