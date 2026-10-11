@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.evolutos.com/mconet/json/payload",
+  "title": "Mconet JsonPayload",
+  "description": "Language-neutral erased JSON payload containing a semantic type identifier, an optional schema identifier, and one recursive JSON value.",
+  "$comment": "Copyright © 2026 Mcont. This self-contained Schema is the serializable shape of the codec-json JsonPayload contract. It does not encode, decode, select a media type, choose a component, or authorize a request. TypeScript readonly ownership has no JSON representation. An omitted schemaId means no schema was declared; null is not a substitute. Unknown members are retained and must not drive codec or component selection.",
+  "type": "object",
+  "properties": {
+    "typeId": {
+      "$ref": "#/$defs/openIdentifier",
+      "description": "Semantic identity preserved from the protocol adapter output port."
+    },
+    "schemaId": {
+      "type": "string",
+      "description": "Optional schema identity preserved beside the JSON value. Any string is retained, including the empty string; the member is not an open identifier and must be omitted rather than set to null."
+    },
+    "value": {
+      "$ref": "#/$defs/jsonValue",
+      "description": "JSON value carried through the erased payload envelope."
+    }
+  },
+  "required": ["typeId", "value"],
+  "additionalProperties": true,
+  "$defs": {
+    "openIdentifier": {
+      "description": "Unicode-friendly open identifier with non-empty period-delimited segments.",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^(?!.*[\\s\\p{C}])(?!\\.)(?!.*\\.\\.)(?!.*\\.$).+$"
+    },
+    "jsonPrimitive": {
+      "description": "Primitive value represented directly by JSON.",
+      "oneOf": [
+        { "type": "string" },
+        { "type": "number" },
+        { "type": "boolean" },
+        { "type": "null" }
+      ]
+    },
+    "jsonValue": {
+      "description": "Recursive language-neutral JSON value.",
+      "oneOf": [
+        { "$ref": "#/$defs/jsonPrimitive" },
+        {
+          "type": "array",
+          "items": { "$ref": "#/$defs/jsonValue" }
+        },
+        { "$ref": "#/$defs/jsonRecord" }
+      ]
+    },
+    "jsonRecord": {
+      "description": "String-keyed JSON object whose values remain recursively JSON-compatible.",
+      "type": "object",
+      "additionalProperties": { "$ref": "#/$defs/jsonValue" }
+    }
+  }
+}
