@@ -61,8 +61,13 @@ const emptyModeComponents: ProtocolExecutionPlan["modeComponents"] = Object.free
 /** Shared empty plan extensions. */
 const emptyPlanExtensions: ProtocolExecutionPlan["extensions"] = Object.freeze({});
 
-/** Input identity of an unencoded chat-completions request value. */
-const chatRequestTypeId = "protocol.openai.chat-request";
+/**
+ * Input identity of an unencoded chat-completions request value.
+ *
+ * Request building uses the same identity so the payload and the plan describe
+ * one port.
+ */
+export const OPENAI_CHAT_REQUEST_TYPE_ID = "protocol.openai.chat-request";
 
 /** Output identity of a decoded chat-completions success value. */
 const chatResponseTypeId = "protocol.openai.chat-response";
@@ -154,7 +159,7 @@ export function prepareOpenAIChatCompletionPlan(input: {
       transport: Object.freeze({ requiredCapabilities: new Set<string>() }),
       modeComponents: emptyModeComponents,
       typeContract: Object.freeze({
-        inputTypeId: chatRequestTypeId,
+        inputTypeId: OPENAI_CHAT_REQUEST_TYPE_ID,
         outputTypeId: chatResponseTypeId,
       }),
       extensions: emptyPlanExtensions,

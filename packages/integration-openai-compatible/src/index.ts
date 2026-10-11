@@ -10,8 +10,9 @@
  * token-usage mapping, finish-reason mapping, resolved-model mapping, and
  * protocol-id matching, task-type matching, unary mode matching, and
  * chat-completion plan preparation, temperature mapping, top-p mapping, and
- * max-output-token mapping, stop-sequence mapping, and seed mapping. Request
- * building stays out of this entry until its own step adds it.
+ * max-output-token mapping, stop-sequence mapping, seed mapping, and
+ * unencoded request building. Response parsing stays out of this entry until
+ * its own step adds it.
  */
 export { OpenAIChatCompletionChoiceDTO } from "./openai-chat-completion-choice-dto.js";
 export { OpenAIChatCompletionErrorDTO } from "./openai-chat-completion-error-dto.js";
@@ -23,6 +24,7 @@ export {
   mapAssistantMessageRoleToWire,
   mapAssistantWireRoleToDomain,
 } from "./map-assistant-message-role.js";
+export { buildOpenAIChatCompletionRequest } from "./build-chat-completion-request.js";
 export { mapChoicesToMessageDocument } from "./map-choices.js";
 export { mapWireFinishReasonToDomain } from "./map-finish-reason.js";
 export { mapMaxOutputTokensToWire } from "./map-max-output-tokens.js";
@@ -57,6 +59,9 @@ export type { MappedTemperature } from "./map-temperature.js";
 export { mapTopPToWire } from "./map-top-p.js";
 export type { MappedTopP } from "./map-top-p.js";
 export { mapWireChoiceToMessageEntry } from "./map-wire-choice.js";
-export { prepareOpenAIChatCompletionPlan } from "./prepare-chat-completion-plan.js";
+export {
+  OPENAI_CHAT_REQUEST_TYPE_ID,
+  prepareOpenAIChatCompletionPlan,
+} from "./prepare-chat-completion-plan.js";
 export { mapWireUsageToDomain } from "./map-token-usage.js";
 export { mapUserMessageRoleToWire, mapUserWireRoleToDomain } from "./map-user-message-role.js";
