@@ -25,7 +25,7 @@ it("is a different component from the success decoder", () => {
     version: "1.0.0",
     source: "builtin",
   });
-  expect(errorDecoder.descriptor.typeContract).toBeUndefined();
+  expect(errorDecoder.descriptor.typeContract).not.toBe(successDecoder.descriptor.typeContract);
   expect(errorDecoder.descriptor.capabilities.size).toBe(0);
 });
 

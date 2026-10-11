@@ -14,7 +14,7 @@ import { JsonSuccessPayloadDecoder } from "./json-success-payload-decoder.js";
  * descriptor. It does not classify provider errors or attach the body to a failure.
  */
 export class JsonErrorPayloadDecoder implements PayloadDecoder {
-  /** Shared diagnostic metadata. The error payload port stays separate. */
+  /** Shared descriptor, including the error payload port. */
   public readonly descriptor = jsonErrorPayloadDecoderDescriptor;
 
   /** JSON reader whose buffer policy this error decoder does not replace. */
