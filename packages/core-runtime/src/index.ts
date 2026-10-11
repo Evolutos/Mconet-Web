@@ -6,6 +6,10 @@ export { createDirectModelIntegrationPlan } from "./create-direct-model-integrat
 export { createInteractionExecutionComponents } from "./create-interaction-execution-components.js";
 export { createSafeConfigurationSnapshot } from "./create-safe-configuration-snapshot.js";
 export { createDeadlineSignal } from "./create-deadline-signal.js";
+export {
+  DefaultServiceAccessResolver,
+  defaultServiceAccessResolverDescriptor,
+} from "./default-service-access-resolver.js";
 export { determineComponentOwnership } from "./determine-component-ownership.js";
 export { mergeInteractionConfiguration } from "./merge-interaction-configuration.js";
 export { resolveCapabilities } from "./resolve-capabilities.js";
