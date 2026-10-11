@@ -100,7 +100,7 @@ export function defineAuthorizationHandlerContract(
       assertSecretAbsent(
         secretPlaintext,
         application.input.request,
-        application.input.authorization,
+        observableAuthorization(application.input.authorization),
         contextWithoutSignal,
         {
           method: actual.method,
@@ -144,4 +144,62 @@ export function defineAuthorizationHandlerContract(
       expect(actualContextWithoutSignal).toEqual(contextSnapshot);
     });
   });
+}
+
+/**
+ * Projects an authorization description into plain data the secret scanner can read.
+ *
+ * Credential sources are class instances. Their methods and private slots are not
+ * observable carriers. Own data fields, such as a header name, remain visible.
+ *
+ * @param authorization Authorization description supplied to a handler.
+ * @returns A plain record with the same observable data fields.
+ */
+function observableAuthorization(authorization: object): Readonly<Record<string, unknown>> {
+  return observableRecord(authorization);
+}
+
+/**
+ * Copies own data fields, replacing each class instance with its own data record.
+ *
+ * @param value Object whose observable fields should be scanned.
+ * @returns A plain record containing those fields.
+ */
+function observableRecord(value: object): Readonly<Record<string, unknown>> {
+  const projected: Record<string, unknown> = {};
+  for (const key of Reflect.ownKeys(value)) {
+    if (typeof key !== "string") {
+      continue;
+    }
+    const descriptor = Object.getOwnPropertyDescriptor(value, key);
+    if (
+      descriptor === undefined ||
+      !("value" in descriptor) ||
+      typeof descriptor.value === "function"
+    ) {
+      continue;
+    }
+    projected[key] = observableField(descriptor.value);
+  }
+  return projected;
+}
+
+/**
+ * Keeps plain data and reduces a class instance to its own data fields.
+ *
+ * @param value Field value from an authorization description.
+ * @returns Data the secret scanner can inspect without calling methods.
+ */
+function observableField(value: unknown): unknown {
+  if (value === null || typeof value !== "object") {
+    return value;
+  }
+  if (Array.isArray(value)) {
+    return value;
+  }
+  const prototype = Object.getPrototypeOf(value) as object | null;
+  if (prototype === Object.prototype || prototype === null) {
+    return value;
+  }
+  return observableRecord(value);
 }
