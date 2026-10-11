@@ -1,39 +1,21 @@
 // Copyright © 2026 Mcont.
 
-import {
-  ModelInteractionError,
-  isOpenIdentifier,
-  type OpenIdentifier,
-} from "@evolutos/mconet-core-domain";
+import { ModelInteractionError, isOpenIdentifier } from "@evolutos/mconet-core-domain";
 import type {
   CodecContext,
-  ComponentDescriptor,
   ErasedRuntimeValue,
   PayloadEncoder,
   TransportBody,
 } from "@evolutos/mconet-core-spi";
 
 import { encodeUtf8 } from "./encode-utf8.js";
-
-/** Diagnostic component name. It is not a registry key or selection identity. */
-const JSON_PAYLOAD_ENCODER_NAME = "json-payload-encoder";
-
-/** Descriptive implementation version. It is not the package version. */
-const JSON_PAYLOAD_ENCODER_VERSION = "1.0.0";
+import { jsonPayloadEncoderDescriptor } from "./json-payload-encoder-descriptor.js";
 
 /** Stable code for a payload that cannot be represented as JSON text. */
 const SERIALIZATION_ERROR_CODE = "serialization";
 
 /** Stable code for encoding stopped by the interaction signal. */
 const CANCELLED_ERROR_CODE = "cancelled";
-
-/**
- * Capability set required by the component descriptor.
- *
- * This encoder declares no capability yet. The set is shared and empty so
- * instances cannot grow independent capability claims.
- */
-const encoderCapabilities: ReadonlySet<OpenIdentifier> = new Set();
 
 /**
  * Encodes one JSON payload value into a buffered UTF-8 transport body.
@@ -45,13 +27,8 @@ const encoderCapabilities: ReadonlySet<OpenIdentifier> = new Set();
  * arrays, cycles, and non-plain objects fail before any text is produced.
  */
 export class JsonPayloadEncoder implements PayloadEncoder {
-  /** Minimum descriptor required by the runtime component contract. */
-  public readonly descriptor: ComponentDescriptor = {
-    name: JSON_PAYLOAD_ENCODER_NAME,
-    version: JSON_PAYLOAD_ENCODER_VERSION,
-    capabilities: encoderCapabilities,
-    source: "builtin",
-  };
+  /** Shared diagnostic metadata. Port contract and capability stay separate. */
+  public readonly descriptor = jsonPayloadEncoderDescriptor;
 
   /**
    * Serializes the payload value and returns caller-owned UTF-8 bytes.
