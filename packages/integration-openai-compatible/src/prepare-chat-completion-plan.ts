@@ -69,8 +69,13 @@ const emptyPlanExtensions: ProtocolExecutionPlan["extensions"] = Object.freeze({
  */
 export const OPENAI_CHAT_REQUEST_TYPE_ID = "protocol.openai.chat-request";
 
-/** Output identity of a decoded chat-completions success value. */
-const chatResponseTypeId = "protocol.openai.chat-response";
+/**
+ * Output identity of a decoded chat-completions success value.
+ *
+ * Response parsing accepts only this identity, so a success payload and the
+ * plan describe the same port.
+ */
+export const OPENAI_CHAT_RESPONSE_TYPE_ID = "protocol.openai.chat-response";
 
 /**
  * Prepares the chat-completions execution requirements for one request.
@@ -160,7 +165,7 @@ export function prepareOpenAIChatCompletionPlan(input: {
       modeComponents: emptyModeComponents,
       typeContract: Object.freeze({
         inputTypeId: OPENAI_CHAT_REQUEST_TYPE_ID,
-        outputTypeId: chatResponseTypeId,
+        outputTypeId: OPENAI_CHAT_RESPONSE_TYPE_ID,
       }),
       extensions: emptyPlanExtensions,
     }),
