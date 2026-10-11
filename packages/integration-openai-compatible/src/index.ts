@@ -9,8 +9,9 @@
  * request mapping, single-choice message mapping, choice aggregation, and
  * token-usage mapping, finish-reason mapping, resolved-model mapping, and
  * protocol-id matching, task-type matching, unary mode matching, and
- * chat-completion plan preparation, temperature mapping, and top-p mapping.
- * Output-token mapping stays out of this entry until its own step adds it.
+ * chat-completion plan preparation, temperature mapping, top-p mapping, and
+ * max-output-token mapping. Stop-sequence mapping stays out of this entry until
+ * its own step adds it.
  */
 export { OpenAIChatCompletionChoiceDTO } from "./openai-chat-completion-choice-dto.js";
 export { OpenAIChatCompletionErrorDTO } from "./openai-chat-completion-error-dto.js";
@@ -24,6 +25,8 @@ export {
 } from "./map-assistant-message-role.js";
 export { mapChoicesToMessageDocument } from "./map-choices.js";
 export { mapWireFinishReasonToDomain } from "./map-finish-reason.js";
+export { mapMaxOutputTokensToWire } from "./map-max-output-tokens.js";
+export type { MappedMaxOutputTokens } from "./map-max-output-tokens.js";
 export { mapMessageDocumentToWire } from "./map-message-document.js";
 export {
   matchesUnaryInteractionMode,
