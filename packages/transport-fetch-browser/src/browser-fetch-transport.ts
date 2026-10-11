@@ -4,6 +4,10 @@ import { ModelInteractionError } from "@evolutos/mconet-core-domain";
 
 import { resolveBrowserCredentials } from "./browser-credentials-policy.js";
 import { resolveBrowserRedirect } from "./browser-redirect-policy.js";
+import {
+  resolveBrowserReferrerPolicy,
+  type BrowserReferrerPolicy,
+} from "./browser-referrer-policy.js";
 import type {
   BrowserFetch,
   BrowserFetchCredentials,
@@ -30,8 +34,8 @@ export interface BrowserFetchRealm {
  *
  * An explicit function is stored by reference. When it is omitted, construction
  * reads `fetch` from the current global object once. The credential mode
- * defaults to `omit`, and the redirect mode defaults to `error`. Neither path
- * calls Fetch.
+ * defaults to `omit`, the redirect mode defaults to `error`, and the referrer
+ * policy is `no-referrer`. Neither path calls Fetch.
  */
 export class BrowserFetchTransport {
   /** Fetch function bound to this instance. */
@@ -42,6 +46,9 @@ export class BrowserFetchTransport {
 
   /** Redirect mode this instance passes to Fetch. */
   readonly #redirect: BrowserFetchRedirect;
+
+  /** Referrer policy this instance passes to Fetch. */
+  readonly #referrerPolicy: BrowserReferrerPolicy;
 
   /**
    * Binds an explicit Fetch function, or the current realm's Fetch function.
@@ -54,6 +61,7 @@ export class BrowserFetchTransport {
     this.#fetch = resolveBrowserFetch(options, globalThis);
     this.#credentials = resolveBrowserCredentials(options);
     this.#redirect = resolveBrowserRedirect(options);
+    this.#referrerPolicy = resolveBrowserReferrerPolicy();
   }
 
   /**
@@ -78,6 +86,18 @@ export class BrowserFetchTransport {
    */
   public redirect(): BrowserFetchRedirect {
     return this.#redirect;
+  }
+
+  /**
+   * Returns the referrer policy this instance will pass to Fetch.
+   *
+   * The policy is fixed at construction. This method does not read the current
+   * document URL or call Fetch.
+   *
+   * @returns Referrer policy bound to this instance.
+   */
+  public referrerPolicy(): BrowserReferrerPolicy {
+    return this.#referrerPolicy;
   }
 
   /**

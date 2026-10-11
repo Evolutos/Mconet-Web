@@ -7,14 +7,19 @@
  * mode separately. The constructor binds an explicit Fetch function, or the
  * current realm's Fetch function when that option is omitted, and selects a
  * credential mode that defaults to `omit`, and a redirect mode that defaults
- * to `error`. Importing this module does not read platform globals or call
- * Fetch.
+ * to `error`, and the referrer policy is `no-referrer`. Importing this module
+ * does not read platform globals or call Fetch.
  */
 export { resolveBrowserCredentials } from "./browser-credentials-policy.js";
 export {
   browserRedirectForwardsAuthorization,
   resolveBrowserRedirect,
 } from "./browser-redirect-policy.js";
+export {
+  BROWSER_REFERRER_POLICY,
+  resolveBrowserReferrerPolicy,
+} from "./browser-referrer-policy.js";
+export type { BrowserReferrerPolicy } from "./browser-referrer-policy.js";
 export { BrowserFetchTransport } from "./browser-fetch-transport.js";
 export type {
   BrowserFetch,
