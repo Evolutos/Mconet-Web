@@ -3,8 +3,13 @@
 /**
  * Public module boundary for the browser Fetch transport.
  *
- * Browser networking behavior is introduced only after its transport and
- * security contracts are complete. This empty export creates no requests,
- * global Fetch assumptions, redirect policy, or credential behavior.
+ * The options contract names the Fetch function, credential mode, and redirect
+ * mode separately. Importing this module does not read platform globals, call
+ * Fetch, or apply a credential or redirect policy.
  */
-export {};
+export type {
+  BrowserFetch,
+  BrowserFetchCredentials,
+  BrowserFetchRedirect,
+  BrowserFetchTransportOptions,
+} from "./browser-fetch-transport-options.js";
