@@ -5,8 +5,9 @@
  *
  * Message, request, choice, usage, response, and error wire values are
  * available, along with system, user, assistant, and unknown role mapping,
- * text message content mapping, and message-entry mapping. Document and
- * response-choice mapping stay out of this entry until their own steps add them.
+ * text message content mapping, message-entry mapping, and message-document
+ * request mapping. Response-choice mapping stays out of this entry until its
+ * own step adds it.
  */
 export { OpenAIChatCompletionChoiceDTO } from "./openai-chat-completion-choice-dto.js";
 export { OpenAIChatCompletionErrorDTO } from "./openai-chat-completion-error-dto.js";
@@ -18,6 +19,7 @@ export {
   mapAssistantMessageRoleToWire,
   mapAssistantWireRoleToDomain,
 } from "./map-assistant-message-role.js";
+export { mapMessageDocumentToWire } from "./map-message-document.js";
 export { mapMessageEntryToWire, mapWireMessageToDomain } from "./map-message-entry.js";
 export { mapMessageRoleToWire, mapWireRoleToDomain } from "./map-message-role.js";
 export {
