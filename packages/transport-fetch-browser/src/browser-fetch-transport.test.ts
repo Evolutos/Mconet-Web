@@ -30,6 +30,8 @@ it("binds each instance to its own explicit fetch function", () => {
   expect(new BrowserFetchTransport({ fetch: first, credentials: "include" }).credentials()).toBe(
     "include",
   );
+  expect(firstTransport.redirect()).toBe("error");
+  expect(new BrowserFetchTransport({ fetch: first, redirect: "manual" }).redirect()).toBe("manual");
   expect(globalFetchReads(() => new BrowserFetchTransport({ fetch: first }))).toBe(0);
 });
 

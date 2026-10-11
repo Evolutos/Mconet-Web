@@ -3,9 +3,11 @@
 import { ModelInteractionError } from "@evolutos/mconet-core-domain";
 
 import { resolveBrowserCredentials } from "./browser-credentials-policy.js";
+import { resolveBrowserRedirect } from "./browser-redirect-policy.js";
 import type {
   BrowserFetch,
   BrowserFetchCredentials,
+  BrowserFetchRedirect,
   BrowserFetchTransportOptions,
 } from "./browser-fetch-transport-options.js";
 
@@ -27,8 +29,9 @@ export interface BrowserFetchRealm {
  * Browser transport bound to one Fetch function.
  *
  * An explicit function is stored by reference. When it is omitted, construction
- * reads `fetch` from the current global object once. The credential mode is
- * selected during construction and defaults to `omit`. Neither path calls Fetch.
+ * reads `fetch` from the current global object once. The credential mode
+ * defaults to `omit`, and the redirect mode defaults to `error`. Neither path
+ * calls Fetch.
  */
 export class BrowserFetchTransport {
   /** Fetch function bound to this instance. */
@@ -37,16 +40,20 @@ export class BrowserFetchTransport {
   /** Credential mode this instance passes to Fetch. */
   readonly #credentials: BrowserFetchCredentials;
 
+  /** Redirect mode this instance passes to Fetch. */
+  readonly #redirect: BrowserFetchRedirect;
+
   /**
    * Binds an explicit Fetch function, or the current realm's Fetch function.
    *
-   * @param options Browser transport settings. Only `fetch` and `credentials` are read.
+   * @param options Browser transport settings. `fetch`, `credentials`, and `redirect` are read.
    */
   public constructor(options: BrowserFetchTransportOptions) {
     // An injected function stays intact. The realm is consulted only when the
     // caller did not supply one, and the function is not wrapped or called.
     this.#fetch = resolveBrowserFetch(options, globalThis);
     this.#credentials = resolveBrowserCredentials(options);
+    this.#redirect = resolveBrowserRedirect(options);
   }
 
   /**
@@ -59,6 +66,18 @@ export class BrowserFetchTransport {
    */
   public credentials(): BrowserFetchCredentials {
     return this.#credentials;
+  }
+
+  /**
+   * Returns the redirect mode this instance will pass to Fetch.
+   *
+   * The mode is the constructor selection. This method does not follow a
+   * redirect or call Fetch.
+   *
+   * @returns Redirect mode bound to this instance.
+   */
+  public redirect(): BrowserFetchRedirect {
+    return this.#redirect;
   }
 
   /**
