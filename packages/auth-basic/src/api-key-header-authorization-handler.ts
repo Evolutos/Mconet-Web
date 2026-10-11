@@ -14,6 +14,7 @@ import {
   type ApiKeyHeaderAuthorization,
 } from "./api-key-header-authorization.js";
 import { validateAuthorizationHeaderName } from "./validate-authorization-header-name.js";
+import { validateAuthorizationHeaderValue } from "./validate-authorization-header-value.js";
 
 /** Diagnostic component name. It is not a registry key or selection identity. */
 const API_KEY_HEADER_AUTHORIZATION_HANDLER_NAME = "api-key-header-authorization-handler";
@@ -26,12 +27,6 @@ const UNSUPPORTED_AUTHORIZATION_CODE = "unsupported_authorization";
 
 /** Stable code for authorization stopped by the interaction signal. */
 const CANCELLED_AUTHORIZATION_CODE = "cancelled";
-
-/** Stable code for a header field that would inject another header. */
-const UNSAFE_AUTHORIZATION_HEADER_CODE = "unsafe_authorization_header";
-
-/** Line breaks that would split one header field into additional fields. */
-const headerLineBreak = /[\r\n]/u;
 
 /**
  * Metadata shared by every API-key header authorization handler.
@@ -114,9 +109,7 @@ export class ApiKeyHeaderAuthorizationHandler implements AuthorizationHandler {
     // Expose the credential only to copy it into the one new header value.
     // Validation failure must not place that text into the thrown error.
     const headerValue = secret.expose((value) => value);
-    if (headerLineBreak.test(headerValue)) {
-      throw createUnsafeAuthorizationHeaderError();
-    }
+    validateAuthorizationHeaderValue(headerValue);
 
     return appendHeader(input.request, headerName, headerValue);
   }
@@ -259,21 +252,6 @@ function createUnsupportedAuthorizationError(): ModelInteractionError {
     category: "authentication",
     phase: "authorization",
     code: UNSUPPORTED_AUTHORIZATION_CODE,
-    diagnostics: [],
-  });
-}
-
-/**
- * Creates the failure for a header name or value that contains a line break.
- *
- * @returns An error that does not include the header name or credential.
- */
-function createUnsafeAuthorizationHeaderError(): ModelInteractionError {
-  return new ModelInteractionError({
-    message: "Authorization header field contains a line break.",
-    category: "authentication",
-    phase: "authorization",
-    code: UNSAFE_AUTHORIZATION_HEADER_CODE,
     diagnostics: [],
   });
 }

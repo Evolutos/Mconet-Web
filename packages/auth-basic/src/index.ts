@@ -24,6 +24,7 @@ export {
 } from "./no-authorization-handler.js";
 export { noAuthorizationKind } from "./no-authorization.js";
 export { validateAuthorizationHeaderName } from "./validate-authorization-header-name.js";
+export { validateAuthorizationHeaderValue } from "./validate-authorization-header-value.js";
 export type { ApiKeyHeaderAuthorization } from "./api-key-header-authorization.js";
 export type { BearerAuthorization } from "./bearer-authorization.js";
 export type { NoAuthorization } from "./no-authorization.js";

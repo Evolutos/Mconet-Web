@@ -72,7 +72,7 @@ it("rejects a bearer credential that would split the header", async () => {
   await expect(
     handler.apply({ request: createRequest(), authorization, context }),
   ).rejects.toMatchObject({
-    code: "unsafe_authorization_header",
+    code: "invalid_authorization_header_value",
   });
 
   try {

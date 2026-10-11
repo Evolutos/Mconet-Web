@@ -10,6 +10,7 @@ import type {
 } from "@evolutos/mconet-core-spi";
 
 import { bearerAuthorizationKind, type BearerAuthorization } from "./bearer-authorization.js";
+import { validateAuthorizationHeaderValue } from "./validate-authorization-header-value.js";
 
 /** Diagnostic component name. It is not a registry key or selection identity. */
 const BEARER_AUTHORIZATION_HANDLER_NAME = "bearer-authorization-handler";
@@ -31,9 +32,6 @@ const BEARER_HEADER_NAME = "authorization";
 
 /** Scheme token that precedes the credential in the header value. */
 const BEARER_SCHEME = "Bearer";
-
-/** Line breaks that would split one header field into additional fields. */
-const headerLineBreak = /[\r\n]/u;
 
 /**
  * Metadata shared by every Bearer authorization handler.
@@ -104,11 +102,13 @@ export class BearerAuthorizationHandler implements AuthorizationHandler {
     }
 
     const token = secret.expose((value) => value);
-    if (token.length === 0 || headerLineBreak.test(token)) {
+    if (token.length === 0) {
       throw createUnsafeAuthorizationHeaderError();
     }
+    const headerValue = `${BEARER_SCHEME} ${token}`;
+    validateAuthorizationHeaderValue(headerValue);
 
-    return appendHeader(input.request, BEARER_HEADER_NAME, `${BEARER_SCHEME} ${token}`);
+    return appendHeader(input.request, BEARER_HEADER_NAME, headerValue);
   }
 }
 

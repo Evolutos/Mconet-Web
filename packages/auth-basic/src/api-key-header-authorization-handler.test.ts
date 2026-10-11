@@ -151,7 +151,7 @@ it("rejects a line break in the credential without returning it", async () => {
     handler.apply({ request: createRequest(), authorization, context }),
   ).rejects.toMatchObject({
     category: "authentication",
-    code: "unsafe_authorization_header",
+    code: "invalid_authorization_header_value",
   });
 
   try {
