@@ -7,6 +7,7 @@
  * Fetch. Importing it does not read platform globals, open a connection, or
  * send a request.
  */
+export { mapFetchBody } from "./map-fetch-body.js";
 export { mapFetchHeaders } from "./map-fetch-headers.js";
 export type { FetchHeaderField } from "./map-fetch-headers.js";
 export { mapFetchBaseUrl } from "./map-fetch-base-url.js";

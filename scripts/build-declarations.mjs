@@ -18,14 +18,16 @@ const declarationConfigPath = path.join(workspaceRoot, "tsconfig.declarations.js
  * Explicit type environments for Web contracts, the JSON codec, Node test
  * utilities, and transports.
  *
- * The JSON codec implements the codec SPI, whose cancellation signal is
- * AbortSignal, so it uses the same Web platform library as Core SPI.
+ * The JSON codec and shared Fetch mapper implement SPI contracts whose
+ * cancellation signal is AbortSignal, so they use the same Web platform
+ * library as Core SPI.
  */
 const environmentConfigByPackage = new Map([
   ["codec-json", "tsconfig.web-platform.json"],
   ["core-runtime", "tsconfig.web-platform.json"],
   ["core-spi", "tsconfig.web-platform.json"],
   ["testing", "tsconfig.node.json"],
+  ["transport-fetch-shared", "tsconfig.web-platform.json"],
   ["transport-fetch-browser", "tsconfig.browser.json"],
   ["transport-fetch-node", "tsconfig.node.json"],
 ]);

@@ -41,7 +41,7 @@ const allowedDependencies = new Map([
   ["testing", new Set(["core-domain", "core-runtime", "core-spi"])],
   ["transport-fetch-browser", new Set(["core-spi"])],
   ["transport-fetch-node", new Set(["core-spi"])],
-  ["transport-fetch-shared", new Set(["core-domain"])],
+  ["transport-fetch-shared", new Set(["core-domain", "core-spi"])],
 ]);
 
 /** Node.js built-in specifiers in both bare and explicit `node:` forms. */
