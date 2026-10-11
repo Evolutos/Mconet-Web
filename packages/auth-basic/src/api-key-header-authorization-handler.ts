@@ -13,6 +13,7 @@ import {
   apiKeyHeaderAuthorizationKind,
   type ApiKeyHeaderAuthorization,
 } from "./api-key-header-authorization.js";
+import { validateAuthorizationHeaderName } from "./validate-authorization-header-name.js";
 
 /** Diagnostic component name. It is not a registry key or selection identity. */
 const API_KEY_HEADER_AUTHORIZATION_HANDLER_NAME = "api-key-header-authorization-handler";
@@ -100,9 +101,7 @@ export class ApiKeyHeaderAuthorizationHandler implements AuthorizationHandler {
     if (headerName === undefined || credentialSource === undefined) {
       throw createUnsupportedAuthorizationError();
     }
-    if (headerLineBreak.test(headerName)) {
-      throw createUnsafeAuthorizationHeaderError();
-    }
+    validateAuthorizationHeaderName(headerName);
 
     const secret = await credentialSource.getCredential({ signal: input.context.signal });
     if (input.context.signal.aborted) {

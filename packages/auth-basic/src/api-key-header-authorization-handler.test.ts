@@ -90,7 +90,7 @@ it("rejects a line break in the header name before reading the credential", asyn
     handler.apply({ request: createRequest(), authorization, context }),
   ).rejects.toMatchObject({
     category: "authentication",
-    code: "unsafe_authorization_header",
+    code: "invalid_authorization_header_name",
   });
   expect(reads).toBe(0);
 });
