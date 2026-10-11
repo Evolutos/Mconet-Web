@@ -11,26 +11,35 @@ import type {
 const MISSING_FETCH_CODE = "missing_fetch";
 
 /**
- * Browser transport bound to one explicit Fetch function.
+ * Global object that provides the platform Fetch function.
  *
- * Construction stores that function by reference and does not call it. The
- * platform global is not read, so one instance cannot silently replace the
- * function bound to another instance.
+ * Window and Worker expose `fetch` on their own global. The lookup reads that
+ * property and does not consult `window`, `document`, or `self`.
+ */
+export interface BrowserFetchRealm {
+  /** Platform Fetch function visible in this realm, when present. */
+  readonly fetch?: BrowserFetch;
+}
+
+/**
+ * Browser transport bound to one Fetch function.
+ *
+ * An explicit function is stored by reference. When it is omitted, construction
+ * reads `fetch` from the current global object once. Neither path calls Fetch.
  */
 export class BrowserFetchTransport {
-  /** Fetch function supplied to this instance. */
+  /** Fetch function bound to this instance. */
   readonly #fetch: BrowserFetch;
 
   /**
-   * Binds the explicit Fetch function from `options`.
+   * Binds an explicit Fetch function, or the current realm's Fetch function.
    *
    * @param options Browser transport settings. Only `fetch` is read.
    */
   public constructor(options: BrowserFetchTransportOptions) {
-    // Keep the caller's function intact. A wrapper would hide which
-    // implementation this instance runs, and the platform global is not a
-    // substitute for the injected function.
-    this.#fetch = resolveExplicitBrowserFetch(options);
+    // An injected function stays intact. The realm is consulted only when the
+    // caller did not supply one, and the function is not wrapped or called.
+    this.#fetch = resolveBrowserFetch(options, globalThis);
   }
 
   /**
@@ -48,19 +57,35 @@ export class BrowserFetchTransport {
 }
 
 /**
- * Returns the explicit Fetch function a browser transport must bind.
+ * Selects the Fetch function a browser transport binds.
+ *
+ * An explicit function wins. Otherwise the realm's own `fetch` is used, which
+ * is the Window or Worker global when the constructor supplies `globalThis`.
+ * A non-function option does not fall through to the realm.
  *
  * @param options Browser transport settings. Only `fetch` is read.
- * @returns The caller-supplied Fetch function.
+ * @param realm Realm whose `fetch` property supplies the default.
+ * @returns The selected Fetch function.
  */
-export function resolveExplicitBrowserFetch(options: BrowserFetchTransportOptions): BrowserFetch {
-  const fetchImplementation = options.fetch;
+export function resolveBrowserFetch(
+  options: BrowserFetchTransportOptions,
+  realm: BrowserFetchRealm,
+): BrowserFetch {
+  if (typeof options.fetch === "function") {
+    return options.fetch;
+  }
 
-  if (typeof fetchImplementation !== "function") {
+  if (options.fetch !== undefined) {
     throw createMissingFetchError();
   }
 
-  return fetchImplementation;
+  const realmFetch = realm.fetch;
+
+  if (typeof realmFetch !== "function") {
+    throw createMissingFetchError();
+  }
+
+  return realmFetch;
 }
 
 /**
@@ -70,7 +95,7 @@ export function resolveExplicitBrowserFetch(options: BrowserFetchTransportOption
  */
 function createMissingFetchError(): ModelInteractionError {
   return new ModelInteractionError({
-    message: "Browser Fetch transport requires an explicit fetch function.",
+    message: "Browser Fetch transport requires a fetch function.",
     category: "invalid_component_configuration",
     phase: "transport",
     code: MISSING_FETCH_CODE,
