@@ -12,8 +12,9 @@
  * chat-completion plan preparation, temperature mapping, top-p mapping, and
  * max-output-token mapping, stop-sequence mapping, seed mapping, and
  * unencoded request building, success-response parsing, and authentication
- * error mapping, and rate-limit error mapping. Content-filter error mapping
- * stays out of this entry until its own step adds it.
+ * error mapping, rate-limit error mapping, and content-filter error mapping.
+ * Generic service-error mapping stays out of this entry until its own step
+ * adds it.
  */
 export { OpenAIChatCompletionChoiceDTO } from "./openai-chat-completion-choice-dto.js";
 export { OpenAIChatCompletionErrorDTO } from "./openai-chat-completion-error-dto.js";
@@ -28,6 +29,7 @@ export {
 export { buildOpenAIChatCompletionRequest } from "./build-chat-completion-request.js";
 export { mapAuthenticationError } from "./map-authentication-error.js";
 export { mapChoicesToMessageDocument } from "./map-choices.js";
+export { mapContentFilterError } from "./map-content-filter-error.js";
 export { mapWireFinishReasonToDomain } from "./map-finish-reason.js";
 export { mapMaxOutputTokensToWire } from "./map-max-output-tokens.js";
 export type { MappedMaxOutputTokens } from "./map-max-output-tokens.js";
