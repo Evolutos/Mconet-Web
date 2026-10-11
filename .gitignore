@@ -5,3 +5,6 @@ coverage/
 **/dist/
 # Package verification tarballs are reproducible and must not be committed.
 .artifacts/
+# Installed dependencies and the local package store are not source.
+node_modules/
+.pnpm-store/
