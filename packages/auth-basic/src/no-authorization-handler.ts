@@ -9,6 +9,8 @@ import type {
 } from "@evolutos/mconet-core-spi";
 
 import { noAuthorizationKind, type NoAuthorization } from "./no-authorization.js";
+import { validateAuthorizationHeaderName } from "./validate-authorization-header-name.js";
+import { validateAuthorizationHeaderValue } from "./validate-authorization-header-value.js";
 
 /** Diagnostic component name. It is not a registry key or selection identity. */
 const NO_AUTHORIZATION_HANDLER_NAME = "no-authorization-handler";
@@ -40,7 +42,8 @@ export const noAuthorizationHandlerDescriptor: ComponentDescriptor = {
  *
  * Support matches only the fixed no-authorization kind. Application returns a
  * new request with the same method, URL, headers, query, and body bytes. It
- * adds no header and does not read a credential. The input request is not
+ * adds no header and does not read a credential. A line break in a copied
+ * header fails before that request is returned. The input request is not
  * mutated. An aborted interaction fails before that copy is returned.
  */
 export class NoAuthorizationHandler implements AuthorizationHandler {
@@ -79,7 +82,26 @@ export class NoAuthorizationHandler implements AuthorizationHandler {
     if (!this.supports(input.authorization)) {
       throw createUnsupportedAuthorizationError();
     }
+    assertHeaderFieldsStayOnOneLine(input.request.headers);
     return copyTransportRequest(input.request);
+  }
+}
+
+/** Line breaks that would split one copied header field into additional fields. */
+const headerLineBreak = /[\r\n]/u;
+
+/**
+ * Rejects a header field that would split into more than one field when copied.
+ *
+ * @param headers Header occurrences the handler would otherwise preserve.
+ * @throws {ModelInteractionError} When a name or value contains a line break.
+ */
+function assertHeaderFieldsStayOnOneLine(headers: TransportRequest["headers"]): void {
+  for (const header of headers) {
+    if (headerLineBreak.test(header.name)) {
+      validateAuthorizationHeaderName(header.name);
+    }
+    validateAuthorizationHeaderValue(header.value);
   }
 }
 
