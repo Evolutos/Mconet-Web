@@ -7,8 +7,8 @@
  * available, along with system, user, assistant, and unknown role mapping,
  * text message content mapping, message-entry mapping, message-document
  * request mapping, single-choice message mapping, choice aggregation, and
- * token-usage mapping, and finish-reason mapping. Resolved-model mapping stays
- * out of this entry until its own step adds it.
+ * token-usage mapping, finish-reason mapping, and resolved-model mapping.
+ * Adapter matching stays out of this entry until its own step adds it.
  */
 export { OpenAIChatCompletionChoiceDTO } from "./openai-chat-completion-choice-dto.js";
 export { OpenAIChatCompletionErrorDTO } from "./openai-chat-completion-error-dto.js";
@@ -25,6 +25,7 @@ export { mapWireFinishReasonToDomain } from "./map-finish-reason.js";
 export { mapMessageDocumentToWire } from "./map-message-document.js";
 export { mapMessageEntryToWire, mapWireMessageToDomain } from "./map-message-entry.js";
 export { mapMessageRoleToWire, mapWireRoleToDomain } from "./map-message-role.js";
+export { mapWireModelToDomain } from "./map-resolved-model.js";
 export {
   mapSystemMessageRoleToWire,
   mapSystemWireRoleToDomain,
