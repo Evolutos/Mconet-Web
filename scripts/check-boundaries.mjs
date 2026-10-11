@@ -22,7 +22,7 @@ const internalPackagePrefix = "@evolutos/mconet-";
  * by default until their architecture boundary is reviewed.
  */
 const allowedDependencies = new Map([
-  ["auth-basic", new Set(["core-spi"])],
+  ["auth-basic", new Set(["core-domain", "core-spi"])],
   [
     "client",
     new Set([

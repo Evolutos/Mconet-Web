@@ -3,8 +3,8 @@
 /**
  * Public module boundary for basic Mconet authentication components.
  *
- * Credential handling is introduced only after its security contracts are
- * complete. This empty export establishes the package without creating secret
- * storage, authorization headers, or browser persistence behavior.
+ * Concrete schemes are exported as data descriptions. Handlers and credential
+ * sources stay out of this entry until their own steps add them.
  */
-export {};
+export { noAuthorizationKind } from "./no-authorization.js";
+export type { NoAuthorization } from "./no-authorization.js";
