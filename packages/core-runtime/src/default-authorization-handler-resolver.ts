@@ -16,11 +16,8 @@ const DEFAULT_AUTHORIZATION_HANDLER_RESOLVER_VERSION = "1.0.0";
 /** Stable code for an authorization description with no compatible handler. */
 const AUTHORIZATION_HANDLER_NOT_FOUND_CODE = "authorization_handler_not_found";
 
-/**
- * Stable code used until the unique and ambiguous branches exist.
- * A compatible candidate must not be selected by list order.
- */
-const AUTHORIZATION_HANDLER_NOT_SELECTED_CODE = "authorization_handler_not_selected";
+/** Stable code for more than one compatible authorization handler. */
+const AMBIGUOUS_AUTHORIZATION_HANDLER_CODE = "ambiguous_authorization_handler";
 
 /**
  * Metadata shared by every default authorization-handler resolver.
@@ -39,9 +36,9 @@ export const defaultAuthorizationHandlerResolverDescriptor: ComponentDescriptor 
  * Selects an authorization handler by exact support.
  *
  * Zero compatible handlers produce a standard authentication error. Exactly one
- * compatible handler is returned by identity. The resolver does not read
- * credentials, call apply, mutate the description, or choose a handler by list
- * order.
+ * compatible handler is returned by identity. More than one compatible handler
+ * is an ambiguous configuration error. The resolver does not read credentials,
+ * call apply, mutate the description, or choose a handler by list order.
  */
 export class DefaultAuthorizationHandlerResolver implements AuthorizationHandlerResolver {
   /** Shared descriptor for this builtin resolver. */
@@ -52,7 +49,8 @@ export class DefaultAuthorizationHandlerResolver implements AuthorizationHandler
    *
    * @param input Authorization description and candidate handlers.
    * @returns The single handler whose support check accepted the description.
-   * @throws {ModelInteractionError} When no candidate supports the description.
+   * @throws {ModelInteractionError} When no candidate supports the description,
+   * or when more than one candidate does.
    */
   public resolve(input: {
     readonly authorization: Authorization;
@@ -68,15 +66,8 @@ export class DefaultAuthorizationHandlerResolver implements AuthorizationHandler
       return match;
     }
 
-    // Multiple compatible handlers are a later branch. Reaching that count must
-    // not silently keep the first handler.
-    throw new ModelInteractionError({
-      message: "Authorization handler selection did not resolve a single handler.",
-      category: "invalid_component_configuration",
-      phase: "resolution",
-      code: AUTHORIZATION_HANDLER_NOT_SELECTED_CODE,
-      diagnostics: [],
-    });
+    // Counting every compatible handler keeps list order from hiding ambiguity.
+    throw createAmbiguousAuthorizationHandlerError(matches.length);
   }
 }
 
@@ -97,6 +88,30 @@ function createNoAuthorizationHandlerError(): ModelInteractionError {
         severity: "error",
         phase: "authorization",
         message: "Authorization requires exactly one compatible handler.",
+      },
+    ],
+  });
+}
+
+/**
+ * Creates the configuration failure for more than one compatible handler.
+ *
+ * @param candidateCount Number of handlers whose support check succeeded.
+ * @returns An error distinct from the no-match authentication failure.
+ */
+function createAmbiguousAuthorizationHandlerError(candidateCount: number): ModelInteractionError {
+  return new ModelInteractionError({
+    message: "Multiple authorization handlers support the supplied authorization.",
+    category: "invalid_component_configuration",
+    phase: "resolution",
+    code: AMBIGUOUS_AUTHORIZATION_HANDLER_CODE,
+    diagnostics: [
+      {
+        code: AMBIGUOUS_AUTHORIZATION_HANDLER_CODE,
+        severity: "error",
+        phase: "resolution",
+        message: "Authorization requires exactly one compatible handler.",
+        details: { candidateCount },
       },
     ],
   });

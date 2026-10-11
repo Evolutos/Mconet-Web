@@ -65,14 +65,41 @@ it("returns the only handler that supports the authorization", () => {
   expect(handlers[1]).toBe(selected);
 });
 
-it("does not keep the first handler when another handler also matches", () => {
+it("rejects multiple matching handlers as ambiguous", () => {
   const resolver = new DefaultAuthorizationHandlerResolver();
   const first = handlerFor(true, () => undefined);
   const second = handlerFor(true, () => undefined);
+  const third = handlerFor(true, () => undefined);
+  const reversed = [second, first];
 
-  expect(() => resolver.resolve({ authorization, handlers: [first, second] })).toThrow(
-    ModelInteractionError,
-  );
+  for (const handlers of [
+    [first, second],
+    reversed,
+    [unsupportedHandler(), first, second, third],
+  ]) {
+    try {
+      resolver.resolve({ authorization, handlers });
+      expect.fail("ambiguous resolution must throw");
+    } catch (error) {
+      expect(error).toMatchObject({
+        category: "invalid_component_configuration",
+        phase: "resolution",
+        code: "ambiguous_authorization_handler",
+        diagnostics: [
+          {
+            details: {
+              candidateCount: handlers.filter((handler) => handler.supports(authorization)).length,
+            },
+          },
+        ],
+      });
+      expect(error).not.toMatchObject({ code: "authorization_handler_not_found" });
+      expect(String(error)).not.toContain("must-stay-out-of-the-error");
+      expect(JSON.stringify(error)).not.toContain("must-stay-out-of-the-error");
+    }
+  }
+  expect(reversed[0]).toBe(second);
+  expect(reversed[1]).toBe(first);
 });
 
 function handlerFor(supported: boolean, onApply: () => void): AuthorizationHandler {
