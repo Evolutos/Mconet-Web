@@ -34,10 +34,13 @@ const buildConfigPath = path.join(workspaceRoot, "tsconfig.build.json");
  * Runtime type configurations used while type-checking each emitted package.
  *
  * Platform-neutral packages use the pure-core environment by default. Shared
- * Web SPI contracts, Node test utilities, and platform transports receive only
- * their explicitly reviewed runtime APIs.
+ * Web SPI contracts, the JSON codec, Node test utilities, and platform
+ * transports receive only their explicitly reviewed runtime APIs. The JSON
+ * codec uses the Web platform library because its SPI cancellation signal is
+ * AbortSignal.
  */
 const environmentConfigByPackage = new Map([
+  ["codec-json", "tsconfig.web-platform.json"],
   ["core-runtime", "tsconfig.web-platform.json"],
   ["core-spi", "tsconfig.web-platform.json"],
   ["testing", "tsconfig.node.json"],

@@ -14,8 +14,15 @@ const packagesRoot = path.join(workspaceRoot, "packages");
 /** Shared configuration that owns declaration emit settings. */
 const declarationConfigPath = path.join(workspaceRoot, "tsconfig.declarations.json");
 
-/** Explicit type environments for Web contracts, Node test utilities, and transports. */
+/**
+ * Explicit type environments for Web contracts, the JSON codec, Node test
+ * utilities, and transports.
+ *
+ * The JSON codec implements the codec SPI, whose cancellation signal is
+ * AbortSignal, so it uses the same Web platform library as Core SPI.
+ */
 const environmentConfigByPackage = new Map([
+  ["codec-json", "tsconfig.web-platform.json"],
   ["core-runtime", "tsconfig.web-platform.json"],
   ["core-spi", "tsconfig.web-platform.json"],
   ["testing", "tsconfig.node.json"],

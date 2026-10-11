@@ -48,6 +48,9 @@ importers:
       '@evolutos/mconet-core-domain':
         specifier: workspace:*
         version: link:../core-domain
+      '@evolutos/mconet-core-spi':
+        specifier: workspace:*
+        version: link:../core-spi
 
   packages/core-domain: {}
 
