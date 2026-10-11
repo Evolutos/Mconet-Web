@@ -12,6 +12,10 @@ export {
 } from "./api-key-header-authorization-handler.js";
 export { apiKeyHeaderAuthorizationKind } from "./api-key-header-authorization.js";
 export { bearerAuthorizationKind } from "./bearer-authorization.js";
+export {
+  BearerAuthorizationHandler,
+  bearerAuthorizationHandlerDescriptor,
+} from "./bearer-authorization-handler.js";
 export { DynamicCredentialSource } from "./dynamic-credential-source.js";
 export { FixedCredentialSource } from "./fixed-credential-source.js";
 export {
