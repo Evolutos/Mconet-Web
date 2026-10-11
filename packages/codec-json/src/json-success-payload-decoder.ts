@@ -27,7 +27,7 @@ const INVALID_BODY_LIMIT_CODE = "invalid_component_configuration";
  * are rejected because JSON text would not preserve them.
  */
 export class JsonSuccessPayloadDecoder implements PayloadDecoder {
-  /** Shared diagnostic metadata. The success payload port stays separate. */
+  /** Shared descriptor, including the success payload port. */
   public readonly descriptor = jsonSuccessPayloadDecoderDescriptor;
 
   /** Positive safe-integer limit applied before the body is parsed. */

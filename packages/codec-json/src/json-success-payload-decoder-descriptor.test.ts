@@ -12,11 +12,14 @@ it("publishes one builtin success decoder descriptor", () => {
   // Instances share the descriptor so name, version, and source cannot drift.
   expect(first.descriptor).toBe(jsonSuccessPayloadDecoderDescriptor);
   expect(second.descriptor).toBe(jsonSuccessPayloadDecoderDescriptor);
-  expect(jsonSuccessPayloadDecoderDescriptor).toEqual({
+  expect(jsonSuccessPayloadDecoderDescriptor).toMatchObject({
     name: "json-success-payload-decoder",
     version: "1.0.0",
-    capabilities: new Set(),
     source: "builtin",
   });
-  expect(jsonSuccessPayloadDecoderDescriptor.typeContract).toBeUndefined();
+  expect(jsonSuccessPayloadDecoderDescriptor.capabilities.size).toBe(0);
+  expect(jsonSuccessPayloadDecoderDescriptor.typeContract).toEqual({
+    outputTypeId: "json.value",
+    outputMediaTypes: [{ type: "application", subtype: "json", parameters: {} }],
+  });
 });
