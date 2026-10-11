@@ -8,8 +8,8 @@
  * text message content mapping, message-entry mapping, message-document
  * request mapping, single-choice message mapping, choice aggregation, and
  * token-usage mapping, finish-reason mapping, resolved-model mapping, and
- * protocol-id matching. Task-type matching stays out of this entry until its
- * own step adds it.
+ * protocol-id matching, and task-type matching. Mode matching stays out of
+ * this entry until its own step adds it.
  */
 export { OpenAIChatCompletionChoiceDTO } from "./openai-chat-completion-choice-dto.js";
 export { OpenAIChatCompletionErrorDTO } from "./openai-chat-completion-error-dto.js";
@@ -28,6 +28,10 @@ export {
   matchesOpenAIChatCompletionsProtocol,
   OPENAI_CHAT_COMPLETIONS_PROTOCOL_ID,
 } from "./match-protocol-id.js";
+export {
+  CONVERSATION_GENERATE_TASK_TYPE,
+  matchesConversationGenerateTask,
+} from "./match-task-type.js";
 export { mapMessageEntryToWire, mapWireMessageToDomain } from "./map-message-entry.js";
 export { mapMessageRoleToWire, mapWireRoleToDomain } from "./map-message-role.js";
 export { mapWireModelToDomain } from "./map-resolved-model.js";
