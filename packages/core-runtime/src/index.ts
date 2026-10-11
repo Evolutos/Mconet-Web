@@ -5,6 +5,7 @@ export { composeAbortSignals } from "./compose-abort-signals.js";
 export { createDirectModelIntegrationPlan } from "./create-direct-model-integration-plan.js";
 export { createInteractionExecutionComponents } from "./create-interaction-execution-components.js";
 export { createSafeConfigurationSnapshot } from "./create-safe-configuration-snapshot.js";
+export { createSafePreAuthorizationRequestSnapshot } from "./create-safe-pre-authorization-request-snapshot.js";
 export { createDeadlineSignal } from "./create-deadline-signal.js";
 export {
   DefaultAuthorizationHandlerResolver,
@@ -26,3 +27,4 @@ export type { InteractionOptionsData } from "./interaction-options-data.js";
 export type { ModelClientConfigurationData } from "./model-client-configuration-data.js";
 export type { ResolvedInteractionConfiguration } from "./resolved-interaction-configuration.js";
 export type { SafeConfigurationSnapshot } from "./safe-configuration-snapshot.js";
+export type { SafePreAuthorizationRequestSnapshot } from "./safe-pre-authorization-request-snapshot.js";
