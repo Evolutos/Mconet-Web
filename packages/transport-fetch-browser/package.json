@@ -24,6 +24,8 @@
     "node": ">=20"
   },
   "dependencies": {
-    "@evolutos/mconet-core-domain": "workspace:*"
+    "@evolutos/mconet-core-domain": "workspace:*",
+    "@evolutos/mconet-core-spi": "workspace:*",
+    "@evolutos/mconet-transport-fetch-shared": "workspace:*"
   }
 }

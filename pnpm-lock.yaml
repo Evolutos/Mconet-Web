@@ -88,6 +88,12 @@ importers:
       '@evolutos/mconet-core-domain':
         specifier: workspace:*
         version: link:../core-domain
+      '@evolutos/mconet-core-spi':
+        specifier: workspace:*
+        version: link:../core-spi
+      '@evolutos/mconet-transport-fetch-shared':
+        specifier: workspace:*
+        version: link:../transport-fetch-shared
 
   packages/transport-fetch-node: {}
 
