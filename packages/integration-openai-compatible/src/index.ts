@@ -11,8 +11,9 @@
  * protocol-id matching, task-type matching, unary mode matching, and
  * chat-completion plan preparation, temperature mapping, top-p mapping, and
  * max-output-token mapping, stop-sequence mapping, seed mapping, and
- * unencoded request building, and success-response parsing. Service-error
- * mapping stays out of this entry until its own step adds it.
+ * unencoded request building, success-response parsing, and authentication
+ * error mapping. Rate-limit error mapping stays out of this entry until its
+ * own step adds it.
  */
 export { OpenAIChatCompletionChoiceDTO } from "./openai-chat-completion-choice-dto.js";
 export { OpenAIChatCompletionErrorDTO } from "./openai-chat-completion-error-dto.js";
@@ -25,6 +26,7 @@ export {
   mapAssistantWireRoleToDomain,
 } from "./map-assistant-message-role.js";
 export { buildOpenAIChatCompletionRequest } from "./build-chat-completion-request.js";
+export { mapAuthenticationError } from "./map-authentication-error.js";
 export { mapChoicesToMessageDocument } from "./map-choices.js";
 export { mapWireFinishReasonToDomain } from "./map-finish-reason.js";
 export { mapMaxOutputTokensToWire } from "./map-max-output-tokens.js";
