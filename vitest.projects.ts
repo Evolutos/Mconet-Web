@@ -15,6 +15,7 @@ const packageRoles = [
   "core-spi",
   "integration-openai-compatible",
   "testing",
+  "transport-fetch-shared",
   "transport-fetch-browser",
   "transport-fetch-node",
 ] as const;

@@ -49,6 +49,7 @@ const declarationBuildOrder = [
   "codec-json",
   "integration-openai-compatible",
   "testing",
+  "transport-fetch-shared",
   "transport-fetch-browser",
   "transport-fetch-node",
   "client",

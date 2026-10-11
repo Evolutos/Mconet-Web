@@ -87,6 +87,12 @@ importers:
 
   packages/transport-fetch-node: {}
 
+  packages/transport-fetch-shared:
+    dependencies:
+      '@evolutos/mconet-core-domain':
+        specifier: workspace:*
+        version: link:../core-domain
+
 packages:
 
   '@babel/helper-string-parser@7.29.7':
