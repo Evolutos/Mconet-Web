@@ -41,6 +41,7 @@ export { captureUnknownInteractionFailure } from "./capture-unknown-interaction-
 export type { InteractionTerminalState } from "./interaction-terminal-state.js";
 export { createInteractionTermination } from "./create-interaction-termination.js";
 export { releaseInteractionResponse } from "./release-interaction-response.js";
+export { releaseInteractionContext } from "./release-interaction-context.js";
 export type { InteractionTermination } from "./create-interaction-termination.js";
 export { resolveInteractionConfiguration } from "./resolve-interaction-configuration.js";
 export { resolveInteractionDeadline } from "./resolve-interaction-deadline.js";
