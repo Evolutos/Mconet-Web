@@ -281,6 +281,80 @@ it("fails resolution once and does not send", async () => {
   expect(sends).toBe(0);
 });
 
+it("does not read a credential when planning fails", async () => {
+  let reads = 0;
+  let sends = 0;
+  const response: TransportResponse = {
+    metadata: { outcome: "success", headers: [], extensions: {} },
+    body: new Uint8Array(),
+  };
+  const transport = new MockTransport({
+    descriptor: {
+      name: "mock-transport",
+      version: "1.0.0",
+      capabilities: new Set(),
+      source: "application",
+    },
+    response,
+  });
+  transport.send = () => {
+    sends += 1;
+    return Promise.resolve(response);
+  };
+  const request = createRequest();
+  const serviceAccess = request.serviceAccess;
+  if (serviceAccess === undefined) {
+    throw new Error("The fixture request has no service access.");
+  }
+
+  await expect(
+    executeUnaryInteraction({
+      context: createInteractionContext({
+        request: {
+          ...request,
+          serviceAccess: {
+            ...serviceAccess,
+            authorization: {
+              kind: "authorization.bearer",
+              credentialSource: {
+                async getCredential() {
+                  reads += 1;
+                  throw new Error("credential");
+                },
+              },
+            },
+          },
+        },
+      }),
+      mode: { id: "unary" },
+      clientConfiguration: {},
+      sdkResourceLimits: limits,
+      adapter: {
+        ...unusedAdapter(),
+        supports: () => true,
+        preparePlan: () => ({
+          diagnostics: [
+            {
+              code: "planning_failed",
+              severity: "error",
+              phase: "planning",
+              message: "The protocol plan could not be prepared.",
+            },
+          ],
+        }),
+      },
+      authorizationHandlers: [],
+      payloadEncoder: { integrationComponents: [] },
+      successPayloadDecoder: { integrationComponents: [] },
+      errorPayloadDecoder: { integrationComponents: [] },
+      transport: { interactionComponent: transport, integrationComponents: [] },
+      interactionId: "interaction-planning",
+    }),
+  ).rejects.toMatchObject({ code: "planning_failed" });
+  expect(reads).toBe(0);
+  expect(sends).toBe(0);
+});
+
 function unusedAdapter(): TaskProtocolAdapter {
   const fail = (): never => {
     throw new Error("validation failure reached the adapter");
