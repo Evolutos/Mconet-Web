@@ -91,6 +91,23 @@ it("uses an injected client transport instead of Fetch", async () => {
   }
 });
 
+it("uses a call transport once without replacing the client transport", async () => {
+  const clientSends: string[] = [];
+  const callSends: string[] = [];
+  const clientTransport = recordingTransport("client", clientSends);
+  const callTransport = recordingTransport("call", callSends);
+  const client = createDefaultClient({
+    adapter: recordingAdapter(),
+    components: { transport: clientTransport },
+  });
+
+  await client.interact(request, { components: { transport: callTransport } });
+  await client.interact(request);
+
+  expect(callSends).toEqual(["call"]);
+  expect(clientSends).toEqual(["client"]);
+});
+
 const plan = {
   transportPlan: {
     endpoint: { kind: "absolute" as const, value: "https://example.test/v1" },
@@ -205,6 +222,62 @@ const parsed = {
 
 function isOk(value: unknown): boolean {
   return typeof value === "object" && value !== null && "ok" in value && value.ok === true;
+}
+
+function recordingTransport(name: string, sends: string[]) {
+  const response = {
+    metadata: { outcome: "success" as const, headers: [], extensions: {}, mediaType: json },
+    body: new TextEncoder().encode('{"ok":true}'),
+  };
+  const transport = new MockTransport({
+    descriptor: {
+      name,
+      version: "1.0.0",
+      capabilities: new Set(),
+      source: "application",
+      typeContract: {
+        inputTypeId: "codec.bytes",
+        outputTypeId: "codec.bytes",
+        outputMediaTypes: [json],
+      },
+    },
+    response,
+  });
+  const send = transport.send.bind(transport);
+  transport.send = (transportRequest, context) => {
+    sends.push(name);
+    return send(transportRequest, context);
+  };
+  return transport;
+}
+
+function recordingAdapter() {
+  return {
+    descriptor: {
+      name: "adapter",
+      version: "1.0.0",
+      capabilities: new Set(),
+      source: "application" as const,
+    },
+    supports: () => true,
+    preparePlan: () => ({ diagnostics: [], value: plan }),
+    buildRequest: () => ({
+      diagnostics: [],
+      value: {
+        payload: { typeId: "json.value", value: { hello: "world" } },
+        executionPlan: plan,
+      },
+    }),
+    parseResponse: ({ payload }: { payload: { value: unknown } }) => {
+      if (!isOk(payload.value)) {
+        throw new Error("payload");
+      }
+      return { diagnostics: [], value: parsed };
+    },
+    parseError: () => {
+      throw new Error("parseError");
+    },
+  };
 }
 
 function fakeTransport(): Transport {
