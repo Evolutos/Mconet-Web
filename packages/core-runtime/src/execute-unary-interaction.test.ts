@@ -206,6 +206,63 @@ it("runs the success chain through MockTransport in pipeline order", async () =>
   ]);
 });
 
+it("does not send when request validation fails", async () => {
+  let sends = 0;
+  const response: TransportResponse = {
+    metadata: { outcome: "success", headers: [], extensions: {} },
+    body: new Uint8Array(),
+  };
+  const transport = new MockTransport({
+    descriptor: {
+      name: "mock-transport",
+      version: "1.0.0",
+      capabilities: new Set(),
+      source: "application",
+    },
+    response,
+  });
+  transport.send = () => {
+    sends += 1;
+    return Promise.resolve(response);
+  };
+
+  await expect(
+    executeUnaryInteraction({
+      context: createInteractionContext({ request: createRequest() }),
+      mode: { id: "stream" },
+      clientConfiguration: {},
+      sdkResourceLimits: limits,
+      adapter: unusedAdapter(),
+      authorizationHandlers: [],
+      payloadEncoder: { integrationComponents: [] },
+      successPayloadDecoder: { integrationComponents: [] },
+      errorPayloadDecoder: { integrationComponents: [] },
+      transport: { interactionComponent: transport, integrationComponents: [] },
+      interactionId: "interaction-validation",
+    }),
+  ).rejects.toMatchObject({ code: "unsupported_interaction_mode" });
+  expect(sends).toBe(0);
+});
+
+function unusedAdapter(): TaskProtocolAdapter {
+  const fail = (): never => {
+    throw new Error("validation failure reached the adapter");
+  };
+  return {
+    descriptor: {
+      name: "unused-adapter",
+      version: "1.0.0",
+      capabilities: new Set(),
+      source: "application",
+    },
+    supports: fail,
+    preparePlan: fail,
+    buildRequest: fail,
+    parseResponse: fail,
+    parseError: fail,
+  };
+}
+
 function createRequest(): ModelRequest {
   return {
     target: {
