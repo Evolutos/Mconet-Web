@@ -24,6 +24,7 @@ export { resolveInteractionConfiguration } from "./resolve-interaction-configura
 export { resolveInteractionDeadline } from "./resolve-interaction-deadline.js";
 export { resolveInteractionSignal } from "./resolve-interaction-signal.js";
 export { resolveRequiredCapabilities } from "./resolve-required-capabilities.js";
+export { scheduleDirectAdapterBranch } from "./schedule-direct-adapter-branch.js";
 export { resolveSingleComponent } from "./resolve-single-component.js";
 export { selectErrorPayloadDecoder } from "./select-error-payload-decoder.js";
 export { selectSuccessPayloadDecoder } from "./select-success-payload-decoder.js";
