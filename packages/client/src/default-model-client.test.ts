@@ -87,6 +87,47 @@ it("delegates interact to the unary runtime", async () => {
   expect(again.target).toBe(request.target);
 });
 
+it("rejects an opted-in raw response that exceeds the byte limit", async () => {
+  const body = new Uint8Array([1, 2]);
+  const response: TransportResponse = {
+    metadata: { outcome: "success", headers: [], extensions: {}, mediaType: json },
+    body,
+  };
+  const transport = new MockTransport({
+    descriptor: {
+      name: "mock-transport",
+      version: "1.0.0",
+      capabilities: new Set(),
+      source: "application",
+      typeContract: {
+        inputTypeId: bytesType,
+        outputTypeId: bytesType,
+        outputMediaTypes: [json],
+      },
+    },
+    response,
+  });
+  const client = new DefaultModelClient({
+    clientConfiguration: {},
+    sdkResourceLimits: { ...limits, maxResponseBodyBytes: 1 },
+    adapter: createAdapter(createPlan()),
+    authorizationHandlers: [passThroughHandler()],
+    payloadEncoder: createEncoder(),
+    successPayloadDecoder: createDecoder(() => undefined),
+    errorPayloadDecoder: createErrorDecoder(),
+    transport,
+  });
+
+  await expect(
+    client.interact(createRequest(), { includeRawResponse: true }),
+  ).rejects.toMatchObject({
+    name: "ModelInteractionError",
+    code: "raw_response_too_large",
+    category: "invalid_request",
+    phase: "decoding",
+  });
+});
+
 it("resolves a second close without changing the closed client", async () => {
   const client = new DefaultModelClient({
     clientConfiguration: {},

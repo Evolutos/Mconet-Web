@@ -35,6 +35,9 @@ const unaryMode = { id: "unary" } as const;
 /** Stable code when a new request arrives after the client has closed. */
 const clientClosedCode = "client_closed";
 
+/** Stable code when an opted-in raw response exceeds the response byte limit. */
+const rawResponseTooLargeCode = "raw_response_too_large";
+
 /**
  * Components and limits a client holds so each call can enter the one runtime.
  *
@@ -135,11 +138,11 @@ export class DefaultModelClient implements ModelClient {
     const dependencies = this.#dependencies;
     const callComponents = options?.components;
     const includeRawResponse = options?.includeRawResponse === true;
-    const captured: { snapshot?: RawResponseSnapshot } = {};
+    const captured: { snapshot?: RawResponseSnapshot; tooLarge: boolean } = { tooLarge: false };
     const transportForCall = (component: Transport | undefined) =>
       component === undefined || !includeRawResponse
         ? component
-        : captureResponse(component, captured);
+        : captureResponse(component, captured, rawResponseByteLimit(options, dependencies));
     const output = await executeUnaryInteraction({
       context: createInteractionContext({
         request,
@@ -179,6 +182,9 @@ export class DefaultModelClient implements ModelClient {
       ...(dependencies.monitors === undefined ? {} : { monitors: dependencies.monitors }),
       interactionId: crypto.randomUUID(),
     });
+    if (captured.tooLarge) {
+      throw createRawResponseTooLargeError();
+    }
     if (!includeRawResponse || captured.snapshot === undefined) {
       return output;
     }
@@ -253,18 +259,67 @@ async function closeSdkComponent(component: RuntimeComponent): Promise<void> {
  */
 function captureResponse(
   transport: Transport,
-  captured: { snapshot?: RawResponseSnapshot },
+  captured: { snapshot?: RawResponseSnapshot; tooLarge: boolean },
+  maxResponseBodyBytes: number,
 ): Transport {
   return {
     descriptor: transport.descriptor,
     send: async (request, context) => {
       const response = await transport.send(request, context);
+      if (response.body.byteLength > maxResponseBodyBytes) {
+        // Keep the oversized body out of the snapshot. The caller receives a
+        // stable error after the runtime returns, not a truncated copy.
+        captured.tooLarge = true;
+        return response;
+      }
       const bytes = new Uint8Array(response.body.byteLength);
       bytes.set(response.body);
       captured.snapshot = { bytes, metadata: response.metadata };
       return response;
     },
   };
+}
+
+/**
+ * Selects the response byte limit that applies to an opted-in snapshot.
+ *
+ * A call field wins, then the client default, then the SDK limit. This matches
+ * resource-limit precedence for the one field the snapshot guard reads.
+ *
+ * @param options Call options, when the caller supplied them.
+ * @param dependencies Stored client defaults and SDK limits.
+ * @returns The maximum snapshot length in bytes.
+ */
+function rawResponseByteLimit(
+  options: InteractionOptions | undefined,
+  dependencies: DefaultModelClientDependencies,
+): number {
+  const interactionLimit = options?.resourceLimits?.maxResponseBodyBytes;
+  if (interactionLimit !== undefined) {
+    return interactionLimit;
+  }
+  const clientLimit = dependencies.clientConfiguration.defaultResourceLimits?.maxResponseBodyBytes;
+  if (clientLimit !== undefined) {
+    return clientLimit;
+  }
+  return dependencies.sdkResourceLimits.maxResponseBodyBytes;
+}
+
+/**
+ * Creates the stable failure for an oversized raw snapshot.
+ *
+ * The error does not include the response body or header values.
+ *
+ * @returns The size-limit error.
+ */
+function createRawResponseTooLargeError(): ModelInteractionError {
+  return new ModelInteractionError({
+    message: "The raw response exceeds the response byte limit.",
+    category: "invalid_request",
+    phase: "decoding",
+    code: rawResponseTooLargeCode,
+    diagnostics: [],
+  });
 }
 
 function createClientClosedError(): ModelInteractionError {
