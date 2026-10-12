@@ -37,11 +37,13 @@ const buildConfigPath = path.join(workspaceRoot, "tsconfig.build.json");
  * Web SPI contracts, the JSON codec, Node test utilities, and platform
  * transports receive only their explicitly reviewed runtime APIs. The JSON
  * codec, basic authorization descriptions, the OpenAI-compatible integration,
- * and the shared Fetch mapper use the Web platform library because their SPI
- * cancellation signal is AbortSignal.
+ * the shared Fetch mapper, and the client use the Web platform library because
+ * their cancellation signal is AbortSignal. The client also calls crypto and
+ * the text encoder APIs from that same library.
  */
 const environmentConfigByPackage = new Map([
   ["auth-basic", "tsconfig.web-platform.json"],
+  ["client", "tsconfig.web-platform.json"],
   ["codec-json", "tsconfig.web-platform.json"],
   ["core-runtime", "tsconfig.web-platform.json"],
   ["core-spi", "tsconfig.web-platform.json"],
