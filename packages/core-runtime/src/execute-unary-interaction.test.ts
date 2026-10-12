@@ -575,6 +575,62 @@ it("reports a network error when the transport fails", async () => {
   });
 });
 
+it("releases the response and context when decoding fails", async () => {
+  const released: string[] = [];
+  const response: TransportResponse = {
+    metadata: { outcome: "success", headers: [], extensions: {}, mediaType: json },
+    body: new Uint8Array([9]),
+  };
+  const transport = new MockTransport({
+    descriptor: {
+      name: "mock-transport",
+      version: "1.0.0",
+      capabilities: new Set(),
+      source: "application",
+      typeContract: {
+        inputTypeId: bytesType,
+        outputTypeId: bytesType,
+        outputMediaTypes: [json],
+      },
+    },
+    response,
+  });
+  const decoder = idleDecoder("decoder", responseType, [json]);
+  decoder.decode = async () => {
+    throw new Error("decoder-secret");
+  };
+
+  await expect(
+    executeUnaryInteraction({
+      context: createInteractionContext({ request: createRequest() }),
+      mode: { id: "unary" },
+      clientConfiguration: {},
+      sdkResourceLimits: limits,
+      adapter: planningAdapter(),
+      authorizationHandlers: [passThroughHandler()],
+      payloadEncoder: { interactionComponent: encodingEncoder(), integrationComponents: [] },
+      successPayloadDecoder: { interactionComponent: decoder, integrationComponents: [] },
+      errorPayloadDecoder: {
+        interactionComponent: idleDecoder("error-decoder", "protocol.error"),
+        integrationComponents: [],
+      },
+      transport: { interactionComponent: transport, integrationComponents: [] },
+      interactionId: "interaction-decoding",
+      releaseResponse: () => {
+        released.push("response");
+      },
+      releaseContext: () => {
+        released.push("context");
+      },
+    }),
+  ).rejects.toMatchObject({
+    code: "decoding_failed",
+    category: "deserialization",
+    message: expect.not.stringMatching(/decoder-secret/u),
+  });
+  expect(released).toEqual(["response", "context"]);
+});
+
 function unusedAdapter(): TaskProtocolAdapter {
   const fail = (): never => {
     throw new Error("validation failure reached the adapter");
@@ -606,6 +662,19 @@ function planningAdapter(): TaskProtocolAdapter {
         executionPlan: createPlan(),
       },
     }),
+  };
+}
+
+function passThroughHandler(): AuthorizationHandler {
+  return {
+    descriptor: {
+      name: "handler",
+      version: "1.0.0",
+      capabilities: new Set(),
+      source: "builtin",
+    },
+    supports: () => true,
+    apply: async ({ request: authorizedRequest }) => authorizedRequest,
   };
 }
 
