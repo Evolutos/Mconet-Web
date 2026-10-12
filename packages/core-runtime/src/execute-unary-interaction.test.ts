@@ -1,12 +1,15 @@
 // Copyright © 2026 Mcont.
 
-import type {
-  ModelRequest,
-  ParsedTaskResponse,
-  ResolvedInteractionResourceLimits,
+import {
+  SecretValue,
+  type Authorization,
+  type ModelRequest,
+  type ParsedTaskResponse,
+  type ResolvedInteractionResourceLimits,
 } from "@evolutos/mconet-core-domain";
 import type {
   AuthorizationHandler,
+  CredentialSource,
   PayloadDecoder,
   PayloadEncoder,
   ProtocolExecutionPlan,
@@ -750,6 +753,82 @@ it("keeps concurrent requests on their own targets", async () => {
   expect(outputB.target.model.name).toBe("model-b");
 });
 
+it("does not share credentials across concurrent interactions", async () => {
+  let entered = 0;
+  let releaseBoth: () => void = () => undefined;
+  const bothEntered = new Promise<void>((resolve) => {
+    releaseBoth = resolve;
+  });
+  const appliedSources: Array<CredentialSource | undefined> = [];
+  const calls = { a: 0, b: 0 };
+  const sourceFor = (label: "a" | "b", secret: string): CredentialSource => ({
+    async getCredential() {
+      calls[label] += 1;
+      entered += 1;
+      if (entered === 2) {
+        releaseBoth();
+      } else {
+        await bothEntered;
+      }
+      return new SecretValue(secret);
+    },
+  });
+  // Resolution copies authorization, so isolation is the credential-source
+  // reference that the copy retains, not the original object identity.
+  const sourceA = sourceFor("a", "credential-a");
+  const sourceB = sourceFor("b", "credential-b");
+  const authorizationA = {
+    kind: "authorization.bearer",
+    credentialSource: sourceA,
+  };
+  const authorizationB = {
+    kind: "authorization.bearer",
+    credentialSource: sourceB,
+  };
+  const handlerFor = (expected: CredentialSource): AuthorizationHandler => ({
+    descriptor: {
+      name: "handler",
+      version: "1.0.0",
+      capabilities: new Set(),
+      source: "builtin",
+    },
+    supports: () => true,
+    apply: async ({ request, authorization }) => {
+      const source =
+        "credentialSource" in authorization &&
+        typeof authorization.credentialSource === "object" &&
+        authorization.credentialSource !== null &&
+        "getCredential" in authorization.credentialSource
+          ? authorization.credentialSource
+          : undefined;
+      appliedSources.push(source === expected ? expected : undefined);
+      return request;
+    },
+  });
+
+  await Promise.all([
+    completeInteraction({
+      request: requestNamed("model-a"),
+      interactionId: "credential-a",
+      authorization: authorizationA,
+      handler: handlerFor(sourceA),
+    }),
+    completeInteraction({
+      request: requestNamed("model-b"),
+      interactionId: "credential-b",
+      authorization: authorizationB,
+      handler: handlerFor(sourceB),
+    }),
+  ]);
+
+  expect(calls).toEqual({ a: 1, b: 1 });
+  expect(appliedSources).toHaveLength(2);
+  expect(appliedSources).toContain(sourceA);
+  expect(appliedSources).toContain(sourceB);
+  expect(JSON.stringify(appliedSources)).not.toContain("credential-a");
+  expect(JSON.stringify(appliedSources)).not.toContain("credential-b");
+});
+
 function unusedAdapter(): TaskProtocolAdapter {
   const fail = (): never => {
     throw new Error("validation failure reached the adapter");
@@ -937,6 +1016,8 @@ async function completeInteraction(input: {
   readonly request: ModelRequest;
   readonly interactionId: string;
   readonly onEncode?: () => Promise<void>;
+  readonly authorization?: Authorization;
+  readonly handler?: AuthorizationHandler;
 }): Promise<Awaited<ReturnType<typeof executeUnaryInteraction>>> {
   const response: TransportResponse = {
     metadata: { outcome: "success", headers: [], extensions: {}, mediaType: json },
@@ -967,8 +1048,18 @@ async function completeInteraction(input: {
   }
   const decoder = idleDecoder("decoder", responseType, [json]);
   decoder.decode = async () => ({ typeId: responseType, value: { ok: true } });
+  const request =
+    input.authorization === undefined || input.request.serviceAccess === undefined
+      ? input.request
+      : {
+          ...input.request,
+          serviceAccess: {
+            ...input.request.serviceAccess,
+            authorization: input.authorization,
+          },
+        };
   return executeUnaryInteraction({
-    context: createInteractionContext({ request: input.request }),
+    context: createInteractionContext({ request }),
     mode: { id: "unary" },
     clientConfiguration: {},
     sdkResourceLimits: limits,
@@ -976,7 +1067,7 @@ async function completeInteraction(input: {
       ...planningAdapter(),
       parseResponse: () => ({ diagnostics: [], value: createParsedResponse() }),
     },
-    authorizationHandlers: [passThroughHandler()],
+    authorizationHandlers: [input.handler ?? passThroughHandler()],
     payloadEncoder: { interactionComponent: encoder, integrationComponents: [] },
     successPayloadDecoder: { interactionComponent: decoder, integrationComponents: [] },
     errorPayloadDecoder: {
