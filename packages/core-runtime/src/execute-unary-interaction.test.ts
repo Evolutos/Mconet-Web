@@ -829,6 +829,48 @@ it("does not share credentials across concurrent interactions", async () => {
   expect(JSON.stringify(appliedSources)).not.toContain("credential-b");
 });
 
+it("does not abort a concurrent interaction when another signal aborts", async () => {
+  const controllerA = new AbortController();
+  const controllerB = new AbortController();
+  let entered = 0;
+  let releaseBoth: () => void = () => undefined;
+  const bothEntered = new Promise<void>((resolve) => {
+    releaseBoth = resolve;
+  });
+  const observed = new Map<"a" | "b", AbortSignal>();
+  const watch = (slot: "a" | "b") => async (signal: AbortSignal) => {
+    observed.set(slot, signal);
+    entered += 1;
+    if (entered === 2) {
+      controllerA.abort();
+      releaseBoth();
+      return;
+    }
+    await bothEntered;
+  };
+
+  const [outputA, outputB] = await Promise.all([
+    completeInteraction({
+      request: requestNamed("model-a"),
+      interactionId: "signal-a",
+      signal: controllerA.signal,
+      onSend: watch("a"),
+    }),
+    completeInteraction({
+      request: requestNamed("model-b"),
+      interactionId: "signal-b",
+      signal: controllerB.signal,
+      onSend: watch("b"),
+    }),
+  ]);
+
+  expect(observed.get("a")?.aborted).toBe(true);
+  expect(observed.get("b")?.aborted).toBe(false);
+  expect(observed.get("a")).not.toBe(observed.get("b"));
+  expect(outputA.target.model.name).toBe("model-a");
+  expect(outputB.target.model.name).toBe("model-b");
+});
+
 function unusedAdapter(): TaskProtocolAdapter {
   const fail = (): never => {
     throw new Error("validation failure reached the adapter");
@@ -1018,6 +1060,8 @@ async function completeInteraction(input: {
   readonly onEncode?: () => Promise<void>;
   readonly authorization?: Authorization;
   readonly handler?: AuthorizationHandler;
+  readonly signal?: AbortSignal;
+  readonly onSend?: (signal: AbortSignal) => Promise<void>;
 }): Promise<Awaited<ReturnType<typeof executeUnaryInteraction>>> {
   const response: TransportResponse = {
     metadata: { outcome: "success", headers: [], extensions: {}, mediaType: json },
@@ -1046,6 +1090,14 @@ async function completeInteraction(input: {
       return encode(value, context);
     };
   }
+  if (input.onSend !== undefined) {
+    const observe = input.onSend;
+    const send = transport.send.bind(transport);
+    transport.send = async (request, context) => {
+      await observe(context.signal);
+      return send(request, context);
+    };
+  }
   const decoder = idleDecoder("decoder", responseType, [json]);
   decoder.decode = async () => ({ typeId: responseType, value: { ok: true } });
   const request =
@@ -1059,7 +1111,10 @@ async function completeInteraction(input: {
           },
         };
   return executeUnaryInteraction({
-    context: createInteractionContext({ request }),
+    context: createInteractionContext({
+      request,
+      ...(input.signal === undefined ? {} : { options: { signal: input.signal } }),
+    }),
     mode: { id: "unary" },
     clientConfiguration: {},
     sdkResourceLimits: limits,
