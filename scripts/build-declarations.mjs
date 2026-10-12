@@ -19,12 +19,13 @@ const declarationConfigPath = path.join(workspaceRoot, "tsconfig.declarations.js
  * utilities, and transports.
  *
  * The JSON codec, basic authorization descriptions, the OpenAI-compatible
- * integration, and the shared Fetch mapper implement or reference SPI contracts
- * whose cancellation signal is AbortSignal, so they use the same Web platform
- * library as Core SPI.
+ * integration, the public client, and the shared Fetch mapper implement or
+ * reference SPI contracts whose cancellation signal is AbortSignal, so they
+ * use the same Web platform library as Core SPI.
  */
 const environmentConfigByPackage = new Map([
   ["auth-basic", "tsconfig.web-platform.json"],
+  ["client", "tsconfig.web-platform.json"],
   ["codec-json", "tsconfig.web-platform.json"],
   ["core-runtime", "tsconfig.web-platform.json"],
   ["core-spi", "tsconfig.web-platform.json"],

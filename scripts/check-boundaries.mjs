@@ -28,7 +28,9 @@ const allowedDependencies = new Map([
     new Set([
       "auth-basic",
       "codec-json",
+      "core-domain",
       "core-runtime",
+      "core-spi",
       "integration-openai-compatible",
       "transport-fetch-browser",
     ]),
