@@ -32,6 +32,7 @@ export { scheduleApplyAuthorization } from "./schedule-apply-authorization.js";
 export { scheduleTransportSend } from "./schedule-transport-send.js";
 export { scheduleSuccessDecoderBranch } from "./schedule-success-decoder-branch.js";
 export { scheduleErrorDecoderBranch } from "./schedule-error-decoder-branch.js";
+export { validateResponseContentType } from "./validate-response-content-type.js";
 export { resolveInteractionConfiguration } from "./resolve-interaction-configuration.js";
 export { resolveInteractionDeadline } from "./resolve-interaction-deadline.js";
 export { resolveInteractionSignal } from "./resolve-interaction-signal.js";
