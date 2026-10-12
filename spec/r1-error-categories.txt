@@ -1,0 +1,16 @@
+invalid_request
+invalid_component_configuration
+unsupported_feature
+authentication
+permission
+rate_limit
+content_filter
+context_length
+timeout
+cancelled
+network
+serialization
+deserialization
+protocol
+model_service
+unknown
