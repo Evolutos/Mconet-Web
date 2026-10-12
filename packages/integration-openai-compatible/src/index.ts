@@ -14,8 +14,9 @@
  * unencoded request building, success-response parsing, and authentication
  * error mapping, rate-limit error mapping, content-filter error mapping, and
  * generic service-error mapping, service-error dispatch, and integration type
- * keys, integration bindings, type-key serialization, and the type table.
- * Exact type matching stays out of this entry until its own step adds it.
+ * keys, integration bindings, type-key serialization, the type table, and
+ * exact type matching. Responsibility-chain matching stays out of this entry
+ * until its own step adds it.
  */
 export { OpenAIChatCompletionChoiceDTO } from "./openai-chat-completion-choice-dto.js";
 export { OpenAIChatCompletionErrorDTO } from "./openai-chat-completion-error-dto.js";
@@ -55,6 +56,7 @@ export {
   matchesConversationGenerateTask,
 } from "./match-task-type.js";
 export { mapMessageEntryToWire, mapWireMessageToDomain } from "./map-message-entry.js";
+export { matchIntegrationType } from "./match-integration-type.js";
 export { mapMessageRoleToWire, mapWireRoleToDomain } from "./map-message-role.js";
 export { mapRateLimitError } from "./map-rate-limit-error.js";
 export { mapWireModelToDomain } from "./map-resolved-model.js";
