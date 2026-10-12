@@ -460,6 +460,121 @@ it("does not authorize when encoding fails", async () => {
   expect(authorizations).toBe(0);
 });
 
+it("does not send when authorization has no handler", async () => {
+  let sends = 0;
+  const response: TransportResponse = {
+    metadata: { outcome: "success", headers: [], extensions: {} },
+    body: new Uint8Array(),
+  };
+  const transport = new MockTransport({
+    descriptor: {
+      name: "mock-transport",
+      version: "1.0.0",
+      capabilities: new Set(),
+      source: "application",
+      typeContract: {
+        inputTypeId: bytesType,
+        outputTypeId: bytesType,
+        outputMediaTypes: [json],
+      },
+    },
+    response,
+  });
+  transport.send = () => {
+    sends += 1;
+    return Promise.resolve(response);
+  };
+  const decoder = idleDecoder("decoder", responseType, [json]);
+  const errorDecoder = idleDecoder("error-decoder", "protocol.error");
+
+  await expect(
+    executeUnaryInteraction({
+      context: createInteractionContext({ request: createRequest() }),
+      mode: { id: "unary" },
+      clientConfiguration: {},
+      sdkResourceLimits: limits,
+      adapter: planningAdapter(),
+      authorizationHandlers: [
+        {
+          descriptor: {
+            name: "handler",
+            version: "1.0.0",
+            capabilities: new Set(),
+            source: "builtin",
+          },
+          supports: () => false,
+          apply: async () => {
+            throw new Error("apply");
+          },
+        },
+      ],
+      payloadEncoder: { interactionComponent: encodingEncoder(), integrationComponents: [] },
+      successPayloadDecoder: { interactionComponent: decoder, integrationComponents: [] },
+      errorPayloadDecoder: { interactionComponent: errorDecoder, integrationComponents: [] },
+      transport: { interactionComponent: transport, integrationComponents: [] },
+      interactionId: "interaction-authentication",
+    }),
+  ).rejects.toMatchObject({ code: "authorization_handler_not_found" });
+  expect(sends).toBe(0);
+});
+
+it("reports a network error when the transport fails", async () => {
+  const response: TransportResponse = {
+    metadata: { outcome: "success", headers: [], extensions: {} },
+    body: new Uint8Array(),
+  };
+  const transport = new MockTransport({
+    descriptor: {
+      name: "mock-transport",
+      version: "1.0.0",
+      capabilities: new Set(),
+      source: "application",
+      typeContract: {
+        inputTypeId: bytesType,
+        outputTypeId: bytesType,
+        outputMediaTypes: [json],
+      },
+    },
+    response,
+  });
+  transport.send = () => {
+    throw new Error("network-secret");
+  };
+  const decoder = idleDecoder("decoder", responseType, [json]);
+  const errorDecoder = idleDecoder("error-decoder", "protocol.error");
+
+  await expect(
+    executeUnaryInteraction({
+      context: createInteractionContext({ request: createRequest() }),
+      mode: { id: "unary" },
+      clientConfiguration: {},
+      sdkResourceLimits: limits,
+      adapter: planningAdapter(),
+      authorizationHandlers: [
+        {
+          descriptor: {
+            name: "handler",
+            version: "1.0.0",
+            capabilities: new Set(),
+            source: "builtin",
+          },
+          supports: () => true,
+          apply: async ({ request: authorizedRequest }) => authorizedRequest,
+        },
+      ],
+      payloadEncoder: { interactionComponent: encodingEncoder(), integrationComponents: [] },
+      successPayloadDecoder: { interactionComponent: decoder, integrationComponents: [] },
+      errorPayloadDecoder: { interactionComponent: errorDecoder, integrationComponents: [] },
+      transport: { interactionComponent: transport, integrationComponents: [] },
+      interactionId: "interaction-transport",
+    }),
+  ).rejects.toMatchObject({
+    code: "transport_failed",
+    category: "network",
+    phase: "transport",
+  });
+});
+
 function unusedAdapter(): TaskProtocolAdapter {
   const fail = (): never => {
     throw new Error("validation failure reached the adapter");
@@ -476,6 +591,57 @@ function unusedAdapter(): TaskProtocolAdapter {
     buildRequest: fail,
     parseResponse: fail,
     parseError: fail,
+  };
+}
+
+function planningAdapter(): TaskProtocolAdapter {
+  return {
+    ...unusedAdapter(),
+    supports: () => true,
+    preparePlan: () => ({ diagnostics: [], value: createPlan() }),
+    buildRequest: () => ({
+      diagnostics: [],
+      value: {
+        payload: { typeId: requestType, value: { text: "hello" } },
+        executionPlan: createPlan(),
+      },
+    }),
+  };
+}
+
+function encodingEncoder(): PayloadEncoder {
+  return {
+    descriptor: {
+      name: "encoder",
+      version: "1.0.0",
+      capabilities: new Set(),
+      source: "builtin",
+      typeContract: { inputTypeId: requestType, outputTypeId: bytesType },
+    },
+    encode: async () => ({ kind: "bytes", bytes: new Uint8Array([1]) }),
+  };
+}
+
+function idleDecoder(
+  name: string,
+  outputTypeId: string,
+  inputMediaTypes?: readonly (typeof json)[],
+): PayloadDecoder {
+  return {
+    descriptor: {
+      name,
+      version: "1.0.0",
+      capabilities: new Set(),
+      source: "builtin",
+      typeContract: {
+        inputTypeId: bytesType,
+        outputTypeId,
+        ...(inputMediaTypes === undefined ? {} : { inputMediaTypes }),
+      },
+    },
+    decode: async () => {
+      throw new Error("decode");
+    },
   };
 }
 

@@ -412,18 +412,44 @@ async function runUnaryInteraction(
  * @param phase Phase used when the result has no diagnostic.
  * @returns The stage value.
  */
-function requireValue<Value>(result: ProcessingResult<Value>, phase: Diagnostic["phase"]): Value {
+function requireValue<Value>(
+  result: ProcessingResult<Value>,
+  fallbackPhase: Diagnostic["phase"],
+): Value {
   if (result.value !== undefined) {
     return result.value;
   }
   const diagnostic = result.diagnostics[0];
+  const phase = diagnostic?.phase ?? fallbackPhase;
   throw new ModelInteractionError({
     message: diagnostic?.message ?? "An interaction stage produced no value.",
-    category: "invalid_request",
-    phase: diagnostic?.phase ?? phase,
+    category: categoryForPhase(phase),
+    phase,
     code: diagnostic?.code ?? "interaction_stage_failed",
     diagnostics: result.diagnostics,
   });
+}
+
+/**
+ * Maps a stage phase to the public error category.
+ *
+ * @param phase Phase recorded by the failing stage.
+ * @returns The category a caller can branch on.
+ */
+function categoryForPhase(phase: Diagnostic["phase"]): ModelInteractionError["category"] {
+  if (phase === "transport") {
+    return "network";
+  }
+  if (phase === "encoding") {
+    return "serialization";
+  }
+  if (phase === "decoding") {
+    return "deserialization";
+  }
+  if (phase === "authorization") {
+    return "authentication";
+  }
+  return "invalid_request";
 }
 
 /**
