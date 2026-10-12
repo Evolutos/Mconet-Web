@@ -95,6 +95,15 @@ importers:
         specifier: workspace:*
         version: link:../../packages/integration-openai-compatible
 
+  examples/custom-transport:
+    dependencies:
+      '@evolutos/mconet-client':
+        specifier: workspace:*
+        version: link:../../packages/client
+      '@evolutos/mconet-core-spi':
+        specifier: workspace:*
+        version: link:../../packages/core-spi
+
   packages/auth-basic:
     dependencies:
       '@evolutos/mconet-core-domain':

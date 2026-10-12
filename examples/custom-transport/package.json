@@ -1,0 +1,12 @@
+{
+  "name": "@evolutos/example-custom-transport",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Example of injecting a transport without modifying Core.",
+  "type": "module",
+  "dependencies": {
+    "@evolutos/mconet-client": "workspace:*",
+    "@evolutos/mconet-core-spi": "workspace:*"
+  },
+  "license": "UNLICENSED"
+}
