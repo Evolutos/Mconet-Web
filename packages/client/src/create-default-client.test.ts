@@ -3,7 +3,11 @@
 import { createServer } from "node:http";
 
 import type { ParsedTaskResponse } from "@evolutos/mconet-core-domain";
-import type { ProtocolExecutionPlan, TaskProtocolAdapter } from "@evolutos/mconet-core-spi";
+import type {
+  ProtocolExecutionPlan,
+  TaskProtocolAdapter,
+  Transport,
+} from "@evolutos/mconet-core-spi";
 import { expect, it } from "vitest";
 
 import { createDefaultClient } from "./create-default-client.js";
@@ -36,6 +40,24 @@ it("completes one JSON exchange through Fetch", async () => {
   } finally {
     await closeServer(server);
   }
+});
+
+it("rejects a transport that has no send method", () => {
+  const transport = {
+    descriptor: {
+      name: "transport",
+      version: "1.0.0",
+      capabilities: new Set(),
+      source: "application",
+    },
+  } as unknown as Transport;
+
+  expect(() =>
+    createDefaultClient({
+      adapter: createAdapter("https://example.test"),
+      components: { transport },
+    }),
+  ).toThrow(TypeError);
 });
 
 function listen(server: ReturnType<typeof createServer>): Promise<string> {

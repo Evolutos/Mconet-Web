@@ -8,7 +8,11 @@ import {
 } from "@evolutos/mconet-codec-json";
 import type { ResolvedInteractionResourceLimits } from "@evolutos/mconet-core-domain";
 import type { ModelClientConfigurationData } from "@evolutos/mconet-core-runtime";
-import type { RuntimeComponents, TaskProtocolAdapter } from "@evolutos/mconet-core-spi";
+import type {
+  RuntimeComponent,
+  RuntimeComponents,
+  TaskProtocolAdapter,
+} from "@evolutos/mconet-core-spi";
 import { BrowserFetchTransport } from "@evolutos/mconet-transport-fetch-browser";
 
 import { DefaultModelClient } from "./default-model-client.js";
@@ -19,6 +23,25 @@ import { mapClientComponents } from "./map-client-components.js";
  *
  * These are the composition-root defaults. They are not inferred from a request.
  */
+/**
+ * Rejects a component that does not expose the method its role requires.
+ *
+ * Construction fails before a request exists. The check does not call the method.
+ *
+ * @param component Candidate component.
+ * @param methodName Method the role must provide.
+ */
+function assertRole(component: RuntimeComponent, methodName: string): void {
+  const method = Reflect.get(component, methodName);
+  if (
+    typeof component.descriptor !== "object" ||
+    component.descriptor === null ||
+    typeof method !== "function"
+  ) {
+    throw new TypeError(`The ${methodName} component does not satisfy its role.`);
+  }
+}
+
 const sdkResourceLimits: ResolvedInteractionResourceLimits = {
   maxResponseBodyBytes: 16_777_216,
   maxStreamingErrorBodyBytes: 1_048_576,
@@ -56,19 +79,33 @@ export interface DefaultClientInput {
  */
 export function createDefaultClient(input: DefaultClientInput): DefaultModelClient {
   const components = mapClientComponents(input.components);
+  const adapter = components.adapter ?? input.adapter;
+  const authorizationHandlers = components.authorizationHandlers ?? [new NoAuthorizationHandler()];
+  const payloadEncoder = components.payloadEncoder ?? new JsonPayloadEncoder();
+  const successPayloadDecoder =
+    components.successPayloadDecoder ??
+    new JsonSuccessPayloadDecoder(sdkResourceLimits.maxResponseBodyBytes);
+  const errorPayloadDecoder =
+    components.errorPayloadDecoder ??
+    new JsonErrorPayloadDecoder(sdkResourceLimits.maxResponseBodyBytes);
+  const transport = components.transport ?? new BrowserFetchTransport({});
+  assertRole(adapter, "supports");
+  assertRole(payloadEncoder, "encode");
+  assertRole(successPayloadDecoder, "decode");
+  assertRole(errorPayloadDecoder, "decode");
+  assertRole(transport, "send");
+  for (const handler of authorizationHandlers) {
+    assertRole(handler, "apply");
+  }
   return new DefaultModelClient({
     clientConfiguration: input.clientConfiguration ?? {},
     sdkResourceLimits,
-    adapter: components.adapter ?? input.adapter,
-    authorizationHandlers: components.authorizationHandlers ?? [new NoAuthorizationHandler()],
-    payloadEncoder: components.payloadEncoder ?? new JsonPayloadEncoder(),
-    successPayloadDecoder:
-      components.successPayloadDecoder ??
-      new JsonSuccessPayloadDecoder(sdkResourceLimits.maxResponseBodyBytes),
-    errorPayloadDecoder:
-      components.errorPayloadDecoder ??
-      new JsonErrorPayloadDecoder(sdkResourceLimits.maxResponseBodyBytes),
-    transport: components.transport ?? new BrowserFetchTransport({}),
+    adapter,
+    authorizationHandlers,
+    payloadEncoder,
+    successPayloadDecoder,
+    errorPayloadDecoder,
+    transport,
     ...(components.resolver === undefined ? {} : { resolver: components.resolver }),
     ...(components.serviceAccessResolver === undefined
       ? {}
