@@ -21,6 +21,7 @@ export { mergeInteractionConfiguration } from "./merge-interaction-configuration
 export { normalizeInteractionRequest } from "./normalize-interaction-request.js";
 export { resolveCapabilities } from "./resolve-capabilities.js";
 export { scheduleCapabilityValidation } from "./schedule-capability-validation.js";
+export { freezeExecutionSnapshot } from "./freeze-execution-snapshot.js";
 export { resolveInteractionConfiguration } from "./resolve-interaction-configuration.js";
 export { resolveInteractionDeadline } from "./resolve-interaction-deadline.js";
 export { resolveInteractionSignal } from "./resolve-interaction-signal.js";
