@@ -10,6 +10,7 @@
  */
 export { ConversationTaskBuilder } from "@evolutos/mconet-core-domain";
 export { conversationRequest } from "./conversation-request.js";
+export { interactWithText } from "./interact-with-text.js";
 export type { ConversationMessage, ConversationRequestInput } from "./conversation-request.js";
 export { DefaultModelClient } from "./default-model-client.js";
 export type { DefaultModelClientDependencies } from "./default-model-client.js";
