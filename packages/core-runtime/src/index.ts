@@ -25,6 +25,7 @@ export { selectErrorPayloadDecoder } from "./select-error-payload-decoder.js";
 export { selectSuccessPayloadDecoder } from "./select-success-payload-decoder.js";
 export { validateComponentTypeConnection } from "./validate-component-type-connection.js";
 export type { InteractionOptionsData } from "./interaction-options-data.js";
+export { createInteractionContext, type InteractionContext } from "./interaction-context.js";
 export type { ModelClientConfigurationData } from "./model-client-configuration-data.js";
 export type { ResolvedInteractionConfiguration } from "./resolved-interaction-configuration.js";
 export type { SafeConfigurationSnapshot } from "./safe-configuration-snapshot.js";
