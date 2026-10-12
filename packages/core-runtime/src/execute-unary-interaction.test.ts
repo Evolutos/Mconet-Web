@@ -722,6 +722,34 @@ it("uses a plugin encoder instead of the SDK default encoder", async () => {
   expect(names).toEqual(["plugin"]);
 });
 
+it("keeps concurrent requests on their own targets", async () => {
+  let entered = 0;
+  let releaseBoth: () => void = () => undefined;
+  const bothEntered = new Promise<void>((resolve) => {
+    releaseBoth = resolve;
+  });
+  const onEncode = async (): Promise<void> => {
+    entered += 1;
+    if (entered === 2) {
+      releaseBoth();
+      return;
+    }
+    await bothEntered;
+  };
+  const requestA = requestNamed("model-a");
+  const requestB = requestNamed("model-b");
+
+  const [outputA, outputB] = await Promise.all([
+    completeInteraction({ request: requestA, interactionId: "interaction-a", onEncode }),
+    completeInteraction({ request: requestB, interactionId: "interaction-b", onEncode }),
+  ]);
+
+  expect(outputA.target).toBe(requestA.target);
+  expect(outputB.target).toBe(requestB.target);
+  expect(outputA.target.model.name).toBe("model-a");
+  expect(outputB.target.model.name).toBe("model-b");
+});
+
 function unusedAdapter(): TaskProtocolAdapter {
   const fail = (): never => {
     throw new Error("validation failure reached the adapter");
@@ -895,6 +923,78 @@ function idleDecoder(
     },
     decode: async () => {
       throw new Error("decode");
+    },
+  };
+}
+
+/**
+ * Completes one interaction so concurrent calls can overlap inside encode.
+ *
+ * @param input Request identity and an optional encode pause.
+ * @returns The assembled output for that request only.
+ */
+async function completeInteraction(input: {
+  readonly request: ModelRequest;
+  readonly interactionId: string;
+  readonly onEncode?: () => Promise<void>;
+}): Promise<Awaited<ReturnType<typeof executeUnaryInteraction>>> {
+  const response: TransportResponse = {
+    metadata: { outcome: "success", headers: [], extensions: {}, mediaType: json },
+    body: new Uint8Array([4]),
+  };
+  const transport = new MockTransport({
+    descriptor: {
+      name: "mock-transport",
+      version: "1.0.0",
+      capabilities: new Set(),
+      source: "application",
+      typeContract: {
+        inputTypeId: bytesType,
+        outputTypeId: bytesType,
+        outputMediaTypes: [json],
+      },
+    },
+    response,
+  });
+  const encoder = encodingEncoder();
+  if (input.onEncode !== undefined) {
+    const pause = input.onEncode;
+    const encode = encoder.encode.bind(encoder);
+    encoder.encode = async (value, context) => {
+      await pause();
+      return encode(value, context);
+    };
+  }
+  const decoder = idleDecoder("decoder", responseType, [json]);
+  decoder.decode = async () => ({ typeId: responseType, value: { ok: true } });
+  return executeUnaryInteraction({
+    context: createInteractionContext({ request: input.request }),
+    mode: { id: "unary" },
+    clientConfiguration: {},
+    sdkResourceLimits: limits,
+    adapter: {
+      ...planningAdapter(),
+      parseResponse: () => ({ diagnostics: [], value: createParsedResponse() }),
+    },
+    authorizationHandlers: [passThroughHandler()],
+    payloadEncoder: { interactionComponent: encoder, integrationComponents: [] },
+    successPayloadDecoder: { interactionComponent: decoder, integrationComponents: [] },
+    errorPayloadDecoder: {
+      interactionComponent: idleDecoder("error-decoder", "protocol.error"),
+      integrationComponents: [],
+    },
+    transport: { interactionComponent: transport, integrationComponents: [] },
+    interactionId: input.interactionId,
+  });
+}
+
+function requestNamed(name: string): ModelRequest {
+  const request = createRequest();
+  return {
+    ...request,
+    target: {
+      ...request.target,
+      model: { name, metadata: {}, extensions: {} },
     },
   };
 }
