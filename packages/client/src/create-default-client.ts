@@ -16,7 +16,6 @@ import type {
   RuntimeComponents,
   TaskProtocolAdapter,
 } from "@evolutos/mconet-core-spi";
-import { BrowserFetchTransport } from "@evolutos/mconet-transport-fetch-browser";
 
 import { DefaultModelClient } from "./default-model-client.js";
 import { mapClientComponents } from "./map-client-components.js";
@@ -72,15 +71,16 @@ export interface DefaultClientInput {
 }
 
 /**
- * Creates a client whose default components are JSON codecs and Fetch.
+ * Assembles a client from JSON codecs and a caller-supplied transport.
  *
- * The transport is the browser Fetch transport, which uses the platform fetch
- * function. A call still goes through the one unary runtime.
+ * This module is shared by the browser and Node entries, so it must not choose
+ * a Fetch implementation. The platform entry supplies the transport before
+ * any request exists. A call still goes through the one unary runtime.
  *
- * @param input Protocol adapter and optional domain defaults.
+ * @param input Protocol adapter, transport, and optional domain defaults.
  * @returns A client that can run one unary JSON exchange.
  */
-export function createDefaultClient(input: DefaultClientInput): DefaultModelClient {
+export function assembleDefaultClient(input: DefaultClientInput): DefaultModelClient {
   const components = mapClientComponents(input.components);
   const adapter = components.adapter ?? input.adapter;
   const authorizationHandlers = components.authorizationHandlers ?? [new NoAuthorizationHandler()];
@@ -91,7 +91,10 @@ export function createDefaultClient(input: DefaultClientInput): DefaultModelClie
   const errorPayloadDecoder =
     components.errorPayloadDecoder ??
     new JsonErrorPayloadDecoder(sdkResourceLimits.maxResponseBodyBytes);
-  const transport = components.transport ?? new BrowserFetchTransport({});
+  const transport = components.transport;
+  if (transport === undefined) {
+    throw new TypeError("The send component does not satisfy its role.");
+  }
   assertRole(adapter, "supports");
   assertRole(payloadEncoder, "encode");
   assertRole(successPayloadDecoder, "decode");

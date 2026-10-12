@@ -32,6 +32,7 @@
     "@evolutos/mconet-core-runtime": "workspace:*",
     "@evolutos/mconet-core-spi": "workspace:*",
     "@evolutos/mconet-integration-openai-compatible": "workspace:*",
-    "@evolutos/mconet-transport-fetch-browser": "workspace:*"
+    "@evolutos/mconet-transport-fetch-browser": "workspace:*",
+    "@evolutos/mconet-transport-fetch-node": "workspace:*"
   }
 }

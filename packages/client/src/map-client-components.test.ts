@@ -4,7 +4,7 @@ import type { PayloadEncoder, Transport } from "@evolutos/mconet-core-spi";
 import { MockTransport } from "@evolutos/mconet-testing";
 import { expect, it } from "vitest";
 
-import { createDefaultClient } from "./create-default-client.js";
+import { createDefaultClient } from "./browser-client.js";
 import { mapClientComponents } from "./map-client-components.js";
 
 const json = { type: "application", subtype: "json", parameters: {} } as const;

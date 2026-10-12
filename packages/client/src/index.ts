@@ -6,10 +6,12 @@
  * The interactor names the single call operation, and the client adds close.
  * `DefaultModelClient.interact` enters the unary runtime. The conversation task
  * builder is the domain builder, re-exported so a public caller can build the
- * same task value as a literal. Platform transports stay out of this entry.
+ * same task value as a literal. The default entry uses the browser Fetch
+ * client. The node export condition selects `node.ts`, which supplies the Node
+ * Fetch transport without importing this browser choice.
  */
 export { ConversationTaskBuilder } from "@evolutos/mconet-core-domain";
-export { createDefaultClient } from "./create-default-client.js";
+export { createDefaultClient } from "./browser-client.js";
 export { mapClientComponents } from "./map-client-components.js";
 export type { ClientComponentSelection } from "./map-client-components.js";
 export { createOpenAICompatibleClient } from "./create-openai-compatible-client.js";

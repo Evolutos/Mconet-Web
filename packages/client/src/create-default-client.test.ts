@@ -10,7 +10,7 @@ import type {
 } from "@evolutos/mconet-core-spi";
 import { expect, it } from "vitest";
 
-import { createDefaultClient } from "./create-default-client.js";
+import { createDefaultClient } from "./browser-client.js";
 
 const json = { type: "application", subtype: "json", parameters: {} } as const;
 const jsonValue = "json.value";
