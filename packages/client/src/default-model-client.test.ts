@@ -80,6 +80,17 @@ it("delegates interact to the unary runtime", async () => {
   expect(again.target).toBe(request.target);
 });
 
+it("resolves a second close without changing the closed client", async () => {
+  const client = new DefaultModelClient({
+    clientConfiguration: {},
+    sdkResourceLimits: limits,
+    authorizationHandlers: [],
+  });
+
+  await client.close();
+  await expect(client.close()).resolves.toBeUndefined();
+});
+
 function createEncoder(): PayloadEncoder {
   return {
     descriptor: {

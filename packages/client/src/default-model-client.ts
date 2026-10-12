@@ -81,9 +81,8 @@ export interface DefaultModelClientDependencies {
  *
  * The class does not encode, authorize, or send on its own. Call options are
  * placed into the runtime input; component priority stays inside the runtime.
- * Close is present so the class satisfies the client contract. Resource release
- * and the closed state are later lifecycle steps, so this close does not dispose
- * anything.
+ * Close moves the client to the closed state and can be repeated. SDK-owned
+ * resource release remains a later step, so close does not dispose injected objects.
  */
 export class DefaultModelClient implements ModelClient {
   /** Reusable inputs. A call does not write back into this object. */
@@ -162,14 +161,15 @@ export class DefaultModelClient implements ModelClient {
   }
 
   /**
-   * Satisfies the client contract without releasing resources.
+   * Stops the client from accepting a new request.
    *
-   * Open, idempotent close, and SDK-owned release are separate lifecycle steps.
+   * A second call leaves the client closed and resolves. SDK-owned resource
+   * release is a later step, so this method does not dispose injected objects.
    *
    * @returns A settled promise.
    */
   public async close(): Promise<void> {
-    return undefined;
+    this.#acceptingRequests = false;
   }
 }
 
