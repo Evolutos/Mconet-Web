@@ -871,6 +871,51 @@ it("does not abort a concurrent interaction when another signal aborts", async (
   expect(outputB.target.model.name).toBe("model-b");
 });
 
+/** Rounds sampled after garbage collection. The first round is the baseline. */
+const memoryRounds = 4;
+
+/** Interactions completed before each retained-heap sample. */
+const interactionsPerRound = 25;
+
+/**
+ * Allowed retained-heap growth from the first sample to the last.
+ *
+ * One leaked response body per interaction would pass this ceiling. The bound
+ * is large enough for allocator noise and small enough to fail a per-call retain.
+ */
+const maxHeapGrowthBytes = 4_000_000;
+
+it("does not grow retained heap across repeated interactions", async () => {
+  const runtime = globalThis as {
+    gc?: () => void;
+    process?: { memoryUsage(): { heapUsed: number } };
+  };
+  const collectGarbage = runtime.gc;
+  const heapUsed = runtime.process?.memoryUsage;
+  if (collectGarbage === undefined || heapUsed === undefined) {
+    throw new Error("Repeated interaction memory test requires Node --expose-gc.");
+  }
+
+  const samples: number[] = [];
+  for (let round = 0; round < memoryRounds; round += 1) {
+    for (let index = 0; index < interactionsPerRound; index += 1) {
+      await completeInteraction({
+        request: requestNamed("model-a"),
+        interactionId: `memory-${round}-${index}`,
+      });
+    }
+    collectGarbage();
+    samples.push(heapUsed().heapUsed);
+  }
+
+  const baseline = samples[0];
+  const retained = samples[memoryRounds - 1];
+  if (baseline === undefined || retained === undefined) {
+    throw new Error("Repeated interaction memory test did not record a heap sample.");
+  }
+  expect(retained - baseline).toBeLessThan(maxHeapGrowthBytes);
+});
+
 function unusedAdapter(): TaskProtocolAdapter {
   const fail = (): never => {
     throw new Error("validation failure reached the adapter");
