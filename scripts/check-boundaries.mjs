@@ -238,6 +238,17 @@ function checkSourceFile(filePath) {
       continue;
     }
 
+    // The Node Fetch transport stays out of client production source so the
+    // browser entry cannot pull it in. A client test is the composition point
+    // that can run the runtime against a local HTTP server.
+    if (
+      sourcePackage === "client" &&
+      targetPackage === "transport-fetch-node" &&
+      (filePath.endsWith(".test.ts") || filePath.endsWith(".spec.ts"))
+    ) {
+      continue;
+    }
+
     // Reject cross-package edges absent from the source role's explicit set;
     // same-package and external imports remain outside this rule.
     if (targetPackage && targetPackage !== sourcePackage && !allowedTargets.has(targetPackage)) {
