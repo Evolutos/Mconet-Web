@@ -1,0 +1,14 @@
+{
+  "browser": {
+    "maxMinifiedBytes": 170000,
+    "maxGzipBytes": 38000
+  },
+  "core": {
+    "maxMinifiedBytes": 86000,
+    "maxGzipBytes": 20000
+  },
+  "integration": {
+    "maxMinifiedBytes": 89000,
+    "maxGzipBytes": 20000
+  }
+}
