@@ -44,6 +44,7 @@ export { releaseInteractionResponse } from "./release-interaction-response.js";
 export { releaseInteractionContext } from "./release-interaction-context.js";
 export { publishMonitoringChain } from "./publish-monitoring-chain.js";
 export { publishIsolatedMonitoringChain } from "./publish-isolated-monitoring-chain.js";
+export { executeUnaryInteraction } from "./execute-unary-interaction.js";
 export type { InteractionTermination } from "./create-interaction-termination.js";
 export { resolveInteractionConfiguration } from "./resolve-interaction-configuration.js";
 export { resolveInteractionDeadline } from "./resolve-interaction-deadline.js";
