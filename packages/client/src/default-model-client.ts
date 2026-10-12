@@ -1,9 +1,10 @@
 // Copyright © 2026 Mcont.
 
-import type {
-  ModelOutput,
-  ModelRequest,
-  ResolvedInteractionResourceLimits,
+import {
+  ModelInteractionError,
+  type ModelOutput,
+  type ModelRequest,
+  type ResolvedInteractionResourceLimits,
 } from "@evolutos/mconet-core-domain";
 import {
   createInteractionContext,
@@ -27,6 +28,9 @@ import type { ModelClient } from "./model-client.js";
 
 /** R1 executes one request and returns one output. There is no second mode here. */
 const unaryMode = { id: "unary" } as const;
+
+/** Stable code when a new request arrives after the client has closed. */
+const clientClosedCode = "client_closed";
 
 /**
  * Components and limits a client holds so each call can enter the one runtime.
@@ -86,6 +90,14 @@ export class DefaultModelClient implements ModelClient {
   readonly #dependencies: DefaultModelClientDependencies;
 
   /**
+   * Whether this client still accepts a new request.
+   *
+   * Construction leaves the client open. The flag is not a current request,
+   * secret, or cancellation signal.
+   */
+  #acceptingRequests = true;
+
+  /**
    * Stores reusable inputs by reference.
    *
    * @param dependencies Configuration, limits, and components for later calls.
@@ -106,6 +118,9 @@ export class DefaultModelClient implements ModelClient {
    * @returns The output assembled by the runtime.
    */
   public async interact(request: ModelRequest, options?: InteractionOptions): Promise<ModelOutput> {
+    if (!this.#acceptingRequests) {
+      throw createClientClosedError();
+    }
     const dependencies = this.#dependencies;
     const callComponents = options?.components;
     return executeUnaryInteraction({
@@ -167,6 +182,21 @@ export class DefaultModelClient implements ModelClient {
  * @param options Call options supplied by the caller.
  * @returns Data overrides for one context.
  */
+/**
+ * Creates the stable rejection for a request that arrives after close.
+ *
+ * @returns An error that does not include request or component data.
+ */
+function createClientClosedError(): ModelInteractionError {
+  return new ModelInteractionError({
+    message: "The client is closed and cannot accept a new request.",
+    category: "invalid_request",
+    phase: "validation",
+    code: clientClosedCode,
+    diagnostics: [],
+  });
+}
+
 function interactionData(options: InteractionOptions) {
   return {
     ...(options.serviceAccessOverride === undefined

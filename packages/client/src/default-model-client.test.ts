@@ -69,12 +69,15 @@ it("delegates interact to the unary runtime", async () => {
   });
 
   const output = await client.interact(request);
+  const again = await client.interact(request);
 
-  // One send and the transport body at the decoder show the runtime pipeline ran.
-  expect(sends).toBe(1);
+  // Each open call enters the runtime once. The client does not store the first request.
+  expect(sends).toBe(2);
   expect(decoded).toEqual(responseBytes);
   expect(output.status).toBe("completed");
+  expect(again.status).toBe("completed");
   expect(output.target).toBe(request.target);
+  expect(again.target).toBe(request.target);
 });
 
 function createEncoder(): PayloadEncoder {
