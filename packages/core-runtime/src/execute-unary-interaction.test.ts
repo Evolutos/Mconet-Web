@@ -355,6 +355,111 @@ it("does not read a credential when planning fails", async () => {
   expect(sends).toBe(0);
 });
 
+it("does not authorize when encoding fails", async () => {
+  let authorizations = 0;
+  const response: TransportResponse = {
+    metadata: { outcome: "success", headers: [], extensions: {} },
+    body: new Uint8Array(),
+  };
+  const transport = new MockTransport({
+    descriptor: {
+      name: "mock-transport",
+      version: "1.0.0",
+      capabilities: new Set(),
+      source: "application",
+      typeContract: {
+        inputTypeId: bytesType,
+        outputTypeId: bytesType,
+        outputMediaTypes: [json],
+      },
+    },
+    response,
+  });
+  const decoder: PayloadDecoder = {
+    descriptor: {
+      name: "decoder",
+      version: "1.0.0",
+      capabilities: new Set(),
+      source: "builtin",
+      typeContract: { inputTypeId: bytesType, outputTypeId: responseType, inputMediaTypes: [json] },
+    },
+    decode: async () => {
+      throw new Error("decode");
+    },
+  };
+  const errorDecoder: PayloadDecoder = {
+    descriptor: {
+      name: "error-decoder",
+      version: "1.0.0",
+      capabilities: new Set(),
+      source: "builtin",
+      typeContract: { inputTypeId: bytesType, outputTypeId: "protocol.error" },
+    },
+    decode: async () => {
+      throw new Error("decode");
+    },
+  };
+
+  await expect(
+    executeUnaryInteraction({
+      context: createInteractionContext({ request: createRequest() }),
+      mode: { id: "unary" },
+      clientConfiguration: {},
+      sdkResourceLimits: limits,
+      adapter: {
+        ...unusedAdapter(),
+        supports: () => true,
+        preparePlan: () => ({ diagnostics: [], value: createPlan() }),
+        buildRequest: () => ({
+          diagnostics: [],
+          value: {
+            payload: { typeId: requestType, value: { text: "hello" } },
+            executionPlan: createPlan(),
+          },
+        }),
+      },
+      authorizationHandlers: [
+        {
+          descriptor: {
+            name: "handler",
+            version: "1.0.0",
+            capabilities: new Set(),
+            source: "builtin",
+          },
+          supports: () => {
+            authorizations += 1;
+            return true;
+          },
+          apply: async () => {
+            authorizations += 1;
+            throw new Error("apply");
+          },
+        },
+      ],
+      payloadEncoder: {
+        interactionComponent: {
+          descriptor: {
+            name: "encoder",
+            version: "1.0.0",
+            capabilities: new Set(),
+            source: "builtin",
+            typeContract: { inputTypeId: requestType, outputTypeId: bytesType },
+          },
+          encode: async () => {
+            throw new Error("encode");
+          },
+        },
+        integrationComponents: [],
+      },
+      successPayloadDecoder: { interactionComponent: decoder, integrationComponents: [] },
+      errorPayloadDecoder: { interactionComponent: errorDecoder, integrationComponents: [] },
+      transport: { interactionComponent: transport, integrationComponents: [] },
+      interactionId: "interaction-encoding",
+    }),
+  ).rejects.toMatchObject({ code: "encoding_failed" });
+  expect(authorizations).toBe(0);
+});
+
 function unusedAdapter(): TaskProtocolAdapter {
   const fail = (): never => {
     throw new Error("validation failure reached the adapter");
