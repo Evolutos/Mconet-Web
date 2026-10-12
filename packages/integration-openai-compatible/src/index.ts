@@ -14,8 +14,8 @@
  * unencoded request building, success-response parsing, and authentication
  * error mapping, rate-limit error mapping, content-filter error mapping, and
  * generic service-error mapping, service-error dispatch, and integration type
- * keys, and integration bindings. Type-key serialization stays out of this
- * entry until its own step adds it.
+ * keys, integration bindings, and type-key serialization. The type table stays
+ * out of this entry until its own step adds it.
  */
 export { OpenAIChatCompletionChoiceDTO } from "./openai-chat-completion-choice-dto.js";
 export { OpenAIChatCompletionErrorDTO } from "./openai-chat-completion-error-dto.js";
@@ -64,6 +64,7 @@ export {
   mapSystemWireRoleToDomain,
 } from "./map-system-message-role.js";
 export { mapStopSequencesToWire } from "./map-stop-sequences.js";
+export { serializeIntegrationTypeKey } from "./serialize-integration-type-key.js";
 export type { MappedStopSequences } from "./map-stop-sequences.js";
 export { mapTextMessageContentToWire, mapWireTextToDomain } from "./map-text-message-content.js";
 export { mapTemperatureToWire } from "./map-temperature.js";
