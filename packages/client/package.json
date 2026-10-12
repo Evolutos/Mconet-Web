@@ -27,6 +27,7 @@
   },
   "dependencies": {
     "@evolutos/mconet-core-domain": "workspace:*",
+    "@evolutos/mconet-core-runtime": "workspace:*",
     "@evolutos/mconet-core-spi": "workspace:*"
   }
 }
