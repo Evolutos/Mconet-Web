@@ -45,6 +45,16 @@ importers:
         specifier: 4.1.11
         version: 4.1.11(@types/node@20.19.43)(@vitest/browser-playwright@4.1.11)(@vitest/coverage-v8@4.1.11)(vite@8.3.2(@types/node@20.19.43))
 
+  examples/browser-bff:
+    dependencies:
+      '@evolutos/mconet-client':
+        specifier: workspace:*
+        version: link:../../packages/client
+    devDependencies:
+      vite:
+        specifier: 8.3.2
+        version: 8.3.2
+
   packages/auth-basic:
     dependencies:
       '@evolutos/mconet-core-domain':
