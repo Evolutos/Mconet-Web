@@ -1,0 +1,22 @@
+{
+  "name": "@evolutos/example-browser-direct-ephemeral-token",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Browser example that calls a provider with a short-lived token only when CORS allows it.",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build"
+  },
+  "dependencies": {
+    "@evolutos/mconet-auth-basic": "workspace:*",
+    "@evolutos/mconet-client": "workspace:*",
+    "@evolutos/mconet-core-domain": "workspace:*",
+    "@evolutos/mconet-core-spi": "workspace:*",
+    "@evolutos/mconet-integration-openai-compatible": "workspace:*"
+  },
+  "devDependencies": {
+    "vite": "8.3.2"
+  },
+  "license": "UNLICENSED"
+}
