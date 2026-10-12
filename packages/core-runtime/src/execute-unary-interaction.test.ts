@@ -689,6 +689,18 @@ it("releases the response and context when response parsing fails", async () => 
   expect(released).toEqual(["response", "context"]);
 });
 
+it("uses the interaction encoder instead of a client encoder", async () => {
+  const marker = encodingEncoder();
+  const names = await encodeWith({
+    interactionComponent: marker,
+    clientComponent: marker,
+    integrationComponents: [marker],
+    sdkDefaultComponent: marker,
+  });
+
+  expect(names).toEqual(["interaction"]);
+});
+
 function unusedAdapter(): TaskProtocolAdapter {
   const fail = (): never => {
     throw new Error("validation failure reached the adapter");
@@ -734,6 +746,100 @@ function passThroughHandler(): AuthorizationHandler {
     supports: () => true,
     apply: async ({ request: authorizedRequest }) => authorizedRequest,
   };
+}
+
+function namedEncoder(name: string, names: string[]): PayloadEncoder {
+  return {
+    descriptor: {
+      name,
+      version: "1.0.0",
+      capabilities: new Set(),
+      source: "application",
+      typeContract: { inputTypeId: requestType, outputTypeId: bytesType },
+    },
+    encode: async () => {
+      names.push(name);
+      return { kind: "bytes", bytes: new Uint8Array([1]) };
+    },
+  };
+}
+
+/**
+ * Runs the pipeline until decoding fails and records which encoder tier ran.
+ *
+ * The supplied encoders are presence markers. Each present tier is replaced
+ * with an encoder that records that tier name, so the result shows priority
+ * rather than which marker instance was retained.
+ *
+ * @param payloadEncoder Tier markers. An omitted tier is absent from selection.
+ * @returns The tier names whose encode method ran, in call order.
+ */
+async function encodeWith(
+  payloadEncoder: Parameters<typeof executeUnaryInteraction>[0]["payloadEncoder"],
+): Promise<readonly string[]> {
+  const names: string[] = [];
+  const tiers = {
+    interactionComponent:
+      payloadEncoder.interactionComponent === undefined
+        ? undefined
+        : namedEncoder("interaction", names),
+    clientComponent:
+      payloadEncoder.clientComponent === undefined ? undefined : namedEncoder("client", names),
+    integrationComponents: payloadEncoder.integrationComponents.map(() =>
+      namedEncoder("plugin", names),
+    ),
+    sdkDefaultComponent:
+      payloadEncoder.sdkDefaultComponent === undefined ? undefined : namedEncoder("sdk", names),
+  };
+  const response: TransportResponse = {
+    metadata: { outcome: "success", headers: [], extensions: {}, mediaType: json },
+    body: new Uint8Array([3]),
+  };
+  const transport = new MockTransport({
+    descriptor: {
+      name: "mock-transport",
+      version: "1.0.0",
+      capabilities: new Set(),
+      source: "application",
+      typeContract: {
+        inputTypeId: bytesType,
+        outputTypeId: bytesType,
+        outputMediaTypes: [json],
+      },
+    },
+    response,
+  });
+  await expect(
+    executeUnaryInteraction({
+      context: createInteractionContext({ request: createRequest() }),
+      mode: { id: "unary" },
+      clientConfiguration: {},
+      sdkResourceLimits: limits,
+      adapter: planningAdapter(),
+      authorizationHandlers: [passThroughHandler()],
+      payloadEncoder: {
+        integrationComponents: tiers.integrationComponents,
+        ...(tiers.interactionComponent === undefined
+          ? {}
+          : { interactionComponent: tiers.interactionComponent }),
+        ...(tiers.clientComponent === undefined ? {} : { clientComponent: tiers.clientComponent }),
+        ...(tiers.sdkDefaultComponent === undefined
+          ? {}
+          : { sdkDefaultComponent: tiers.sdkDefaultComponent }),
+      },
+      successPayloadDecoder: {
+        interactionComponent: idleDecoder("decoder", responseType, [json]),
+        integrationComponents: [],
+      },
+      errorPayloadDecoder: {
+        interactionComponent: idleDecoder("error-decoder", "protocol.error"),
+        integrationComponents: [],
+      },
+      transport: { interactionComponent: transport, integrationComponents: [] },
+      interactionId: "interaction-priority",
+    }),
+  ).rejects.toMatchObject({ code: "decoding_failed" });
+  return names;
 }
 
 function encodingEncoder(): PayloadEncoder {
