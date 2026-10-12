@@ -24,6 +24,7 @@ export { scheduleCapabilityValidation } from "./schedule-capability-validation.j
 export { freezeExecutionSnapshot } from "./freeze-execution-snapshot.js";
 export { scheduleBuildRequest } from "./schedule-build-request.js";
 export { scheduleEncodePayload } from "./schedule-encode-payload.js";
+export { schedulePreAuthorizationSnapshot } from "./schedule-pre-authorization-snapshot.js";
 export { resolveInteractionConfiguration } from "./resolve-interaction-configuration.js";
 export { resolveInteractionDeadline } from "./resolve-interaction-deadline.js";
 export { resolveInteractionSignal } from "./resolve-interaction-signal.js";
