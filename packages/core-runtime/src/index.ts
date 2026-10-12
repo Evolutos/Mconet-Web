@@ -34,6 +34,7 @@ export { resolveSingleComponent } from "./resolve-single-component.js";
 export { selectErrorPayloadDecoder } from "./select-error-payload-decoder.js";
 export { selectSuccessPayloadDecoder } from "./select-success-payload-decoder.js";
 export { validateComponentTypeConnection } from "./validate-component-type-connection.js";
+export { scheduleTypeContractValidation } from "./schedule-type-contract-validation.js";
 export { validateR1Interaction } from "./validate-r1-interaction.js";
 export { validateR1PlanScope } from "./validate-r1-plan-scope.js";
 export type { InteractionOptionsData } from "./interaction-options-data.js";
