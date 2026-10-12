@@ -16,8 +16,9 @@
  * generic service-error mapping, service-error dispatch, and integration type
  * keys, integration bindings, type-key serialization, the type table, and
  * exact type matching, responsibility-chain matching, and the unsupported
- * integration error, and the default binding factory. Protocol fixtures stay
- * out of this entry until their own step adds them.
+ * integration error, the default binding factory, and protocol request
+ * fixtures. Success fixtures stay out of this entry until their own step adds
+ * them.
  */
 export { OpenAIChatCompletionChoiceDTO } from "./openai-chat-completion-choice-dto.js";
 export { OpenAIChatCompletionErrorDTO } from "./openai-chat-completion-error-dto.js";
@@ -37,6 +38,13 @@ export {
 } from "./create-default-openai-chat-binding.js";
 export type { DefaultOpenAIChatBindingRoles } from "./create-default-openai-chat-binding.js";
 export { createOpenAIChatCompletionAdapter } from "./openai-chat-completion-adapter.js";
+export {
+  createOpenAIChatFixtureRequest,
+  openAIChatFixtureMode,
+  openAIChatFixturePlan,
+  openAIChatFixturePolicy,
+  openAIChatFixtureRequestBody,
+} from "./openai-chat-request.fixture.js";
 export { mapAuthenticationError } from "./map-authentication-error.js";
 export { mapChoicesToMessageDocument } from "./map-choices.js";
 export { mapContentFilterError, matchesContentPolicyError } from "./map-content-filter-error.js";
