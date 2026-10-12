@@ -17,8 +17,8 @@
  * keys, integration bindings, type-key serialization, the type table, and
  * exact type matching, responsibility-chain matching, and the unsupported
  * integration error, the default binding factory, and protocol request
- * fixtures. Success fixtures stay out of this entry until their own step adds
- * them.
+ * fixtures, and protocol success fixtures. Error fixtures stay out of this
+ * entry until their own step adds them.
  */
 export { OpenAIChatCompletionChoiceDTO } from "./openai-chat-completion-choice-dto.js";
 export { OpenAIChatCompletionErrorDTO } from "./openai-chat-completion-error-dto.js";
@@ -45,6 +45,12 @@ export {
   openAIChatFixturePolicy,
   openAIChatFixtureRequestBody,
 } from "./openai-chat-request.fixture.js";
+export {
+  openAIChatFixtureParsedResponse,
+  openAIChatFixtureSuccessBody,
+  openAIChatFixtureSuccessMetadata,
+  openAIChatFixtureSuccessPayload,
+} from "./openai-chat-success.fixture.js";
 export { mapAuthenticationError } from "./map-authentication-error.js";
 export { mapChoicesToMessageDocument } from "./map-choices.js";
 export { mapContentFilterError, matchesContentPolicyError } from "./map-content-filter-error.js";
