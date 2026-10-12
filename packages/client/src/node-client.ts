@@ -4,8 +4,9 @@ import { createOpenAIChatCompletionAdapter } from "@evolutos/mconet-integration-
 import { NodeFetchTransport } from "@evolutos/mconet-transport-fetch-node";
 
 import { assembleDefaultClient, type DefaultClientInput } from "./create-default-client.js";
-import type { OpenAICompatibleClientInput } from "./openai-compatible-client-input.js";
 import type { DefaultModelClient } from "./default-model-client.js";
+import { createOpenAICompatibleComponents } from "./openai-compatible-components.js";
+import type { OpenAICompatibleClientInput } from "./openai-compatible-client-input.js";
 
 /**
  * Creates the Node.js client.
@@ -29,10 +30,11 @@ export function createDefaultClient(input: DefaultClientInput): DefaultModelClie
 }
 
 /**
- * Composes the chat-completions adapter with the Node JSON and Fetch client.
+ * Composes the chat-completions adapter with the Node Fetch client.
  *
- * This composition lives beside the Node transport so the browser OpenAI
- * factory is not imported into the Node entry.
+ * The protocol-port codecs match the browser factory. This composition lives
+ * beside the Node transport so the browser OpenAI factory is not imported
+ * into the Node entry.
  *
  * @param input Default target and service access.
  * @returns A client whose adapter is the chat-completions adapter.
@@ -46,5 +48,6 @@ export function createOpenAICompatibleClient(
       defaultTarget: input.target,
       defaultServiceAccess: input.serviceAccess,
     },
+    components: createOpenAICompatibleComponents(),
   });
 }

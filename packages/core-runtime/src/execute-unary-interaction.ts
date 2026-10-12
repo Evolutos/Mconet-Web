@@ -25,6 +25,7 @@ import type {
   TaskProtocolAdapter,
   Transport,
   TransportRequest,
+  TransportResponseMetadata,
 } from "@evolutos/mconet-core-spi";
 
 import { captureUnknownInteractionFailure } from "./capture-unknown-interaction-failure.js";
@@ -48,7 +49,9 @@ import { scheduleComponentSelection } from "./schedule-component-selection.js";
 import { scheduleCredentialRead } from "./schedule-credential-read.js";
 import { scheduleDecodePayload } from "./schedule-decode-payload.js";
 import { scheduleEncodePayload } from "./schedule-encode-payload.js";
+import { scheduleErrorDecoderBranch } from "./schedule-error-decoder-branch.js";
 import { scheduleModelOutputAssembly } from "./schedule-model-output-assembly.js";
+import { scheduleParseError } from "./schedule-parse-error.js";
 import { scheduleParseResponse } from "./schedule-parse-response.js";
 import { schedulePreAuthorizationEvent } from "./schedule-pre-authorization-event.js";
 import { schedulePreAuthorizationSnapshot } from "./schedule-pre-authorization-snapshot.js";
@@ -339,6 +342,17 @@ async function runUnaryInteraction(
     }),
     "transport",
   );
+  // A service error is a response body. Decode it and let the adapter classify
+  // the status. Transport failures are not service payloads and stay here.
+  if (sent.metadata.outcome === "service_error") {
+    throw await readServiceError({
+      adapter: snapshot.taskProtocolAdapter,
+      decoder: snapshot.errorPayloadDecoder,
+      metadata: sent.metadata,
+      bytes: sent.body,
+      signal,
+    });
+  }
   if (sent.metadata.outcome !== "success") {
     throw new ModelInteractionError({
       message: "The transport outcome was not a successful response.",
@@ -402,6 +416,57 @@ async function runUnaryInteraction(
     result: output,
   });
   return output;
+}
+
+/**
+ * Decodes a service-error body and returns the adapter's classified error.
+ *
+ * The error decoder was fixed before I/O. This function does not choose a
+ * different decoder or treat the body as a successful task result.
+ *
+ * @param input Adapter, error decoder, response metadata, body, and cancellation signal.
+ * @returns The classified interaction error.
+ */
+async function readServiceError(input: {
+  readonly adapter: TaskProtocolAdapter;
+  readonly decoder: PayloadDecoder;
+  readonly metadata: TransportResponseMetadata;
+  readonly bytes: Uint8Array;
+  readonly signal: AbortSignal;
+}): Promise<ModelInteractionError> {
+  const decoder = scheduleErrorDecoderBranch({
+    outcome: "service_error",
+    errorPayloadDecoder: input.decoder,
+  });
+  if (decoder === undefined) {
+    throw new ModelInteractionError({
+      message: "The error decoder branch did not select the pre-fixed decoder.",
+      category: "invalid_component_configuration",
+      phase: "decoding",
+      code: "missing_error_decoder",
+      diagnostics: [],
+    });
+  }
+  requireValue(
+    validateResponseContentType({
+      ...(input.metadata.mediaType === undefined ? {} : { mediaType: input.metadata.mediaType }),
+      decoder,
+    }),
+    "decoding",
+  );
+  const decoded = requireValue(
+    await scheduleDecodePayload({
+      decoder,
+      bytes: input.bytes,
+      context: { signal: input.signal },
+    }),
+    "decoding",
+  );
+  return scheduleParseError({
+    adapter: input.adapter,
+    payload: decoded,
+    metadata: input.metadata,
+  });
 }
 
 /**

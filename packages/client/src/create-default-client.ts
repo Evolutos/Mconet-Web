@@ -44,7 +44,8 @@ function assertRole(component: RuntimeComponent, methodName: string): void {
   }
 }
 
-const sdkResourceLimits: ResolvedInteractionResourceLimits = {
+/** Response, error, and frame limits used when a call does not override them. */
+export const sdkResourceLimits: ResolvedInteractionResourceLimits = {
   maxResponseBodyBytes: 16_777_216,
   maxStreamingErrorBodyBytes: 1_048_576,
   maxFrameBytes: 2_097_152,
