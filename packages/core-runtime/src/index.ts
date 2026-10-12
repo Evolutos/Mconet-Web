@@ -39,6 +39,8 @@ export { scheduleParseError } from "./schedule-parse-error.js";
 export { scheduleModelOutputAssembly } from "./schedule-model-output-assembly.js";
 export { captureUnknownInteractionFailure } from "./capture-unknown-interaction-failure.js";
 export type { InteractionTerminalState } from "./interaction-terminal-state.js";
+export { createInteractionTermination } from "./create-interaction-termination.js";
+export type { InteractionTermination } from "./create-interaction-termination.js";
 export { resolveInteractionConfiguration } from "./resolve-interaction-configuration.js";
 export { resolveInteractionDeadline } from "./resolve-interaction-deadline.js";
 export { resolveInteractionSignal } from "./resolve-interaction-signal.js";
