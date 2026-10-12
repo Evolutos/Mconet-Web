@@ -27,6 +27,7 @@ import type {
 } from "@evolutos/mconet-core-spi";
 
 import type { ModelClient } from "./model-client.js";
+import { redactRawResponse } from "./redact-raw-response.js";
 import type { RawResponseSnapshot } from "./raw-response-snapshot.js";
 
 /** R1 executes one request and returns one output. There is no second mode here. */
@@ -274,7 +275,7 @@ function captureResponse(
       }
       const bytes = new Uint8Array(response.body.byteLength);
       bytes.set(response.body);
-      captured.snapshot = { bytes, metadata: response.metadata };
+      captured.snapshot = redactRawResponse({ bytes, metadata: response.metadata });
       return response;
     },
   };

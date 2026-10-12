@@ -16,4 +16,5 @@ export { DefaultModelClient } from "./default-model-client.js";
 export type { DefaultModelClientDependencies } from "./default-model-client.js";
 export type { ModelClient } from "./model-client.js";
 export type { RawResponseSnapshot } from "./raw-response-snapshot.js";
+export { redactRawResponse } from "./redact-raw-response.js";
 export type { ModelInteractor } from "./model-interactor.js";
