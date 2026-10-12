@@ -1,0 +1,15 @@
+{
+  "name": "@evolutos/example-node-server",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Node server example whose vendor credential stays in the server environment.",
+  "type": "module",
+  "dependencies": {
+    "@evolutos/mconet-auth-basic": "workspace:*",
+    "@evolutos/mconet-client": "workspace:*",
+    "@evolutos/mconet-core-domain": "workspace:*",
+    "@evolutos/mconet-core-spi": "workspace:*",
+    "@evolutos/mconet-integration-openai-compatible": "workspace:*"
+  },
+  "license": "UNLICENSED"
+}

@@ -77,6 +77,24 @@ importers:
         specifier: 8.3.2
         version: 8.3.2
 
+  examples/node-server:
+    dependencies:
+      '@evolutos/mconet-auth-basic':
+        specifier: workspace:*
+        version: link:../../packages/auth-basic
+      '@evolutos/mconet-client':
+        specifier: workspace:*
+        version: link:../../packages/client
+      '@evolutos/mconet-core-domain':
+        specifier: workspace:*
+        version: link:../../packages/core-domain
+      '@evolutos/mconet-core-spi':
+        specifier: workspace:*
+        version: link:../../packages/core-spi
+      '@evolutos/mconet-integration-openai-compatible':
+        specifier: workspace:*
+        version: link:../../packages/integration-openai-compatible
+
   packages/auth-basic:
     dependencies:
       '@evolutos/mconet-core-domain':
