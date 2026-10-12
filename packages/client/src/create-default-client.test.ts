@@ -2,7 +2,7 @@
 
 import { createServer } from "node:http";
 
-import type { ParsedTaskResponse } from "@evolutos/mconet-core-domain";
+import { ModelInteractionError, type ParsedTaskResponse } from "@evolutos/mconet-core-domain";
 import type {
   ProtocolExecutionPlan,
   TaskProtocolAdapter,
@@ -58,6 +58,26 @@ it("rejects a transport that has no send method", () => {
       components: { transport },
     }),
   ).toThrow(TypeError);
+});
+
+it("rejects a transport whose byte port does not match the JSON encoder", () => {
+  const transport = {
+    descriptor: {
+      name: "transport",
+      version: "1.0.0",
+      capabilities: new Set(),
+      source: "application" as const,
+      typeContract: { inputTypeId: "codec.other", outputTypeId: "codec.other" },
+    },
+    send: () => Promise.reject(new Error("unused")),
+  } as unknown as Transport;
+
+  expect(() =>
+    createDefaultClient({
+      adapter: createAdapter("https://example.test"),
+      components: { transport },
+    }),
+  ).toThrow(ModelInteractionError);
 });
 
 function listen(server: ReturnType<typeof createServer>): Promise<string> {

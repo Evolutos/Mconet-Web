@@ -7,7 +7,10 @@ import {
   JsonSuccessPayloadDecoder,
 } from "@evolutos/mconet-codec-json";
 import type { ResolvedInteractionResourceLimits } from "@evolutos/mconet-core-domain";
-import type { ModelClientConfigurationData } from "@evolutos/mconet-core-runtime";
+import {
+  validateComponentTypeConnection,
+  type ModelClientConfigurationData,
+} from "@evolutos/mconet-core-runtime";
 import type {
   RuntimeComponent,
   RuntimeComponents,
@@ -97,6 +100,17 @@ export function createDefaultClient(input: DefaultClientInput): DefaultModelClie
   for (const handler of authorizationHandlers) {
     assertRole(handler, "apply");
   }
+  const encoderContract = payloadEncoder.descriptor.typeContract ?? {};
+  const transportContract = transport.descriptor.typeContract ?? {};
+  validateComponentTypeConnection({ producer: encoderContract, consumer: transportContract });
+  validateComponentTypeConnection({
+    producer: transportContract,
+    consumer: successPayloadDecoder.descriptor.typeContract ?? {},
+  });
+  validateComponentTypeConnection({
+    producer: transportContract,
+    consumer: errorPayloadDecoder.descriptor.typeContract ?? {},
+  });
   return new DefaultModelClient({
     clientConfiguration: input.clientConfiguration ?? {},
     sdkResourceLimits,
