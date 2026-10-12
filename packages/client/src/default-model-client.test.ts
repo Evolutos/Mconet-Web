@@ -119,6 +119,23 @@ it("releases an SDK-created resource once", async () => {
   expect(calls).toEqual(["sdk"]);
 });
 
+it("does not release an injected resource", async () => {
+  const calls: string[] = [];
+  const sdkResource = closableResource("sdk", calls);
+  const injected = closableResource("injected", calls);
+  const client = new DefaultModelClient({
+    clientConfiguration: {},
+    sdkResourceLimits: limits,
+    authorizationHandlers: [],
+    transport: injected,
+    sdkCreatedComponents: new Set([sdkResource]),
+  });
+
+  await client.close();
+
+  expect(calls).toEqual(["sdk"]);
+});
+
 it("rejects a new request after close before transport", async () => {
   let sends = 0;
   const client = new DefaultModelClient({
@@ -149,6 +166,22 @@ it("rejects a new request after close before transport", async () => {
   });
   expect(sends).toBe(0);
 });
+
+function closableResource(name: string, calls: string[]) {
+  return {
+    descriptor: {
+      name,
+      version: "1.0.0",
+      capabilities: new Set<string>(),
+      source: "builtin" as const,
+    },
+    close: () => {
+      calls.push(name);
+      return Promise.resolve();
+    },
+    send: () => Promise.reject(new Error("unused")),
+  };
+}
 
 function createEncoder(): PayloadEncoder {
   return {
