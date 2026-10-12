@@ -32,7 +32,7 @@ it("does not normalize Unicode", () => {
 });
 
 it("rejects non-text content with a stable code and no payload", () => {
-  const secret = "payload-secret";
+  const secret = "TEST_ONLY_DO_NOT_USE";
   const content: UnknownMessageContent = {
     id: "c2",
     kind: "content.json",

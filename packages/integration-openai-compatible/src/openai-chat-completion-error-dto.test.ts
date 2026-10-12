@@ -145,7 +145,7 @@ it("freezes the error", () => {
 });
 
 it("does not copy the service message into a protocol failure", () => {
-  const secret = "secret-service-text";
+  const secret = "TEST_ONLY_DO_NOT_USE";
   const message = failureMessage({ message: [secret] });
 
   expect(message).not.toContain(secret);

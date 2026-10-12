@@ -84,7 +84,7 @@ it("returns the authorized request after one apply call", async () => {
 });
 
 it("rejects an injected header without sending or copying the value", async () => {
-  const secret = "header-secret";
+  const secret = "TEST_ONLY_DO_NOT_USE";
   const transport = idleTransport();
   const result = await scheduleApplyAuthorization({
     handler: handler(async () => ({

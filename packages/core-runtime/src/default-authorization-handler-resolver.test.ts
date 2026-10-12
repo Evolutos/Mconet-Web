@@ -10,7 +10,7 @@ import {
   defaultAuthorizationHandlerResolverDescriptor,
 } from "./default-authorization-handler-resolver.js";
 
-const authorization = { kind: "authorization.none", token: "must-stay-out-of-the-error" };
+const authorization = { kind: "authorization.none", token: "TEST_ONLY_DO_NOT_USE" };
 
 function unsupportedHandler(): AuthorizationHandler {
   return {
@@ -44,8 +44,8 @@ it("reports a standard authentication error when no handler matches", () => {
       phase: "authorization",
       code: "authorization_handler_not_found",
     });
-    expect(String(error)).not.toContain("must-stay-out-of-the-error");
-    expect(JSON.stringify(error)).not.toContain("must-stay-out-of-the-error");
+    expect(String(error)).not.toContain("TEST_ONLY_DO_NOT_USE");
+    expect(JSON.stringify(error)).not.toContain("TEST_ONLY_DO_NOT_USE");
   }
   expect(handlers).toEqual(handlersBefore);
   expect(authorization.kind).toBe("authorization.none");
@@ -94,8 +94,8 @@ it("rejects multiple matching handlers as ambiguous", () => {
         ],
       });
       expect(error).not.toMatchObject({ code: "authorization_handler_not_found" });
-      expect(String(error)).not.toContain("must-stay-out-of-the-error");
-      expect(JSON.stringify(error)).not.toContain("must-stay-out-of-the-error");
+      expect(String(error)).not.toContain("TEST_ONLY_DO_NOT_USE");
+      expect(JSON.stringify(error)).not.toContain("TEST_ONLY_DO_NOT_USE");
     }
   }
   expect(reversed[0]).toBe(second);

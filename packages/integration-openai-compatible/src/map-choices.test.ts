@@ -64,7 +64,7 @@ it("rejects a choice that was not parsed as a choice", () => {
 });
 
 it("rejects a duplicated choice index without copying message text", () => {
-  const secret = "choice-secret";
+  const secret = "TEST_ONLY_DO_NOT_USE";
 
   let caught: unknown;
   try {

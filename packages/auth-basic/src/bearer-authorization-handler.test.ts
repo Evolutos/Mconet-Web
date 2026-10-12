@@ -10,7 +10,7 @@ import { bearerAuthorizationKind } from "./bearer-authorization.js";
 import { FixedCredentialSource } from "./fixed-credential-source.js";
 import { noAuthorizationKind } from "./no-authorization.js";
 
-const token = "bearer-credential-token";
+const token = "TEST_ONLY_DO_NOT_USE";
 
 const context: AuthorizationContext = {
   interactionId: "interaction.test",

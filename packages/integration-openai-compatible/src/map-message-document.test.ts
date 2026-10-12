@@ -79,7 +79,7 @@ it("returns an empty list when the tree has no entries", () => {
 });
 
 it("does not copy document metadata or extensions into messages", () => {
-  const secret = "document-secret";
+  const secret = "TEST_ONLY_DO_NOT_USE";
   const messages = mapMessageDocumentToWire(
     document(group("root", [entry("turn-1", "message.user", ["visible"])]), {
       metadata: { note: secret },
@@ -92,7 +92,7 @@ it("does not copy document metadata or extensions into messages", () => {
 });
 
 it("rejects a value that is not a message document", () => {
-  const secret = "shape-secret";
+  const secret = "TEST_ONLY_DO_NOT_USE";
   const lookalike = {
     version: "1.0",
     purpose: "input",
@@ -116,7 +116,7 @@ it("rejects a value that is not a message document", () => {
 });
 
 it("rejects non-text content without returning earlier turns", () => {
-  const secret = "payload-secret";
+  const secret = "TEST_ONLY_DO_NOT_USE";
   const tree = document(
     group("root", [
       entry("turn-1", "message.user", ["keep"]),

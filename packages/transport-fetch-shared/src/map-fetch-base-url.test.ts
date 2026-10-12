@@ -109,7 +109,7 @@ it.each([
 });
 
 it("rejects user information and query text without copying either secret", () => {
-  const secret = "base-url-secret-value";
+  const secret = "TEST_ONLY_DO_NOT_USE";
   const urls = [
     absoluteUrl(`https://user:${secret}@models.example.test/v1`),
     absoluteUrl(`https://models.example.test/v1?token=${secret}`),

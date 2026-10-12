@@ -55,7 +55,7 @@ it("maps each standard role independently of content order", () => {
 });
 
 it("does not write relations, metadata, or extensions onto the wire message", () => {
-  const secret = "relation-secret";
+  const secret = "TEST_ONLY_DO_NOT_USE";
   const message = mapMessageEntryToWire(
     entry("message.user", ["visible"], {
       relations: [{ sourceId: "entry-1", targetId: "other", type: "follows", metadata: {} }],
@@ -70,7 +70,7 @@ it("does not write relations, metadata, or extensions onto the wire message", ()
 });
 
 it("rejects an entry that is not a message leaf", () => {
-  const secret = "shape-secret";
+  const secret = "TEST_ONLY_DO_NOT_USE";
   const lookalike = {
     id: "entry-1",
     kind: "message.entry",
@@ -112,7 +112,7 @@ it("rejects an unsupported role without using semantic or rawValue", () => {
 });
 
 it("rejects non-text content before producing a message", () => {
-  const secret = "payload-secret";
+  const secret = "TEST_ONLY_DO_NOT_USE";
   const mixed = entry("message.user", ["keep"], {
     content: [
       textContent("content-1", "keep"),

@@ -7,7 +7,7 @@ import { startNodeFetchTestServer } from "./node-fetch-test-server.js";
 import { NodeFetchTransport } from "./node-fetch-transport.js";
 
 /** Response header value that must not appear on a read error. */
-const secret = "node-truncated-secret";
+const secret = "TEST_ONLY_DO_NOT_USE";
 
 it("normalizes a truncated Node response stream as a body read failure", async () => {
   const server = await startNodeFetchTestServer((request, response) => {

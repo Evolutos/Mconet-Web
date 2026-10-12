@@ -7,7 +7,7 @@ import { startNodeFetchTestServer } from "./node-fetch-test-server.js";
 import { NodeFetchTransport } from "./node-fetch-transport.js";
 
 /** Authorization value that must not reach another origin or an error. */
-const secret = "node-redirect-secret";
+const secret = "TEST_ONLY_DO_NOT_USE";
 
 it("does not send authorization to another origin when Fetch is redirected", async () => {
   let redirectedRequests = 0;

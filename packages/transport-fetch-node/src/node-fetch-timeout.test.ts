@@ -7,7 +7,7 @@ import { startNodeFetchTestServer } from "./node-fetch-test-server.js";
 import { NodeFetchTransport } from "./node-fetch-transport.js";
 
 /** Header value that must not appear on a timeout error. */
-const secret = "node-deadline-secret";
+const secret = "TEST_ONLY_DO_NOT_USE";
 
 it("normalizes an expired in-flight Node fetch deadline as timeout", async () => {
   let requestClosed = false;

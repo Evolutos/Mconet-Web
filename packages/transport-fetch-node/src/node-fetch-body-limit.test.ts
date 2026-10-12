@@ -7,7 +7,7 @@ import { startNodeFetchTestServer } from "./node-fetch-test-server.js";
 import { NodeFetchTransport } from "./node-fetch-transport.js";
 
 /** Response header value that must not appear on a limit error. */
-const secret = "node-body-limit-secret";
+const secret = "TEST_ONLY_DO_NOT_USE";
 
 it("cancels a Node response read as soon as the body crosses its limit", async () => {
   let trailingChunkWritten = false;
