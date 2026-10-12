@@ -28,6 +28,7 @@ export { schedulePreAuthorizationSnapshot } from "./schedule-pre-authorization-s
 export { schedulePreAuthorizationEvent } from "./schedule-pre-authorization-event.js";
 export { scheduleAuthorizationHandlerResolution } from "./schedule-authorization-handler-resolution.js";
 export { scheduleCredentialRead } from "./schedule-credential-read.js";
+export { scheduleApplyAuthorization } from "./schedule-apply-authorization.js";
 export { resolveInteractionConfiguration } from "./resolve-interaction-configuration.js";
 export { resolveInteractionDeadline } from "./resolve-interaction-deadline.js";
 export { resolveInteractionSignal } from "./resolve-interaction-signal.js";
