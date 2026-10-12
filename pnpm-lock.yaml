@@ -104,6 +104,18 @@ importers:
         specifier: workspace:*
         version: link:../../packages/core-spi
 
+  examples/custom-adapter:
+    dependencies:
+      '@evolutos/mconet-client':
+        specifier: workspace:*
+        version: link:../../packages/client
+      '@evolutos/mconet-core-domain':
+        specifier: workspace:*
+        version: link:../../packages/core-domain
+      '@evolutos/mconet-core-spi':
+        specifier: workspace:*
+        version: link:../../packages/core-spi
+
   packages/auth-basic:
     dependencies:
       '@evolutos/mconet-core-domain':

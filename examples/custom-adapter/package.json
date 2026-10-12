@@ -1,0 +1,13 @@
+{
+  "name": "@evolutos/example-custom-adapter",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Example of a direct adapter path that does not modify Core.",
+  "type": "module",
+  "dependencies": {
+    "@evolutos/mconet-client": "workspace:*",
+    "@evolutos/mconet-core-domain": "workspace:*",
+    "@evolutos/mconet-core-spi": "workspace:*"
+  },
+  "license": "UNLICENSED"
+}
