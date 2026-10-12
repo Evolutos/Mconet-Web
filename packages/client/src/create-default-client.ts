@@ -8,10 +8,11 @@ import {
 } from "@evolutos/mconet-codec-json";
 import type { ResolvedInteractionResourceLimits } from "@evolutos/mconet-core-domain";
 import type { ModelClientConfigurationData } from "@evolutos/mconet-core-runtime";
-import type { TaskProtocolAdapter } from "@evolutos/mconet-core-spi";
+import type { RuntimeComponents, TaskProtocolAdapter } from "@evolutos/mconet-core-spi";
 import { BrowserFetchTransport } from "@evolutos/mconet-transport-fetch-browser";
 
 import { DefaultModelClient } from "./default-model-client.js";
+import { mapClientComponents } from "./map-client-components.js";
 
 /**
  * Finite SDK byte limits used when a caller does not override a field.
@@ -36,6 +37,12 @@ export interface DefaultClientInput {
 
   /** Optional domain defaults stored on the client. */
   readonly clientConfiguration?: ModelClientConfigurationData;
+
+  /**
+   * Optional client-tier replacements for the JSON codecs, Fetch transport,
+   * or no-authorization handler. A per-call override is not accepted here.
+   */
+  readonly components?: RuntimeComponents;
 }
 
 /**
@@ -48,14 +55,26 @@ export interface DefaultClientInput {
  * @returns A client that can run one unary JSON exchange.
  */
 export function createDefaultClient(input: DefaultClientInput): DefaultModelClient {
+  const components = mapClientComponents(input.components);
   return new DefaultModelClient({
     clientConfiguration: input.clientConfiguration ?? {},
     sdkResourceLimits,
-    adapter: input.adapter,
-    authorizationHandlers: [new NoAuthorizationHandler()],
-    payloadEncoder: new JsonPayloadEncoder(),
-    successPayloadDecoder: new JsonSuccessPayloadDecoder(sdkResourceLimits.maxResponseBodyBytes),
-    errorPayloadDecoder: new JsonErrorPayloadDecoder(sdkResourceLimits.maxResponseBodyBytes),
-    transport: new BrowserFetchTransport({}),
+    adapter: components.adapter ?? input.adapter,
+    authorizationHandlers: components.authorizationHandlers ?? [new NoAuthorizationHandler()],
+    payloadEncoder: components.payloadEncoder ?? new JsonPayloadEncoder(),
+    successPayloadDecoder:
+      components.successPayloadDecoder ??
+      new JsonSuccessPayloadDecoder(sdkResourceLimits.maxResponseBodyBytes),
+    errorPayloadDecoder:
+      components.errorPayloadDecoder ??
+      new JsonErrorPayloadDecoder(sdkResourceLimits.maxResponseBodyBytes),
+    transport: components.transport ?? new BrowserFetchTransport({}),
+    ...(components.resolver === undefined ? {} : { resolver: components.resolver }),
+    ...(components.serviceAccessResolver === undefined
+      ? {}
+      : { serviceAccessResolver: components.serviceAccessResolver }),
+    ...(components.authorizationHandlerResolver === undefined
+      ? {}
+      : { authorizationHandlerResolver: components.authorizationHandlerResolver }),
   });
 }

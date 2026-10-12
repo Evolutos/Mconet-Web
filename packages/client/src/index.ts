@@ -10,6 +10,8 @@
  */
 export { ConversationTaskBuilder } from "@evolutos/mconet-core-domain";
 export { createDefaultClient } from "./create-default-client.js";
+export { mapClientComponents } from "./map-client-components.js";
+export type { ClientComponentSelection } from "./map-client-components.js";
 export { createOpenAICompatibleClient } from "./create-openai-compatible-client.js";
 export type { OpenAICompatibleClientInput } from "./create-openai-compatible-client.js";
 export type { DefaultClientInput } from "./create-default-client.js";
