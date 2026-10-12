@@ -133,7 +133,7 @@ export function assertSuitePassed(summary) {
 /**
  * Runs one Vitest config and writes a single JSON summary.
  *
- * @param {{ suite: string, config: string, files?: readonly string[] }} options Suite name, Vitest config, and optional file filter.
+ * @param {{ suite: string, config: string, files?: readonly string[], testNamePattern?: string }} options Suite name, Vitest config, optional file filter, and optional test-name filter.
  * @returns {Promise<SuiteReport>} Summary written under `.artifacts/reports`.
  */
 export async function runSuiteReport(options) {
@@ -152,6 +152,9 @@ export async function runSuiteReport(options) {
         options.config,
         "--reporter=json",
         `--outputFile=${rawReportPath}`,
+        ...(options.testNamePattern === undefined
+          ? []
+          : [`--testNamePattern=${options.testNamePattern}`]),
         ...(options.files ?? []),
       ],
       {
