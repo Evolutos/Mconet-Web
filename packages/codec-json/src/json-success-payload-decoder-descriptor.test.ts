@@ -19,7 +19,9 @@ it("publishes one builtin success decoder descriptor", () => {
   });
   expect(jsonSuccessPayloadDecoderDescriptor.capabilities.size).toBe(0);
   expect(jsonSuccessPayloadDecoderDescriptor.typeContract).toEqual({
+    inputTypeId: "codec.bytes",
     outputTypeId: "json.value",
+    inputMediaTypes: [{ type: "application", subtype: "json", parameters: {} }],
     outputMediaTypes: [{ type: "application", subtype: "json", parameters: {} }],
   });
 });

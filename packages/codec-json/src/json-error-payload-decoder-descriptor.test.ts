@@ -29,7 +29,9 @@ it("publishes one builtin error decoder descriptor", () => {
   expect(jsonErrorPayloadDecoderDescriptor.typeContract).toBe(jsonErrorPayloadDecoderTypeContract);
   expect(jsonErrorPayloadDecoderTypeContract).not.toBe(jsonSuccessPayloadDecoderTypeContract);
   expect(jsonErrorPayloadDecoderTypeContract).toEqual({
+    inputTypeId: "codec.bytes",
     outputTypeId: "json.value",
+    inputMediaTypes: [{ type: "application", subtype: "json", parameters: {} }],
     outputMediaTypes: [{ type: "application", subtype: "json", parameters: {} }],
   });
 });

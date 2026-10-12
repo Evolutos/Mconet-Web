@@ -25,6 +25,7 @@ it("publishes one builtin encoder descriptor", () => {
   );
   expect(jsonPayloadEncoderDescriptor.typeContract).toEqual({
     inputTypeId: "json.value",
+    outputTypeId: "codec.bytes",
     inputMediaTypes: [{ type: "application", subtype: "json", parameters: {} }],
   });
 });

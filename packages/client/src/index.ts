@@ -9,6 +9,8 @@
  * same task value as a literal. Platform transports stay out of this entry.
  */
 export { ConversationTaskBuilder } from "@evolutos/mconet-core-domain";
+export { createDefaultClient } from "./create-default-client.js";
+export type { DefaultClientInput } from "./create-default-client.js";
 export { conversationRequest } from "./conversation-request.js";
 export { interactWithText } from "./interact-with-text.js";
 export type { ConversationMessage, ConversationRequestInput } from "./conversation-request.js";

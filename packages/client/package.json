@@ -26,8 +26,11 @@
     "node": ">=20"
   },
   "dependencies": {
+    "@evolutos/mconet-auth-basic": "workspace:*",
+    "@evolutos/mconet-codec-json": "workspace:*",
     "@evolutos/mconet-core-domain": "workspace:*",
     "@evolutos/mconet-core-runtime": "workspace:*",
-    "@evolutos/mconet-core-spi": "workspace:*"
+    "@evolutos/mconet-core-spi": "workspace:*",
+    "@evolutos/mconet-transport-fetch-browser": "workspace:*"
   }
 }

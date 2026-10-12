@@ -56,6 +56,12 @@ importers:
 
   packages/client:
     dependencies:
+      '@evolutos/mconet-auth-basic':
+        specifier: workspace:*
+        version: link:../auth-basic
+      '@evolutos/mconet-codec-json':
+        specifier: workspace:*
+        version: link:../codec-json
       '@evolutos/mconet-core-domain':
         specifier: workspace:*
         version: link:../core-domain
@@ -65,6 +71,9 @@ importers:
       '@evolutos/mconet-core-spi':
         specifier: workspace:*
         version: link:../core-spi
+      '@evolutos/mconet-transport-fetch-browser':
+        specifier: workspace:*
+        version: link:../transport-fetch-browser
 
   packages/codec-json:
     dependencies:

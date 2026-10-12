@@ -37,11 +37,12 @@ const jsonMediaType: MediaType = {
  * The input type is the JSON value port, not a protocol or task identity.
  * Schema identity is omitted so an adapter may declare its own schema and still
  * connect. The media list contains only `application/json` without parameters;
- * a producer must emit that representation. This contract has no output port
- * because the encoder result is transport bytes rather than another JSON value.
+ * a producer must emit that representation. The output port is transport bytes
+ * so the runtime can connect this encoder to a Fetch transport.
  */
 export const jsonPayloadEncoderTypeContract: ComponentTypeContract = {
   inputTypeId: "json.value",
+  outputTypeId: "codec.bytes",
   inputMediaTypes: [jsonMediaType],
 };
 

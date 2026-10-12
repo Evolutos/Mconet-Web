@@ -29,11 +29,13 @@ const jsonMediaType: MediaType = {
  *
  * The output type matches the value identity this decoder returns. Schema
  * identity is omitted so a consumer can accept the provider error document
- * without adopting a protocol schema. The object is independent from the
- * success decoder contract even when the port facts are the same.
+ * without adopting a protocol schema. The input port is transport bytes of
+ * `application/json`. The object stays independent from the success contract.
  */
 export const jsonErrorPayloadDecoderTypeContract: ComponentTypeContract = {
+  inputTypeId: "codec.bytes",
   outputTypeId: "json.value",
+  inputMediaTypes: [jsonMediaType],
   outputMediaTypes: [jsonMediaType],
 };
 

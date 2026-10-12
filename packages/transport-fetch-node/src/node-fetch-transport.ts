@@ -1,7 +1,12 @@
 // Copyright © 2026 Mcont.
 
 import { ModelInteractionError } from "@evolutos/mconet-core-domain";
-import type { HeaderField, HeaderFields, OpenIdentifier } from "@evolutos/mconet-core-domain";
+import type {
+  HeaderField,
+  HeaderFields,
+  MediaType,
+  OpenIdentifier,
+} from "@evolutos/mconet-core-domain";
 import type {
   Transport,
   TransportContext,
@@ -34,11 +39,19 @@ import type {
 const MISSING_FETCH_CODE = "missing_fetch";
 
 /** Descriptive identity shared by every Node Fetch transport instance. */
+/** JSON media type this default transport declares on its output port. */
+const jsonMediaType: MediaType = { type: "application", subtype: "json", parameters: {} };
+
 const NODE_FETCH_TRANSPORT_DESCRIPTOR: Transport["descriptor"] = Object.freeze({
   name: "node-fetch-transport",
   version: "0.0.0",
   capabilities: new Set<OpenIdentifier>(),
   source: "builtin",
+  typeContract: Object.freeze({
+    inputTypeId: "codec.bytes",
+    outputTypeId: "codec.bytes",
+    outputMediaTypes: Object.freeze([jsonMediaType]),
+  }),
 });
 
 /**

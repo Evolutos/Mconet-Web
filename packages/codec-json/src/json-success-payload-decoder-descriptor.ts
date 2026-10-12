@@ -29,11 +29,12 @@ const jsonMediaType: MediaType = {
  *
  * The output type matches the value identity this decoder returns. Schema
  * identity is omitted so a consumer can accept the payload without adopting a
- * protocol schema. There is no input port: the decoder consumes bytes, and the
- * connected fact is the success payload it produces.
+ * protocol schema. The input port is transport bytes of `application/json`.
  */
 export const jsonSuccessPayloadDecoderTypeContract: ComponentTypeContract = {
+  inputTypeId: "codec.bytes",
   outputTypeId: "json.value",
+  inputMediaTypes: [jsonMediaType],
   outputMediaTypes: [jsonMediaType],
 };
 
