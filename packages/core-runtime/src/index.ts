@@ -20,6 +20,7 @@ export { determineComponentOwnership } from "./determine-component-ownership.js"
 export { mergeInteractionConfiguration } from "./merge-interaction-configuration.js";
 export { normalizeInteractionRequest } from "./normalize-interaction-request.js";
 export { resolveCapabilities } from "./resolve-capabilities.js";
+export { resolveInteractionConfiguration } from "./resolve-interaction-configuration.js";
 export { resolveRequiredCapabilities } from "./resolve-required-capabilities.js";
 export { resolveSingleComponent } from "./resolve-single-component.js";
 export { selectErrorPayloadDecoder } from "./select-error-payload-decoder.js";
