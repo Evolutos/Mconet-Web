@@ -712,6 +712,16 @@ it("uses the client encoder instead of a plugin encoder", async () => {
   expect(names).toEqual(["client"]);
 });
 
+it("uses a plugin encoder instead of the SDK default encoder", async () => {
+  const marker = encodingEncoder();
+  const names = await encodeWith({
+    integrationComponents: [marker],
+    sdkDefaultComponent: marker,
+  });
+
+  expect(names).toEqual(["plugin"]);
+});
+
 function unusedAdapter(): TaskProtocolAdapter {
   const fail = (): never => {
     throw new Error("validation failure reached the adapter");
