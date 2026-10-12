@@ -1,8 +1,9 @@
 // Copyright © 2026 Mcont.
 
-import type {
-  ParsedTaskResponse,
-  ResolvedInteractionResourceLimits,
+import {
+  ModelInteractionError,
+  type ParsedTaskResponse,
+  type ResolvedInteractionResourceLimits,
 } from "@evolutos/mconet-core-domain";
 import type {
   AuthorizationHandler,
@@ -89,6 +90,64 @@ it("resolves a second close without changing the closed client", async () => {
 
   await client.close();
   await expect(client.close()).resolves.toBeUndefined();
+});
+
+it("releases an SDK-created resource once", async () => {
+  const calls: string[] = [];
+  const sdkResource = {
+    descriptor: {
+      name: "sdk-transport",
+      version: "1.0.0",
+      capabilities: new Set<string>(),
+      source: "builtin" as const,
+    },
+    close: () => {
+      calls.push("sdk");
+      return Promise.resolve();
+    },
+  };
+  const client = new DefaultModelClient({
+    clientConfiguration: {},
+    sdkResourceLimits: limits,
+    authorizationHandlers: [],
+    sdkCreatedComponents: new Set([sdkResource]),
+  });
+
+  await client.close();
+  await client.close();
+
+  expect(calls).toEqual(["sdk"]);
+});
+
+it("rejects a new request after close before transport", async () => {
+  let sends = 0;
+  const client = new DefaultModelClient({
+    clientConfiguration: {},
+    sdkResourceLimits: limits,
+    authorizationHandlers: [],
+    transport: {
+      descriptor: {
+        name: "transport",
+        version: "1.0.0",
+        capabilities: new Set(),
+        source: "application",
+      },
+      send: () => {
+        sends += 1;
+        return Promise.reject(new Error("send"));
+      },
+    },
+  });
+
+  await client.close();
+
+  await expect(client.interact(createRequest())).rejects.toBeInstanceOf(ModelInteractionError);
+  await expect(client.interact(createRequest())).rejects.toMatchObject({
+    code: "client_closed",
+    category: "invalid_request",
+    phase: "validation",
+  });
+  expect(sends).toBe(0);
 });
 
 function createEncoder(): PayloadEncoder {

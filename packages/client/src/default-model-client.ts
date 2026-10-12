@@ -8,6 +8,7 @@ import {
 } from "@evolutos/mconet-core-domain";
 import {
   createInteractionContext,
+  determineComponentOwnership,
   executeUnaryInteraction,
   type ModelClientConfigurationData,
 } from "@evolutos/mconet-core-runtime";
@@ -19,6 +20,7 @@ import type {
   ModelIntegrationResolver,
   PayloadDecoder,
   PayloadEncoder,
+  RuntimeComponent,
   ServiceAccessResolver,
   TaskProtocolAdapter,
   Transport,
@@ -74,6 +76,12 @@ export interface DefaultModelClientDependencies {
 
   /** Monitors observed after the runtime assembles an output. */
   readonly monitors?: readonly InteractionMonitor[];
+
+  /**
+   * Instances the SDK constructed. Close releases only these identities.
+   * An omitted set means this client owns no SDK resource.
+   */
+  readonly sdkCreatedComponents?: ReadonlySet<RuntimeComponent>;
 }
 
 /**
@@ -81,8 +89,8 @@ export interface DefaultModelClientDependencies {
  *
  * The class does not encode, authorize, or send on its own. Call options are
  * placed into the runtime input; component priority stays inside the runtime.
- * Close moves the client to the closed state and can be repeated. SDK-owned
- * resource release remains a later step, so close does not dispose injected objects.
+ * Close moves the client to the closed state, can be repeated, and releases
+ * only the SDK-created component identities recorded for this client.
  */
 export class DefaultModelClient implements ModelClient {
   /** Reusable inputs. A call does not write back into this object. */
@@ -161,15 +169,29 @@ export class DefaultModelClient implements ModelClient {
   }
 
   /**
-   * Stops the client from accepting a new request.
+   * Stops new requests and releases SDK-created resources once.
    *
-   * A second call leaves the client closed and resolves. SDK-owned resource
-   * release is a later step, so this method does not dispose injected objects.
+   * A second call leaves the client closed and does not release again.
+   * A component that is not in the SDK-created set is left open, including
+   * when it has a close method.
    *
-   * @returns A settled promise.
+   * @returns A promise that settles after the first release attempt.
    */
   public async close(): Promise<void> {
+    if (!this.#acceptingRequests) {
+      return;
+    }
     this.#acceptingRequests = false;
+    const created = this.#dependencies.sdkCreatedComponents;
+    if (created === undefined) {
+      return;
+    }
+    for (const component of created) {
+      if (determineComponentOwnership({ component, sdkCreatedComponents: created }) !== "builtin") {
+        continue;
+      }
+      await closeSdkComponent(component);
+    }
   }
 }
 
@@ -187,6 +209,20 @@ export class DefaultModelClient implements ModelClient {
  *
  * @returns An error that does not include request or component data.
  */
+/**
+ * Releases one SDK-created component when it exposes close.
+ *
+ * Descriptor source is not consulted. A component without close stays as it is.
+ *
+ * @param component Instance recorded as SDK-created.
+ */
+async function closeSdkComponent(component: RuntimeComponent): Promise<void> {
+  if (!("close" in component) || typeof component.close !== "function") {
+    return;
+  }
+  await component.close();
+}
+
 function createClientClosedError(): ModelInteractionError {
   return new ModelInteractionError({
     message: "The client is closed and cannot accept a new request.",
