@@ -17,8 +17,8 @@
  * keys, integration bindings, type-key serialization, the type table, and
  * exact type matching, responsibility-chain matching, and the unsupported
  * integration error, the default binding factory, and protocol request
- * fixtures, protocol success fixtures, and protocol error fixtures. The
- * adapter contract stays out of this entry until its own step adds it.
+ * fixtures, protocol success fixtures, protocol error fixtures, and the
+ * adapter contract suite.
  */
 export { OpenAIChatCompletionChoiceDTO } from "./openai-chat-completion-choice-dto.js";
 export { OpenAIChatCompletionErrorDTO } from "./openai-chat-completion-error-dto.js";
