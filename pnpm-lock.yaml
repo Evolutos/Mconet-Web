@@ -71,6 +71,9 @@ importers:
       '@evolutos/mconet-core-spi':
         specifier: workspace:*
         version: link:../core-spi
+      '@evolutos/mconet-integration-openai-compatible':
+        specifier: workspace:*
+        version: link:../integration-openai-compatible
       '@evolutos/mconet-transport-fetch-browser':
         specifier: workspace:*
         version: link:../transport-fetch-browser
