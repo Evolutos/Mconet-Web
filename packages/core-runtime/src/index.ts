@@ -28,6 +28,7 @@ export { scheduleDirectAdapterBranch } from "./schedule-direct-adapter-branch.js
 export { scheduleIntegrationResolverBranch } from "./schedule-integration-resolver-branch.js";
 export { joinIntegrationBranches } from "./join-integration-branches.js";
 export { scheduleServiceAccessResolution } from "./schedule-service-access-resolution.js";
+export { schedulePreparePlan } from "./schedule-prepare-plan.js";
 export { resolveSingleComponent } from "./resolve-single-component.js";
 export { selectErrorPayloadDecoder } from "./select-error-payload-decoder.js";
 export { selectSuccessPayloadDecoder } from "./select-success-payload-decoder.js";
