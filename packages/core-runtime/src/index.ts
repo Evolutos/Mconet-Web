@@ -21,6 +21,7 @@ export { mergeInteractionConfiguration } from "./merge-interaction-configuration
 export { normalizeInteractionRequest } from "./normalize-interaction-request.js";
 export { resolveCapabilities } from "./resolve-capabilities.js";
 export { resolveInteractionConfiguration } from "./resolve-interaction-configuration.js";
+export { resolveInteractionSignal } from "./resolve-interaction-signal.js";
 export { resolveRequiredCapabilities } from "./resolve-required-capabilities.js";
 export { resolveSingleComponent } from "./resolve-single-component.js";
 export { selectErrorPayloadDecoder } from "./select-error-payload-decoder.js";
