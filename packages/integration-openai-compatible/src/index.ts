@@ -15,8 +15,9 @@
  * error mapping, rate-limit error mapping, content-filter error mapping, and
  * generic service-error mapping, service-error dispatch, and integration type
  * keys, integration bindings, type-key serialization, the type table, and
- * exact type matching, and responsibility-chain matching. A missing-integration
- * error stays out of this entry until its own step adds it.
+ * exact type matching, responsibility-chain matching, and the unsupported
+ * integration error. The default binding factory stays out of this entry until
+ * its own step adds it.
  */
 export { OpenAIChatCompletionChoiceDTO } from "./openai-chat-completion-choice-dto.js";
 export { OpenAIChatCompletionErrorDTO } from "./openai-chat-completion-error-dto.js";
@@ -70,6 +71,7 @@ export {
 } from "./map-system-message-role.js";
 export { mapStopSequencesToWire } from "./map-stop-sequences.js";
 export { serializeIntegrationTypeKey } from "./serialize-integration-type-key.js";
+export { resolveIntegrationBinding } from "./resolve-integration-binding.js";
 export type { MappedStopSequences } from "./map-stop-sequences.js";
 export { mapTextMessageContentToWire, mapWireTextToDomain } from "./map-text-message-content.js";
 export { mapTemperatureToWire } from "./map-temperature.js";
