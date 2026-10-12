@@ -631,6 +631,64 @@ it("releases the response and context when decoding fails", async () => {
   expect(released).toEqual(["response", "context"]);
 });
 
+it("releases the response and context when response parsing fails", async () => {
+  const released: string[] = [];
+  const response: TransportResponse = {
+    metadata: { outcome: "success", headers: [], extensions: {}, mediaType: json },
+    body: new Uint8Array([9]),
+  };
+  const transport = new MockTransport({
+    descriptor: {
+      name: "mock-transport",
+      version: "1.0.0",
+      capabilities: new Set(),
+      source: "application",
+      typeContract: {
+        inputTypeId: bytesType,
+        outputTypeId: bytesType,
+        outputMediaTypes: [json],
+      },
+    },
+    response,
+  });
+  const decoder = idleDecoder("decoder", responseType, [json]);
+  decoder.decode = async () => ({ typeId: responseType, value: { ok: true } });
+
+  await expect(
+    executeUnaryInteraction({
+      context: createInteractionContext({ request: createRequest() }),
+      mode: { id: "unary" },
+      clientConfiguration: {},
+      sdkResourceLimits: limits,
+      adapter: {
+        ...planningAdapter(),
+        parseResponse: () => {
+          throw new Error("parser-secret");
+        },
+      },
+      authorizationHandlers: [passThroughHandler()],
+      payloadEncoder: { interactionComponent: encodingEncoder(), integrationComponents: [] },
+      successPayloadDecoder: { interactionComponent: decoder, integrationComponents: [] },
+      errorPayloadDecoder: {
+        interactionComponent: idleDecoder("error-decoder", "protocol.error"),
+        integrationComponents: [],
+      },
+      transport: { interactionComponent: transport, integrationComponents: [] },
+      interactionId: "interaction-parsing",
+      releaseResponse: () => {
+        released.push("response");
+      },
+      releaseContext: () => {
+        released.push("context");
+      },
+    }),
+  ).rejects.toMatchObject({
+    code: "response_parsing_failed",
+    message: expect.not.stringMatching(/parser-secret/u),
+  });
+  expect(released).toEqual(["response", "context"]);
+});
+
 function unusedAdapter(): TaskProtocolAdapter {
   const fail = (): never => {
     throw new Error("validation failure reached the adapter");
