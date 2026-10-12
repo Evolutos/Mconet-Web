@@ -36,6 +36,7 @@ export { validateResponseContentType } from "./validate-response-content-type.js
 export { scheduleDecodePayload } from "./schedule-decode-payload.js";
 export { scheduleParseResponse } from "./schedule-parse-response.js";
 export { scheduleParseError } from "./schedule-parse-error.js";
+export { scheduleModelOutputAssembly } from "./schedule-model-output-assembly.js";
 export { resolveInteractionConfiguration } from "./resolve-interaction-configuration.js";
 export { resolveInteractionDeadline } from "./resolve-interaction-deadline.js";
 export { resolveInteractionSignal } from "./resolve-interaction-signal.js";
