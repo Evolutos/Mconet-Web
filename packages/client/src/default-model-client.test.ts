@@ -71,9 +71,15 @@ it("delegates interact to the unary runtime", async () => {
 
   const output = await client.interact(request);
   const again = await client.interact(request);
+  const captured = await client.interact(request, { includeRawResponse: true });
 
-  // Each open call enters the runtime once. The client does not store the first request.
-  expect(sends).toBe(2);
+  // Each open call enters the runtime once. Raw bytes stay off unless requested.
+  expect(sends).toBe(3);
+  expect(output).not.toHaveProperty("rawResponse");
+  expect(again).not.toHaveProperty("rawResponse");
+  expect(captured).toMatchObject({
+    rawResponse: { bytes: responseBytes, metadata: response.metadata },
+  });
   expect(decoded).toEqual(responseBytes);
   expect(output.status).toBe("completed");
   expect(again.status).toBe("completed");

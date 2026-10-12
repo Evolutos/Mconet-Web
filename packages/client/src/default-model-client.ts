@@ -27,6 +27,7 @@ import type {
 } from "@evolutos/mconet-core-spi";
 
 import type { ModelClient } from "./model-client.js";
+import type { RawResponseSnapshot } from "./raw-response-snapshot.js";
 
 /** R1 executes one request and returns one output. There is no second mode here. */
 const unaryMode = { id: "unary" } as const;
@@ -124,13 +125,22 @@ export class DefaultModelClient implements ModelClient {
    * @param options Optional per-call overrides.
    * @returns The output assembled by the runtime.
    */
-  public async interact(request: ModelRequest, options?: InteractionOptions): Promise<ModelOutput> {
+  public async interact(
+    request: ModelRequest,
+    options?: InteractionOptions,
+  ): Promise<ModelOutput & { readonly rawResponse?: RawResponseSnapshot }> {
     if (!this.#acceptingRequests) {
       throw createClientClosedError();
     }
     const dependencies = this.#dependencies;
     const callComponents = options?.components;
-    return executeUnaryInteraction({
+    const includeRawResponse = options?.includeRawResponse === true;
+    const captured: { snapshot?: RawResponseSnapshot } = {};
+    const transportForCall = (component: Transport | undefined) =>
+      component === undefined || !includeRawResponse
+        ? component
+        : captureResponse(component, captured);
+    const output = await executeUnaryInteraction({
       context: createInteractionContext({
         request,
         ...(options === undefined ? {} : { options: interactionData(options) }),
@@ -162,10 +172,17 @@ export class DefaultModelClient implements ModelClient {
         callComponents?.errorPayloadDecoder,
         dependencies.errorPayloadDecoder,
       ),
-      transport: tier(callComponents?.transport, dependencies.transport),
+      transport: tier(
+        transportForCall(callComponents?.transport),
+        transportForCall(dependencies.transport),
+      ),
       ...(dependencies.monitors === undefined ? {} : { monitors: dependencies.monitors }),
       interactionId: crypto.randomUUID(),
     });
+    if (!includeRawResponse || captured.snapshot === undefined) {
+      return output;
+    }
+    return { ...output, rawResponse: captured.snapshot };
   }
 
   /**
@@ -221,6 +238,33 @@ async function closeSdkComponent(component: RuntimeComponent): Promise<void> {
     return;
   }
   await component.close();
+}
+
+/**
+ * Copies one successful transport response when the call opted in.
+ *
+ * The descriptor stays the selected transport's descriptor. The body is copied
+ * so a later decoder does not share the snapshot's storage. Metadata is kept
+ * by reference until redaction owns that copy.
+ *
+ * @param transport Transport that will actually send.
+ * @param captured Slot filled with the snapshot for this call only.
+ * @returns A transport that sends once and records the response.
+ */
+function captureResponse(
+  transport: Transport,
+  captured: { snapshot?: RawResponseSnapshot },
+): Transport {
+  return {
+    descriptor: transport.descriptor,
+    send: async (request, context) => {
+      const response = await transport.send(request, context);
+      const bytes = new Uint8Array(response.body.byteLength);
+      bytes.set(response.body);
+      captured.snapshot = { bytes, metadata: response.metadata };
+      return response;
+    },
+  };
 }
 
 function createClientClosedError(): ModelInteractionError {
