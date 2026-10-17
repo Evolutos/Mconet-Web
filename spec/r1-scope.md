@@ -4,17 +4,17 @@ This file is the frozen R1 scope. A change to the supported or rejected set belo
 
 ## Supported
 
-| Dimension           | Supported value                                         |
-| ------------------- | ------------------------------------------------------- |
-| Task                | `conversation.generate`                                 |
-| Message             | `system`, `user`, `assistant`, text content             |
-| Mode                | `unary`                                                 |
-| Wire format         | JSON                                                    |
-| Transport           | HTTP and HTTPS `fetch`                                  |
-| Authorization       | no authorization, header API key, Bearer                |
-| Default integration | one OpenAI-compatible text protocol                     |
-| Configuration       | client defaults plus one call override                  |
-| Output              | text, finish reason, usage, model and response metadata |
+| Dimension           | Supported value                                                                       |
+| ------------------- | ------------------------------------------------------------------------------------- |
+| Task                | `conversation.generate`                                                               |
+| Message             | `system`, `user`, `assistant`, text content                                           |
+| Mode                | `unary`, `server_stream`                                                              |
+| Wire format         | JSON                                                                                  |
+| Transport           | HTTP and HTTPS `fetch`                                                                |
+| Authorization       | no authorization, header API key, Bearer                                              |
+| Default integration | one OpenAI-compatible text protocol                                                   |
+| Configuration       | client defaults plus one call override                                                |
+| Output              | text, server-stream text fragments, finish reason, usage, model and response metadata |
 
 ## Rejected
 
@@ -22,13 +22,13 @@ This file is the frozen R1 scope. A change to the supported or rejected set belo
 | ------------- | -------------------------------------------------------------- |
 | Task          | embedding, rerank, image, audio, video, custom binary tasks    |
 | Message       | tool, image, audio, video, and file content                    |
-| Mode          | `server_stream`, `client_stream`, `duplex`, `long_running`     |
+| Mode          | `client_stream`, `duplex`, `long_running`                      |
 | Wire format   | Protobuf, XML, custom binary                                   |
 | Transport     | WebSocket, WebTransport, gRPC                                  |
 | Authorization | automatic OAuth refresh, body or chunk signatures              |
 | Integration   | guessing among provider protocols                              |
 | Configuration | a global mutable registry or changing components during a call |
-| Output        | artifacts, stream deltas, operation handles                    |
+| Output        | artifacts, operation handles                                   |
 
 Rejected task, message content, and mode values fail with a stable error before a credential is read and before network I/O.
 
