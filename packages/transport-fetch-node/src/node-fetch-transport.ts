@@ -8,6 +8,7 @@ import type {
   OpenIdentifier,
 } from "@evolutos/mconet-core-domain";
 import type {
+  StreamingTransportResponse,
   Transport,
   TransportContext,
   TransportRequest,
@@ -16,6 +17,7 @@ import type {
 import {
   bridgeCallerAbortSignal,
   bridgeDeadlineSignal,
+  iterateBoundedFetchResponseBody,
   mapFetchAbortError,
   mapFetchBaseUrl,
   mapFetchBody,
@@ -172,6 +174,53 @@ export class NodeFetchTransport implements Transport {
     } finally {
       caller.stop();
       deadline?.stop();
+    }
+  }
+
+  /**
+   * Sends one encoded request and leaves the response body as frames.
+   *
+   * The same request checks as `send` run first. Signal bridges stay active
+   * until the body iteration stops.
+   *
+   * @param request Encoded transport request.
+   * @param context Cancellation, deadline, and response-size controls.
+   * @returns Response metadata and the unread body.
+   */
+  public async open(
+    request: TransportRequest,
+    context: TransportContext,
+  ): Promise<StreamingTransportResponse> {
+    const method = mapFetchHttpMethod(request.method);
+    const url = mapFetchQuery(mapFetchBaseUrl(request.url), request.query);
+    const headers = mapFetchHeaders(request.headers);
+    const body = mapFetchBody(request.body);
+    const caller = bridgeCallerAbortSignal(context.signal);
+    const deadline =
+      context.deadline === undefined ? undefined : bridgeDeadlineSignal(context.deadline);
+    const signal =
+      deadline === undefined ? caller.signal : AbortSignal.any([caller.signal, deadline.signal]);
+    const release = () => {
+      caller.stop();
+      deadline?.stop();
+    };
+    try {
+      const response = await this.#exchange(url, method, headers, body, signal);
+      const responseHeaders = readNodeResponseHeaders(response.headers);
+      const mediaType = mapFetchResponseMediaType(responseHeaders);
+      return {
+        metadata: {
+          outcome: mapFetchStatus(response.status),
+          headers: responseHeaders,
+          statusCode: response.status,
+          extensions: {},
+          ...(mediaType === undefined ? {} : { mediaType }),
+        },
+        body: iterateBoundedFetchResponseBody(response, context.maxResponseBodyBytes, release),
+      };
+    } catch (error) {
+      release();
+      throw error;
     }
   }
 
