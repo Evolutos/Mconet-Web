@@ -14,6 +14,7 @@ export { bridgeDeadlineSignal } from "./bridge-deadline-signal.js";
 export type { DeadlineAbortBridge } from "./bridge-deadline-signal.js";
 export { bridgeCallerAbortSignal } from "./bridge-caller-abort-signal.js";
 export type { CallerAbortBridge } from "./bridge-caller-abort-signal.js";
+export { iterateBoundedFetchResponseBody } from "./iterate-bounded-fetch-response-body.js";
 export { readBoundedFetchResponseBody } from "./read-bounded-fetch-response-body.js";
 export { readFetchResponseBody } from "./read-fetch-response-body.js";
 export type { FetchResponseBodySource } from "./read-fetch-response-body.js";
