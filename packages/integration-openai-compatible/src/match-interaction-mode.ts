@@ -25,3 +25,19 @@ export function matchesUnaryInteractionMode(mode: InteractionMode): boolean {
   // without throwing from a supports check.
   return mode?.id === UNARY_INTERACTION_MODE_ID;
 }
+
+/** Text server-stream mode. It is not rewritten into unary. */
+export const SERVER_STREAM_INTERACTION_MODE_ID = "server_stream";
+
+/**
+ * Returns whether a mode is one of the text chat modes.
+ *
+ * Unary is the default. `server_stream` is the event stream. Comparison is
+ * exact. A missing mode does not match.
+ *
+ * @param mode Interaction mode to test.
+ * @returns Whether `mode.id` is `unary` or `server_stream`.
+ */
+export function matchesTextChatInteractionMode(mode: InteractionMode): boolean {
+  return mode?.id === UNARY_INTERACTION_MODE_ID || mode?.id === SERVER_STREAM_INTERACTION_MODE_ID;
+}

@@ -118,11 +118,11 @@ export function buildOpenAIChatCompletionRequest(input: {
     return { diagnostics: options.diagnostics };
   }
 
-  const requestBody = new OpenAIChatCompletionRequestDTO(
-    modelName,
-    messages,
-    options.options,
-  ).toJson();
+  const stream = input.plan.extensions.stream === true;
+  const requestBody = new OpenAIChatCompletionRequestDTO(modelName, messages, {
+    ...options.options,
+    ...(stream ? { stream: true } : {}),
+  }).toJson();
   return {
     diagnostics: [],
     value: Object.freeze({
@@ -240,6 +240,7 @@ interface RequestOptions {
   readonly maxTokens?: number;
   readonly stop?: readonly string[];
   readonly seed?: number;
+  readonly stream?: boolean;
 }
 
 /**

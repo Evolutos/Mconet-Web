@@ -8,7 +8,7 @@ import type {
 } from "@evolutos/mconet-core-domain";
 import type { ProtocolExecutionPlan } from "@evolutos/mconet-core-spi";
 
-import { matchesUnaryInteractionMode } from "./match-interaction-mode.js";
+import { matchesTextChatInteractionMode } from "./match-interaction-mode.js";
 import { matchesOpenAIChatCompletionsProtocol } from "./match-protocol-id.js";
 import { matchesConversationGenerateTask } from "./match-task-type.js";
 
@@ -18,7 +18,7 @@ const unsupportedProtocolCode = "unsupported_protocol";
 /** Stable code when the task is not conversation generation. */
 const unsupportedTaskCode = "unsupported_task";
 
-/** Stable code when the mode is not unary. */
+/** Stable code when the mode is not a text chat mode. */
 const unsupportedModeCode = "unsupported_mode";
 
 /** Stable code when the request has no absolute service endpoint. */
@@ -55,11 +55,8 @@ const emptyQuery: ProtocolExecutionPlan["transportPlan"]["query"] = Object.freez
 const emptyTransportExtensions: ProtocolExecutionPlan["transportPlan"]["transportExtensions"] =
   Object.freeze({});
 
-/** Unary mode adds no streaming component requirements. */
+/** Text chat adds no extra mode-component requirements. */
 const emptyModeComponents: ProtocolExecutionPlan["modeComponents"] = Object.freeze([]);
-
-/** Shared empty plan extensions. */
-const emptyPlanExtensions: ProtocolExecutionPlan["extensions"] = Object.freeze({});
 
 /**
  * Input identity of an unencoded chat-completions request value.
@@ -116,8 +113,12 @@ export function prepareOpenAIChatCompletionPlan(input: {
       "task.descriptor.type",
     );
   }
-  if (!matchesUnaryInteractionMode(input.mode)) {
-    return failure(unsupportedModeCode, "Interaction mode is not unary.", "mode.id");
+  if (!matchesTextChatInteractionMode(input.mode)) {
+    return failure(
+      unsupportedModeCode,
+      "Interaction mode is not unary or server_stream.",
+      "mode.id",
+    );
   }
 
   const endpoint = input.request.serviceAccess?.endpoint;
@@ -167,7 +168,7 @@ export function prepareOpenAIChatCompletionPlan(input: {
         inputTypeId: OPENAI_CHAT_REQUEST_TYPE_ID,
         outputTypeId: OPENAI_CHAT_RESPONSE_TYPE_ID,
       }),
-      extensions: emptyPlanExtensions,
+      extensions: Object.freeze({ stream: input.mode.id === "server_stream" }),
     }),
   };
 }

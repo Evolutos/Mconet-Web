@@ -73,9 +73,12 @@ export { mapMaxOutputTokensToWire } from "./map-max-output-tokens.js";
 export type { MappedMaxOutputTokens } from "./map-max-output-tokens.js";
 export { mapMessageDocumentToWire } from "./map-message-document.js";
 export {
+  matchesTextChatInteractionMode,
   matchesUnaryInteractionMode,
+  SERVER_STREAM_INTERACTION_MODE_ID,
   UNARY_INTERACTION_MODE_ID,
 } from "./match-interaction-mode.js";
+export { createOpenAIChatServerStreamReader } from "./openai-chat-server-stream-reader.js";
 export {
   matchesOpenAIChatCompletionsProtocol,
   OPENAI_CHAT_COMPLETIONS_PROTOCOL_ID,

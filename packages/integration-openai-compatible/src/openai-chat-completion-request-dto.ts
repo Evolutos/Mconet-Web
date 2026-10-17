@@ -16,8 +16,6 @@ const jsonNegativeZeroMessage = "JSON number must not be negative zero.";
 /** Failure used when an integer is outside the binary64 safe range. */
 const jsonSafeIntegerMessage = "JSON integer must be within the interoperable safe range.";
 
-/** Fixed unary flag written on every request body. */
-const unaryStreamFlag = false;
 
 /**
  * Optional request members. Each field is omitted from the body when absent.
@@ -39,15 +37,18 @@ interface OpenAIChatCompletionRequestOptions {
 
   /** Deterministic sampling seed, or omitted to leave the service default. */
   readonly seed?: number;
+
+  /** When true, the service responds with server-sent events. Omission means false. */
+  readonly stream?: boolean;
 }
 
 /**
  * Holds the complete chat-completion request body before payload encoding.
  *
  * Optional members are absent when the request does not send them, so the
- * service default applies. `stream` is not stored: this release sends only
- * unary requests and always writes `"stream": false`. The value carries no
- * other member, because the request profile forbids unknown members.
+ * service default applies. `stream` defaults to `false`. `true` asks the
+ * service for a server-sent event response. The value carries no other
+ * member, because the request profile forbids unknown members.
  */
 export class OpenAIChatCompletionRequestDTO {
   /** Provider-facing model name sent exactly as configured. */
@@ -70,6 +71,9 @@ export class OpenAIChatCompletionRequestDTO {
 
   /** Deterministic sampling seed when the request sends one. */
   public readonly seed?: number;
+
+  /** Whether the service should stream events. Defaults to false. */
+  public readonly stream: boolean;
 
   /**
    * Creates one request from the model, messages, and any optional members.
@@ -116,23 +120,15 @@ export class OpenAIChatCompletionRequestDTO {
     if (seed !== undefined) {
       this.seed = seed;
     }
+    this.stream = requireOptionalStream(options.stream);
     Object.freeze(this);
-  }
-
-  /**
-   * Returns the fixed unary streaming flag sent with every request.
-   *
-   * @returns Always `false`.
-   */
-  public get stream(): false {
-    return unaryStreamFlag;
   }
 
   /**
    * Returns the request body members in frozen profile order.
    *
-   * Omitted optional members are absent rather than null, and `stream` is
-   * always `false`.
+   * Omitted optional members are absent rather than null. `stream` is false
+   * unless the caller set it.
    *
    * @returns A fresh JSON object.
    */
@@ -243,6 +239,24 @@ function copyStop(value: readonly string[] | undefined): readonly string[] | und
  * @param name Public field name used in the failure.
  * @returns The portable number, or undefined.
  */
+/**
+ * Reads the optional stream flag.
+ *
+ * Omission means a single JSON response. Any other value is rejected.
+ *
+ * @param value Candidate stream flag.
+ * @returns The flag to write on the request.
+ */
+function requireOptionalStream(value: unknown): boolean {
+  if (value === undefined) {
+    return false;
+  }
+  if (typeof value !== "boolean") {
+    throw new TypeError(`${requestOwner} stream must be a boolean.`);
+  }
+  return value;
+}
+
 function requireOptionalNumber(value: unknown, name: string): number | undefined {
   if (value === undefined) {
     return undefined;

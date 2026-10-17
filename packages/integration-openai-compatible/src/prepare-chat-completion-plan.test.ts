@@ -132,8 +132,16 @@ it("returns no plan when the protocol, task, or mode does not match", () => {
     mode: { id: "server_stream" },
     policy,
   });
-  expect(streamed.value).toBeUndefined();
-  expect(streamed.diagnostics[0]?.code).toBe("unsupported_mode");
+  expect(streamed.diagnostics).toEqual([]);
+  expect(streamed.value?.extensions).toEqual({ stream: true });
+
+  const duplex = prepareOpenAIChatCompletionPlan({
+    request: request(),
+    mode: { id: "duplex" },
+    policy,
+  });
+  expect(duplex.value).toBeUndefined();
+  expect(duplex.diagnostics[0]?.code).toBe("unsupported_mode");
 });
 
 it("returns no plan when the endpoint or authorization is missing", () => {

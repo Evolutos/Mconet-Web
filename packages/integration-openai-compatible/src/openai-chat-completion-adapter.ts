@@ -3,7 +3,7 @@
 import type { TaskProtocolAdapter } from "@evolutos/mconet-core-spi";
 
 import { buildOpenAIChatCompletionRequest } from "./build-chat-completion-request.js";
-import { matchesUnaryInteractionMode } from "./match-interaction-mode.js";
+import { matchesTextChatInteractionMode } from "./match-interaction-mode.js";
 import { matchesOpenAIChatCompletionsProtocol } from "./match-protocol-id.js";
 import { matchesConversationGenerateTask } from "./match-task-type.js";
 import { parseOpenAIChatCompletionError } from "./parse-chat-completion-error.js";
@@ -26,7 +26,7 @@ const adapterCapabilities: TaskProtocolAdapter["descriptor"]["capabilities"] = n
 /**
  * Creates the chat-completions task adapter.
  *
- * The adapter matches protocol, task type, and unary mode. A model name does
+ * The adapter matches protocol, task type, and a text mode. A model name does
  * not affect `supports`. The methods delegate to the existing planning, request,
  * response, and error functions. This object does not encode, authorize, or
  * send.
@@ -54,7 +54,7 @@ export function createOpenAIChatCompletionAdapter(): TaskProtocolAdapter {
         matchesOpenAIChatCompletionsProtocol(protocolId) &&
         typeof taskType === "string" &&
         matchesConversationGenerateTask(taskType) &&
-        matchesUnaryInteractionMode(input.mode)
+        matchesTextChatInteractionMode(input.mode)
       );
     },
     preparePlan: prepareOpenAIChatCompletionPlan,
