@@ -19,8 +19,15 @@ export type { OpenAICompatibleClientInput } from "./create-openai-compatible-cli
 export type { DefaultClientInput } from "./create-default-client.js";
 export { conversationRequest } from "./conversation-request.js";
 export { interactWithText } from "./interact-with-text.js";
+export { interactWithTools } from "./interact-with-tools.js";
 export { streamText } from "./stream-text.js";
-export type { ConversationMessage, ConversationRequestInput } from "./conversation-request.js";
+export type {
+  ConversationMessage,
+  ConversationRequestInput,
+  ConversationTool,
+} from "./conversation-request.js";
+export type { ExecutableConversationTool } from "./interact-with-tools.js";
+export { projectConversationToolCalls } from "@evolutos/mconet-core-domain";
 export { DefaultModelClient } from "./default-model-client.js";
 export type { DefaultModelClientDependencies } from "./default-model-client.js";
 export type { ModelClient } from "./model-client.js";

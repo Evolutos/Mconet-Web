@@ -3,9 +3,11 @@
 import {
   ConversationTaskBuilder,
   ModelRequestBuilder,
+  type JsonValue,
   type ModelRequest,
   type ModelTarget,
   type ServiceAccess,
+  type ToolCall,
 } from "@evolutos/mconet-core-domain";
 
 /** Roles a text convenience message can name. Each maps to one standard role id. */
@@ -13,7 +15,24 @@ const messageRoleIds = {
   system: "message.system",
   user: "message.user",
   assistant: "message.assistant",
+  tool: "message.tool",
 } as const;
+
+/**
+ * One function the model may call.
+ *
+ * `parameters` is a JSON Schema object. This declaration has no implementation.
+ */
+export interface ConversationTool {
+  /** Function name the model uses when it asks for this tool. */
+  readonly name: string;
+
+  /** Optional guidance shown to the model. */
+  readonly description?: string;
+
+  /** JSON Schema object describing the function arguments. */
+  readonly parameters: JsonValue;
+}
 
 /** One text turn in a convenience conversation request. */
 export interface ConversationMessage {
@@ -22,6 +41,12 @@ export interface ConversationMessage {
 
   /** Text content of this turn. The helper does not interpret the characters. */
   readonly text: string;
+
+  /** Call identity required when `role` is `tool`. */
+  readonly toolCallId?: string;
+
+  /** Function calls required when an assistant turn is asking for tools. */
+  readonly toolCalls?: readonly ToolCall[];
 }
 
 /**
@@ -36,6 +61,14 @@ export interface ConversationRequestInput {
 
   /** Ordered text turns. Order is the message-document order. */
   readonly messages: readonly ConversationMessage[];
+
+  /**
+   * Function tools declared for this request.
+   *
+   * Omission and an empty list both leave the tool member off the task. The
+   * helper does not execute these declarations.
+   */
+  readonly tools?: readonly ConversationTool[];
 
   /** Optional unresolved access contribution copied onto the request. */
   readonly serviceAccess?: ServiceAccess;
@@ -53,7 +86,9 @@ export interface ConversationRequestInput {
  * @throws {TypeError} When the turns are not a supported conversation task.
  */
 export function conversationRequest(input: ConversationRequestInput): ModelRequest {
-  const task = new ConversationTaskBuilder(createDocument(input.messages)).build();
+  // The task builder validates turns, tool declarations, and message facts.
+  // This function does not call a model.
+  const task = new ConversationTaskBuilder(createDocument(input.messages, input.tools)).build();
   const builder = new ModelRequestBuilder(input.target, task);
   if (input.serviceAccess !== undefined) {
     builder.withServiceAccess(input.serviceAccess);
@@ -68,9 +103,13 @@ export function conversationRequest(input: ConversationRequestInput): ModelReque
  * The helper does not add generation parameters or a second task node.
  *
  * @param messages Ordered text turns.
+ * @param tools Function declarations, omitted from the task when absent or empty.
  * @returns A task document for the conversation task builder.
  */
-function createDocument(messages: readonly ConversationMessage[]) {
+function createDocument(
+  messages: readonly ConversationMessage[],
+  tools: readonly ConversationTool[] | undefined,
+) {
   return {
     version: "1.0",
     root: {
@@ -82,6 +121,9 @@ function createDocument(messages: readonly ConversationMessage[]) {
           id: "conversation-input",
           kind: "task.input.conversation" as const,
           composition: "leaf" as const,
+          // An empty list is omitted so the task matches a conversation that
+          // declared no functions.
+          ...(tools === undefined || tools.length === 0 ? {} : { tools }),
           messages: {
             version: "1.0",
             purpose: "input" as const,
@@ -105,6 +147,9 @@ function createDocument(messages: readonly ConversationMessage[]) {
                 relations: [],
                 metadata: {},
                 extensions: {},
+                // Tool facts stay off the entry when the caller omitted them.
+                ...(message.toolCallId === undefined ? {} : { toolCallId: message.toolCallId }),
+                ...(message.toolCalls === undefined ? {} : { toolCalls: message.toolCalls }),
               })),
               relations: [],
               metadata: {},
