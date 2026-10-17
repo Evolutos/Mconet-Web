@@ -5,7 +5,7 @@ import {
   validateConversationTaskTypeSupport,
   validateEmptyArtifactCatalogSupport,
   validateTextMessageContentSupport,
-  validateUnaryInteractionModeSupport,
+  validateTextInteractionModeSupport,
   type ConversationInputNode,
   type InteractionMode,
   type ProcessingResult,
@@ -35,9 +35,9 @@ export function validateR1Interaction(input: {
   readonly context: InteractionContext;
   readonly mode: InteractionMode;
 }): ProcessingResult<InteractionContext> {
-  const modeResult = validateUnaryInteractionModeSupport(input.mode);
+  const modeResult = validateTextInteractionModeSupport(input.mode);
   if (modeResult.value === undefined) {
-    // A non-unary mode is not executable. Later gates are not consulted.
+    // Client stream, duplex, and long-running modes are not executable here.
     return { diagnostics: modeResult.diagnostics };
   }
 

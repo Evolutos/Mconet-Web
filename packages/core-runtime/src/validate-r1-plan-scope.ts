@@ -1,7 +1,7 @@
 // Copyright © 2026 Mcont.
 
 import {
-  validateUnaryInteractionModeSupport,
+  validateTextInteractionModeSupport,
   type InteractionMode,
   type MediaType,
   type ProcessingResult,
@@ -50,9 +50,9 @@ export function validateR1PlanScope(input: {
   readonly mode: InteractionMode;
   readonly plan: ProtocolExecutionPlan;
 }): ProcessingResult<ProtocolExecutionPlan> {
-  const modeResult = validateUnaryInteractionModeSupport(input.mode);
+  const modeResult = validateTextInteractionModeSupport(input.mode);
   if (modeResult.value === undefined) {
-    // A non-unary mode is outside R1 even when the plan itself looks like HTTP.
+    // Client stream, duplex, and long-running modes stay outside this path.
     return { diagnostics: modeResult.diagnostics };
   }
 

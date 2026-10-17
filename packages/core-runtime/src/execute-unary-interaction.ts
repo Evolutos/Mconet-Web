@@ -21,7 +21,10 @@ import type {
   PayloadEncoder,
   ProtocolExecutionPlan,
   RuntimeComponent,
+  ServerStreamReader,
   ServiceAccessResolver,
+  StreamingByteTransport,
+  StreamingTransportResponse,
   TaskProtocolAdapter,
   Transport,
   TransportRequest,
@@ -76,6 +79,9 @@ const errorDecoderRoleId = "codec.response.error-decoder";
 /** Role id assigned to the transport by component selection. */
 const transportRoleId = "transport.request";
 
+/** Text mode that reads a server-sent response. */
+const serverStreamModeId = "server_stream";
+
 /** Candidates for one single-value component role. */
 interface ComponentCandidates<Component extends RuntimeComponent> {
   readonly interactionComponent?: Component;
@@ -112,6 +118,8 @@ export async function executeUnaryInteraction(input: {
   readonly errorPayloadDecoder: ComponentCandidates<PayloadDecoder>;
   readonly transport: ComponentCandidates<Transport>;
   readonly monitors?: readonly InteractionMonitor[];
+  readonly serverStreamReader?: ServerStreamReader;
+  readonly onServerStreamText?: (text: string) => void;
   readonly interactionId: string;
   readonly releaseResponse?: () => void | Promise<void>;
   readonly releaseContext?: () => void | Promise<void>;
@@ -156,6 +164,9 @@ async function runUnaryInteraction(
     validateR1Interaction({ context: normalized, mode: input.mode }),
     "validation",
   );
+  if (input.mode.id === serverStreamModeId && input.serverStreamReader === undefined) {
+    throw missingServerStreamReader();
+  }
   const configuration = resolveInteractionConfiguration({
     context: validated,
     clientConfiguration: input.clientConfiguration,
@@ -332,6 +343,70 @@ async function runUnaryInteraction(
     }),
     "authorization",
   );
+  if (input.mode.id === serverStreamModeId && input.serverStreamReader !== undefined) {
+    const opened = await openTextStream({
+      transport: snapshot.transport,
+      request: authorized,
+      signal,
+      ...(validated.options.deadline === undefined ? {} : { deadline: validated.options.deadline }),
+      resourceLimits: snapshot.resourceLimits,
+    });
+    if (opened.metadata.outcome === "service_error") {
+      const bytes = await collectStreamBytes(
+        opened.body,
+        snapshot.resourceLimits.maxStreamingErrorBodyBytes,
+      );
+      throw await readServiceError({
+        adapter: snapshot.taskProtocolAdapter,
+        decoder: snapshot.errorPayloadDecoder,
+        metadata: opened.metadata,
+        bytes,
+        signal,
+      });
+    }
+    if (opened.metadata.outcome !== "success") {
+      throw new ModelInteractionError({
+        message: "The transport outcome was not a successful response.",
+        category: "model_service",
+        phase: "transport",
+        code: "unexpected_transport_outcome",
+        diagnostics: [],
+      });
+    }
+    const payload = await input.serverStreamReader.read({
+      frames: opened.body,
+      signal,
+      maxBodyBytes: snapshot.resourceLimits.maxResponseBodyBytes,
+      maxFrameBytes: snapshot.resourceLimits.maxFrameBytes,
+      ...(input.onServerStreamText === undefined ? {} : { onText: input.onServerStreamText }),
+    });
+    const parsed = requireValue(
+      scheduleParseResponse({
+        adapter: snapshot.taskProtocolAdapter,
+        payload,
+        metadata: opened.metadata,
+      }),
+      "response_parsing",
+    );
+    const output = scheduleModelOutputAssembly({
+      request: validated.request,
+      response: parsed,
+      diagnostics: [],
+    });
+    await publishIsolatedMonitoringChain({
+      monitors: input.monitors ?? [],
+      event: {
+        id: `${input.interactionId}:interaction.completed`,
+        type: "interaction.completed",
+        interactionId: input.interactionId,
+        timestamp: { epochMilliseconds: Date.now() },
+        payload: { status: output.status },
+        metadata: {},
+      },
+      result: output,
+    });
+    return output;
+  }
   const sent = requireValue(
     await scheduleTransportSend({
       transport: snapshot.transport,
@@ -648,4 +723,128 @@ function createTransportRequest(
     query: plan.transportPlan.query,
     body,
   };
+}
+
+/**
+ * Opens a framed response, or buffers one send and yields it as a single frame.
+ *
+ * A transport that implements `open` is used directly. Any other transport still
+ * completes the call through `send`.
+ *
+ * @param input Transport, authorized request, and the limits that bound the body.
+ * @returns Response metadata and frames.
+ */
+async function openTextStream(input: {
+  readonly transport: Transport;
+  readonly request: TransportRequest;
+  readonly signal: AbortSignal;
+  readonly deadline?: number;
+  readonly resourceLimits: ResolvedInteractionResourceLimits;
+}): Promise<StreamingTransportResponse> {
+  const context = {
+    signal: input.signal,
+    maxResponseBodyBytes: input.resourceLimits.maxResponseBodyBytes,
+    ...(input.deadline === undefined ? {} : { deadline: input.deadline }),
+  };
+  try {
+    if (isStreamingByteTransport(input.transport)) {
+      return await input.transport.open(input.request, context);
+    }
+    const response = await input.transport.send(input.request, context);
+    return {
+      metadata: response.metadata,
+      body: singleFrame(response.body),
+    };
+  } catch (error) {
+    if (error instanceof ModelInteractionError) {
+      throw error;
+    }
+    throw new ModelInteractionError({
+      message: "The transport did not return a response.",
+      category: "network",
+      phase: "transport",
+      code: "transport_failed",
+      diagnostics: [],
+    });
+  }
+}
+
+/**
+ * Yields one buffered body as a single frame.
+ *
+ * @param bytes Complete response body.
+ */
+async function* singleFrame(bytes: Uint8Array): AsyncGenerator<Uint8Array> {
+  if (bytes.byteLength > 0) {
+    yield bytes;
+  }
+}
+
+/**
+ * Collects frames until the error-body limit.
+ *
+ * @param frames Response frames.
+ * @param maxBytes Maximum bytes that may be kept.
+ * @returns One contiguous buffer.
+ */
+async function collectStreamBytes(
+  frames: AsyncIterable<Uint8Array>,
+  maxBytes: number,
+): Promise<Uint8Array> {
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  for await (const chunk of frames) {
+    if (chunk.byteLength > maxBytes - total) {
+      throw new ModelInteractionError({
+        message: "Response body exceeds its byte limit.",
+        category: "invalid_request",
+        phase: "transport",
+        code: "response_body_too_large",
+        diagnostics: [],
+      });
+    }
+    chunks.push(chunk);
+    total += chunk.byteLength;
+  }
+  const body = new Uint8Array(total);
+  let offset = 0;
+  for (const chunk of chunks) {
+    body.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return body;
+}
+
+/**
+ * Returns whether the transport can expose response frames.
+ *
+ * @param transport Selected transport.
+ * @returns Whether `open` is present.
+ */
+function isStreamingByteTransport(
+  transport: Transport,
+): transport is Transport & StreamingByteTransport {
+  return "open" in transport && typeof transport.open === "function";
+}
+
+/**
+ * Creates the failure for a server-stream call that has no reader.
+ *
+ * @returns The configuration error. No credential has been read.
+ */
+function missingServerStreamReader(): ModelInteractionError {
+  return new ModelInteractionError({
+    message: "Text streaming requires a server stream reader.",
+    category: "invalid_component_configuration",
+    phase: "resolution",
+    code: "missing_server_stream_reader",
+    diagnostics: [
+      {
+        code: "missing_server_stream_reader",
+        severity: "error",
+        phase: "resolution",
+        message: "Inject a server stream reader or use unary mode.",
+      },
+    ],
+  });
 }
