@@ -24,6 +24,7 @@ export { validateConversationTaskNodeSupport } from "./validate-conversation-tas
 export { createDefaultCompatibilityPolicy } from "./create-default-compatibility-policy.js";
 export { parseMediaType } from "./media-type.js";
 export { projectConversationText } from "./project-conversation-text.js";
+export { projectConversationToolCalls } from "./project-conversation-tool-calls.js";
 export { isRawPayloadWithinSizeLimit } from "./raw-payload.js";
 export { resolveInteractionResourceLimits } from "./resolve-interaction-resource-limits.js";
 export { isServiceAccess } from "./service-access.js";
@@ -97,6 +98,8 @@ export type { TaskGroupNode } from "./task-group-node.js";
 export { isTaskNode, type TaskNode } from "./task-node.js";
 export type { TaskRelation } from "./task-relation.js";
 export type { TextMessageContent } from "./text-message-content.js";
+export { isToolCall, isToolDeclaration } from "./tool-call.js";
+export type { ToolCall, ToolDeclaration } from "./tool-call.js";
 export type { Timestamp } from "./timestamp.js";
 export type { TokenUsage } from "./token-usage.js";
 export type { UnknownMessageContent } from "./unknown-message-content.js";

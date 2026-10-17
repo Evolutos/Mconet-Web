@@ -6,6 +6,7 @@ import { isJsonRecord } from "./model-descriptor.js";
 import { isOpenIdentifier } from "./open-identifier.js";
 import { isMessageRole, type MessageRole } from "./message-role.js";
 import { isTextMessageContent } from "./text-message-content.js";
+import { isAbsentOrToolCallId, isAbsentOrToolCalls, type ToolCall } from "./tool-call.js";
 
 /**
  * Immutable leaf message element carrying one participant's ordered content.
@@ -24,6 +25,22 @@ export interface MessageEntry extends MessageElementBase {
 
   /** Ordered content values owned by this leaf element. */
   readonly content: readonly MessageContent[];
+
+  /**
+   * Call identity for a tool-result turn.
+   *
+   * Present only when this entry answers one earlier assistant call. The text
+   * content remains the result itself.
+   */
+  readonly toolCallId?: string;
+
+  /**
+   * Function calls requested by an assistant turn.
+   *
+   * The list is omitted when the assistant did not ask for a tool. Argument
+   * text stays unparsed.
+   */
+  readonly toolCalls?: readonly ToolCall[];
 }
 
 /**
@@ -53,6 +70,9 @@ export function isMessageEntry(value: unknown): value is MessageEntry {
 
   // Every declared field must be stored directly. The reserved children field
   // is rejected even when empty because entries are leaves, not containers.
+  // Tool facts are optional: a present call id must be an open identifier, and
+  // a present call list must be non-empty with distinct ids. Which role may
+  // carry those facts is decided when the protocol request is built.
   return (
     descriptors.children === undefined &&
     isDataDescriptor(idDescriptor) &&
@@ -68,7 +88,9 @@ export function isMessageEntry(value: unknown): value is MessageEntry {
     isDataDescriptor(metadataDescriptor) &&
     isJsonRecord(metadataDescriptor.value, new Set<object>()) &&
     isDataDescriptor(extensionsDescriptor) &&
-    isJsonRecord(extensionsDescriptor.value, new Set<object>())
+    isJsonRecord(extensionsDescriptor.value, new Set<object>()) &&
+    isAbsentOrToolCallId(descriptors.toolCallId) &&
+    isAbsentOrToolCalls(descriptors.toolCalls)
   );
 }
 

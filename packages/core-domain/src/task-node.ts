@@ -14,6 +14,7 @@ import { isOpenIdentifier } from "./open-identifier.js";
 import type { RawPayload } from "./raw-payload.js";
 import type { TaskGroupNode } from "./task-group-node.js";
 import type { TaskRelation } from "./task-relation.js";
+import { isAbsentOrToolDeclarations } from "./tool-call.js";
 import type { UnknownTaskNode } from "./unknown-task-node.js";
 
 /**
@@ -112,11 +113,14 @@ function isLeafNode(descriptors: Record<string, PropertyDescriptor>, kind: strin
   }
 
   if (kind === "task.input.conversation") {
+    // Tools are optional on a conversation input. A present list must be a
+    // non-empty set of distinct function declarations.
     return (
       descriptors.parameters === undefined &&
       descriptors.raw === undefined &&
       isDataDescriptor(descriptors.messages) &&
-      isMessageDocument(descriptors.messages.value)
+      isMessageDocument(descriptors.messages.value) &&
+      isAbsentOrToolDeclarations(descriptors.tools)
     );
   }
 
