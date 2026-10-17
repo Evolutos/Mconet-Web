@@ -15,10 +15,12 @@ export type { OpenAICompatibleClientInput } from "./openai-compatible-client-inp
 export type { DefaultClientInput } from "./create-default-client.js";
 export { conversationRequest } from "./conversation-request.js";
 export { interactWithText } from "./interact-with-text.js";
+export { streamText } from "./stream-text.js";
 export type { ConversationMessage, ConversationRequestInput } from "./conversation-request.js";
 export { DefaultModelClient } from "./default-model-client.js";
 export type { DefaultModelClientDependencies } from "./default-model-client.js";
 export type { ModelClient } from "./model-client.js";
+export type { TextStreamEvent, TextStreamInteraction } from "./text-stream-interaction.js";
 export type { RawResponseSnapshot } from "./raw-response-snapshot.js";
 export { redactRawResponse } from "./redact-raw-response.js";
 export type { ModelInteractor } from "./model-interactor.js";

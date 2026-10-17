@@ -13,7 +13,7 @@ import type { DefaultModelClient } from "./default-model-client.js";
  * remains the caller's transport.
  *
  * @param input Protocol adapter and optional domain defaults.
- * @returns A client that can run one unary JSON exchange.
+ * @returns A client that can run one text exchange, unary or server stream.
  */
 export function createDefaultClient(input: DefaultClientInput): DefaultModelClient {
   const transport = input.components?.transport ?? new BrowserFetchTransport({});

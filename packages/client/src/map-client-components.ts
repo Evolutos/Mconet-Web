@@ -22,6 +22,7 @@ export type ClientComponentSelection = Partial<
     | "successPayloadDecoder"
     | "errorPayloadDecoder"
     | "transport"
+    | "serverStreamReader"
   >
 >;
 
@@ -66,5 +67,8 @@ export function mapClientComponents(
       ? {}
       : { errorPayloadDecoder: components.errorPayloadDecoder }),
     ...(components.transport === undefined ? {} : { transport: components.transport }),
+    ...(components.serverStreamReader === undefined
+      ? {}
+      : { serverStreamReader: components.serverStreamReader }),
   };
 }

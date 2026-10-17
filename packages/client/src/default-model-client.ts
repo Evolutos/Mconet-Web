@@ -2,6 +2,7 @@
 
 import {
   ModelInteractionError,
+  type InteractionMode,
   type ModelOutput,
   type ModelRequest,
   type ResolvedInteractionResourceLimits,
@@ -21,17 +22,26 @@ import type {
   PayloadDecoder,
   PayloadEncoder,
   RuntimeComponent,
+  ServerStreamReader,
   ServiceAccessResolver,
+  StreamingByteTransport,
+  StreamingTransportResponse,
   TaskProtocolAdapter,
   Transport,
+  TransportContext,
+  TransportRequest,
 } from "@evolutos/mconet-core-spi";
 
 import type { ModelClient } from "./model-client.js";
+import { createTextStreamQueue, type TextStreamInteraction } from "./text-stream-interaction.js";
 import { redactRawResponse } from "./redact-raw-response.js";
 import type { RawResponseSnapshot } from "./raw-response-snapshot.js";
 
-/** R1 executes one request and returns one output. There is no second mode here. */
+/** Default text mode. One JSON response comes back. */
 const unaryMode = { id: "unary" } as const;
+
+/** Text mode that reads server-sent events. */
+const serverStreamMode = { id: "server_stream" } as const;
 
 /** Stable code when a new request arrives after the client has closed. */
 const clientClosedCode = "client_closed";
@@ -79,6 +89,12 @@ export interface DefaultModelClientDependencies {
   /** Client-tier transport. */
   readonly transport?: Transport;
 
+  /** Client-tier reader used when a call selects `server_stream` and does not inject one. */
+  readonly serverStreamReader?: ServerStreamReader;
+
+  /** Client default mode used when a call does not name one. Omission means unary. */
+  readonly defaultInteractionMode?: InteractionMode;
+
   /** Monitors observed after the runtime assembles an output. */
   readonly monitors?: readonly InteractionMonitor[];
 
@@ -90,7 +106,7 @@ export interface DefaultModelClientDependencies {
 }
 
 /**
- * Client that performs every interaction by calling the unary runtime once.
+ * Client that performs every text interaction through one runtime.
  *
  * The class does not encode, authorize, or send on its own. Call options are
  * placed into the runtime input; component priority stays inside the runtime.
@@ -133,11 +149,63 @@ export class DefaultModelClient implements ModelClient {
     request: ModelRequest,
     options?: InteractionOptions,
   ): Promise<ModelOutput & { readonly rawResponse?: RawResponseSnapshot }> {
+    return this.#execute(request, options);
+  }
+
+  /**
+   * Runs one text request as `server_stream`.
+   *
+   * The request body asks the service for events. `events` yields each new
+   * text fragment. `output` is the same assembled result `interact` returns
+   * for a unary call. A call mode other than the default is replaced by
+   * `server_stream` for this method.
+   *
+   * @param request Task-neutral request envelope.
+   * @param options Optional per-call overrides. `mode` is set to `server_stream`.
+   * @returns The fragment stream and the final output.
+   */
+  public stream(request: ModelRequest, options?: InteractionOptions): TextStreamInteraction {
+    const queue = createTextStreamQueue();
+    const output = this.#execute(
+      request,
+      { ...options, mode: serverStreamMode },
+      (text) => {
+        queue.push(text);
+      },
+    ).then(
+      (value) => {
+        queue.close();
+        return value;
+      },
+      (error: unknown) => {
+        queue.fail(error);
+        throw error;
+      },
+    );
+    return { events: queue.events, output };
+  }
+
+  /**
+   * Runs one request in the resolved text mode.
+   *
+   * @param request Task-neutral request envelope.
+   * @param options Optional per-call overrides.
+   * @param onServerStreamText Observer used only when the resolved mode is server stream.
+   * @returns The output assembled by the runtime.
+   */
+  async #execute(
+    request: ModelRequest,
+    options?: InteractionOptions,
+    onServerStreamText?: (text: string) => void,
+  ): Promise<ModelOutput & { readonly rawResponse?: RawResponseSnapshot }> {
     if (!this.#acceptingRequests) {
       throw createClientClosedError();
     }
     const dependencies = this.#dependencies;
+    const mode = options?.mode ?? dependencies.defaultInteractionMode ?? unaryMode;
     const callComponents = options?.components;
+    const serverStreamReader =
+      callComponents?.serverStreamReader ?? dependencies.serverStreamReader;
     const includeRawResponse = options?.includeRawResponse === true;
     const captured: { snapshot?: RawResponseSnapshot; tooLarge: boolean } = { tooLarge: false };
     const transportForCall = (component: Transport | undefined) =>
@@ -149,7 +217,13 @@ export class DefaultModelClient implements ModelClient {
         request,
         ...(options === undefined ? {} : { options: interactionData(options) }),
       }),
-      mode: unaryMode,
+      mode,
+      ...(mode.id !== serverStreamMode.id
+        ? {}
+        : {
+            ...(serverStreamReader === undefined ? {} : { serverStreamReader }),
+            ...(onServerStreamText === undefined ? {} : { onServerStreamText }),
+          }),
       clientConfiguration: dependencies.clientConfiguration,
       sdkResourceLimits: dependencies.sdkResourceLimits,
       ...optionalInput("adapter", callComponents?.taskProtocolAdapter ?? dependencies.adapter),
@@ -263,7 +337,7 @@ function captureResponse(
   captured: { snapshot?: RawResponseSnapshot; tooLarge: boolean },
   maxResponseBodyBytes: number,
 ): Transport {
-  return {
+  const wrapped: Transport & Partial<StreamingByteTransport> = {
     descriptor: transport.descriptor,
     send: async (request, context) => {
       const response = await transport.send(request, context);
@@ -279,6 +353,76 @@ function captureResponse(
       return response;
     },
   };
+  if (isStreamingByteTransport(transport)) {
+    wrapped.open = (request, context) =>
+      captureOpen(transport, request, context, captured, maxResponseBodyBytes);
+  }
+  return wrapped;
+}
+
+/**
+ * Forwards a framed response and keeps a bounded raw copy.
+ *
+ * @param transport Transport that exposes frames.
+ * @param request Authorized request.
+ * @param context Transport controls.
+ * @param captured Slot filled when the body fits.
+ * @param maxResponseBodyBytes Maximum snapshot length.
+ * @returns The opened response, with the same frames the caller will read.
+ */
+async function captureOpen(
+  transport: Transport & StreamingByteTransport,
+  request: TransportRequest,
+  context: TransportContext,
+  captured: { snapshot?: RawResponseSnapshot; tooLarge: boolean },
+  maxResponseBodyBytes: number,
+): Promise<StreamingTransportResponse> {
+  const opened = await transport.open(request, context);
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  return {
+    metadata: opened.metadata,
+    body: {
+      async *[Symbol.asyncIterator]() {
+        try {
+          for await (const chunk of opened.body) {
+            if (!captured.tooLarge) {
+              if (chunk.byteLength > maxResponseBodyBytes - total) {
+                captured.tooLarge = true;
+                chunks.length = 0;
+              } else {
+                chunks.push(chunk);
+                total += chunk.byteLength;
+              }
+            }
+            yield chunk;
+          }
+        } finally {
+          if (!captured.tooLarge) {
+            const bytes = new Uint8Array(total);
+            let offset = 0;
+            for (const chunk of chunks) {
+              bytes.set(chunk, offset);
+              offset += chunk.byteLength;
+            }
+            captured.snapshot = redactRawResponse({ bytes, metadata: opened.metadata });
+          }
+        }
+      },
+    },
+  };
+}
+
+/**
+ * Returns whether a transport can open a framed body.
+ *
+ * @param transport Transport selected for this call.
+ * @returns Whether `open` is a function.
+ */
+function isStreamingByteTransport(
+  transport: Transport,
+): transport is Transport & StreamingByteTransport {
+  return "open" in transport && typeof transport.open === "function";
 }
 
 /**

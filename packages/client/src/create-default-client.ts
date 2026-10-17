@@ -54,12 +54,15 @@ export const sdkResourceLimits: ResolvedInteractionResourceLimits = {
 /**
  * Inputs for the default JSON and Fetch client.
  *
- * The adapter is the protocol. This factory does not choose an integration.
- * It supplies the JSON codecs, the no-authorization handler, and browser Fetch.
+ * A supplied adapter is the protocol for every call. When it is omitted, a
+ * resolver in `components` selects the protocol from the model target. This
+ * factory does not infer a protocol from a model name.
  */
 export interface DefaultClientInput {
-  /** Protocol adapter used when a call does not supply its own. */
-  readonly adapter: TaskProtocolAdapter;
+  /**
+   * Explicit protocol adapter. When present, integration resolution is skipped.
+   */
+  readonly adapter?: TaskProtocolAdapter;
 
   /** Optional domain defaults stored on the client. */
   readonly clientConfiguration?: ModelClientConfigurationData;
@@ -76,14 +79,18 @@ export interface DefaultClientInput {
  *
  * This module is shared by the browser and Node entries, so it must not choose
  * a Fetch implementation. The platform entry supplies the transport before
- * any request exists. A call still goes through the one unary runtime.
+ * any request exists. Unary and server-stream text calls share one runtime.
  *
  * @param input Protocol adapter, transport, and optional domain defaults.
- * @returns A client that can run one unary JSON exchange.
+ * @returns A client that can run one text exchange.
  */
 export function assembleDefaultClient(input: DefaultClientInput): DefaultModelClient {
   const components = mapClientComponents(input.components);
   const adapter = components.adapter ?? input.adapter;
+  const resolver = components.resolver;
+  if (adapter === undefined && resolver === undefined) {
+    throw new TypeError("The client requires a protocol adapter or an integration resolver.");
+  }
   const authorizationHandlers = components.authorizationHandlers ?? [new NoAuthorizationHandler()];
   const payloadEncoder = components.payloadEncoder ?? new JsonPayloadEncoder();
   const successPayloadDecoder =
@@ -96,11 +103,19 @@ export function assembleDefaultClient(input: DefaultClientInput): DefaultModelCl
   if (transport === undefined) {
     throw new TypeError("The send component does not satisfy its role.");
   }
-  assertRole(adapter, "supports");
+  if (adapter !== undefined) {
+    assertRole(adapter, "supports");
+  }
+  if (resolver !== undefined) {
+    assertRole(resolver, "resolve");
+  }
   assertRole(payloadEncoder, "encode");
   assertRole(successPayloadDecoder, "decode");
   assertRole(errorPayloadDecoder, "decode");
   assertRole(transport, "send");
+  if (components.serverStreamReader !== undefined) {
+    assertRole(components.serverStreamReader, "read");
+  }
   for (const handler of authorizationHandlers) {
     assertRole(handler, "apply");
   }
@@ -118,13 +133,16 @@ export function assembleDefaultClient(input: DefaultClientInput): DefaultModelCl
   return new DefaultModelClient({
     clientConfiguration: input.clientConfiguration ?? {},
     sdkResourceLimits,
-    adapter,
+    ...(adapter === undefined ? {} : { adapter }),
+    ...(resolver === undefined ? {} : { resolver }),
     authorizationHandlers,
     payloadEncoder,
     successPayloadDecoder,
     errorPayloadDecoder,
     transport,
-    ...(components.resolver === undefined ? {} : { resolver: components.resolver }),
+    ...(components.serverStreamReader === undefined
+      ? {}
+      : { serverStreamReader: components.serverStreamReader }),
     ...(components.serviceAccessResolver === undefined
       ? {}
       : { serviceAccessResolver: components.serviceAccessResolver }),

@@ -1,10 +1,10 @@
 // Copyright © 2026 Mcont.
 
-import { createOpenAIChatCompletionAdapter } from "@evolutos/mconet-integration-openai-compatible";
 import { NodeFetchTransport } from "@evolutos/mconet-transport-fetch-node";
 
 import { assembleDefaultClient, type DefaultClientInput } from "./create-default-client.js";
 import type { DefaultModelClient } from "./default-model-client.js";
+import { createOpenAIChatIntegrationResolver } from "./openai-chat-integration-resolver.js";
 import { createOpenAICompatibleComponents } from "./openai-compatible-components.js";
 import type { OpenAICompatibleClientInput } from "./openai-compatible-client-input.js";
 
@@ -16,7 +16,7 @@ import type { OpenAICompatibleClientInput } from "./openai-compatible-client-inp
  * not send a request.
  *
  * @param input Protocol adapter and optional domain defaults.
- * @returns A client that can run one unary JSON exchange.
+ * @returns A client that can run one text exchange, unary or server stream.
  */
 export function createDefaultClient(input: DefaultClientInput): DefaultModelClient {
   const transport = input.components?.transport ?? new NodeFetchTransport();
@@ -32,9 +32,10 @@ export function createDefaultClient(input: DefaultClientInput): DefaultModelClie
 /**
  * Composes the chat-completions adapter with the Node Fetch client.
  *
- * The protocol-port codecs match the browser factory. This composition lives
- * beside the Node transport so the browser OpenAI factory is not imported
- * into the Node entry.
+ * The resolver, protocol-port codecs, and three authorization handlers match
+ * the browser factory. The call's model target selects the chat binding. This
+ * composition lives beside the Node transport so the browser OpenAI factory
+ * is not imported into the Node entry.
  *
  * @param input Default target and service access.
  * @returns A client whose adapter is the chat-completions adapter.
@@ -43,11 +44,13 @@ export function createOpenAICompatibleClient(
   input: OpenAICompatibleClientInput,
 ): DefaultModelClient {
   return createDefaultClient({
-    adapter: createOpenAIChatCompletionAdapter(),
     clientConfiguration: {
       defaultTarget: input.target,
       defaultServiceAccess: input.serviceAccess,
     },
-    components: createOpenAICompatibleComponents(),
+    components: {
+      ...createOpenAICompatibleComponents(),
+      modelIntegrationResolver: createOpenAIChatIntegrationResolver(),
+    },
   });
 }
