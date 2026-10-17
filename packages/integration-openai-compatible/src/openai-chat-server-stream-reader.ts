@@ -14,6 +14,32 @@ const readerVersion = "1.0.0";
 /** Sentinel that ends an OpenAI chat event stream. */
 const doneSentinel = "[DONE]";
 
+/** Tool-call index used when an event omits one. */
+const defaultToolCallIndex = 0;
+
+/** Wire type written for a function call assembled from stream deltas. */
+const functionToolType = "function";
+
+/** Finish reason used when a stream ends on function calls and names no other reason. */
+const toolCallsFinishReason = "tool_calls";
+
+/** Finish reason used when a text stream ends without a reason. */
+const stopFinishReason = "stop";
+
+/** One function call assembled from stream deltas. */
+interface AccumulatedToolCall {
+  id?: string;
+  name?: string;
+  arguments: string;
+}
+
+/** One choice assembled from stream deltas. */
+interface AccumulatedChoice {
+  content: string;
+  finishReason?: string;
+  toolCalls: Map<number, AccumulatedToolCall>;
+}
+
 /**
  * Creates the reader that turns chat-completion events into one success value.
  *
@@ -42,12 +68,14 @@ export function createOpenAIChatServerStreamReader(): ServerStreamReader {
  * @param input Frames, limits, and the optional text observer.
  * @returns The chat-completions success value.
  */
-async function readChatServerStream(input: Parameters<ServerStreamReader["read"]>[0]): Promise<ErasedRuntimeValue> {
+async function readChatServerStream(
+  input: Parameters<ServerStreamReader["read"]>[0],
+): Promise<ErasedRuntimeValue> {
   const decoder = new TextDecoder("utf-8", { fatal: true });
   let pending = "";
   let mode: "unknown" | "json" | "sse" = "unknown";
   let totalBytes = 0;
-  const choices = new Map<number, { content: string; finishReason?: string }>();
+  const choices = new Map<number, AccumulatedChoice>();
   let responseId: string | undefined;
   let model: string | undefined;
   let usage: JsonValue | undefined;
@@ -148,7 +176,7 @@ interface EventStep {
 function applyEventLine(
   line: string,
   maxFrameBytes: number,
-  choices: Map<number, { content: string; finishReason?: string }>,
+  choices: Map<number, AccumulatedChoice>,
   takeText: (text: string) => void,
 ): EventStep {
   const trimmed = line.endsWith("\r") ? line.slice(0, -1) : line;
@@ -178,14 +206,17 @@ function applyEventLine(
       if (!isRecord(choice)) {
         continue;
       }
-      const index = typeof choice.index === "number" ? choice.index : 0;
-      const current = choices.get(index) ?? { content: "" };
+      const index = typeof choice.index === "number" ? choice.index : defaultToolCallIndex;
+      const current = choices.get(index) ?? emptyChoice();
       const delta = isRecord(choice.delta) ? choice.delta : undefined;
       const fragment = typeof delta?.content === "string" ? delta.content : undefined;
       if (fragment !== undefined && fragment.length > 0) {
         current.content += fragment;
         takeText(fragment);
       }
+      // Function-call fragments are accumulated beside the text. A text-only
+      // delta has no tool_calls member and leaves the call map unchanged.
+      appendToolCallDeltas(current, delta?.tool_calls);
       const finish = choice.finish_reason;
       if (typeof finish === "string" && finish.length > 0) {
         current.finishReason = finish;
@@ -210,21 +241,32 @@ function applyEventLine(
  * @returns A JSON chat-completion object.
  */
 function completionValue(
-  choices: ReadonlyMap<number, { content: string; finishReason?: string }>,
+  choices: ReadonlyMap<number, AccumulatedChoice>,
   id: string | undefined,
   model: string | undefined,
   usage: JsonValue | undefined,
 ): JsonValue {
   const indexes = [...choices.keys()].sort((left, right) => left - right);
   if (indexes.length === 0) {
-    indexes.push(0);
+    indexes.push(defaultToolCallIndex);
   }
   const wireChoices: JsonValue[] = indexes.map((index) => {
-    const choice = choices.get(index) ?? { content: "" };
+    const choice = choices.get(index) ?? emptyChoice();
+    const toolCalls = wireToolCalls(choice);
+    const message: { [key: string]: JsonValue } = {
+      role: "assistant",
+      // An assistant turn that only requests tools is written with null content.
+      content: toolCalls.length > 0 && choice.content.length === 0 ? null : choice.content,
+    };
+    if (toolCalls.length > 0) {
+      message.tool_calls = toolCalls;
+    }
     return {
       index,
-      message: { role: "assistant", content: choice.content },
-      finish_reason: choice.finishReason ?? "stop",
+      message,
+      // A stream that produced calls but named no finish reason stopped for tools.
+      finish_reason:
+        choice.finishReason ?? (toolCalls.length > 0 ? toolCallsFinishReason : stopFinishReason),
     };
   });
   const body: { [key: string]: JsonValue } = { choices: wireChoices };
@@ -238,6 +280,103 @@ function completionValue(
     body.usage = usage;
   }
   return body;
+}
+
+/**
+ * Returns one empty accumulated choice.
+ *
+ * Content starts empty and the call map starts with no indexes, so a text-only
+ * stream does not invent a function call.
+ */
+function emptyChoice(): AccumulatedChoice {
+  return { content: "", toolCalls: new Map() };
+}
+
+/**
+ * Appends function-call fragments from one delta.
+ *
+ * Name and id arrive once. Argument text is concatenated in arrival order and
+ * is not parsed. A missing index addresses the first call.
+ *
+ * @param choice Choice being assembled.
+ * @param value Candidate `delta.tool_calls` member.
+ */
+function appendToolCallDeltas(choice: AccumulatedChoice, value: JsonValue | undefined): void {
+  // A text delta omits tool_calls. That is not a request for a function.
+  if (!Array.isArray(value)) {
+    return;
+  }
+  for (const call of value) {
+    // A non-object element cannot identify a function call.
+    if (!isRecord(call)) {
+      throw invalidStream();
+    }
+    const callIndex = readToolCallIndex(call);
+    const current = choice.toolCalls.get(callIndex) ?? { arguments: "" };
+    // Keep the first non-empty id. A later fragment must not replace it, and
+    // an empty string is not an id a tool result can repeat.
+    if (current.id === undefined && typeof call.id === "string" && call.id.length > 0) {
+      current.id = call.id;
+    }
+    const functionValue = isRecord(call.function) ? call.function : undefined;
+    if (
+      current.name === undefined &&
+      typeof functionValue?.name === "string" &&
+      functionValue.name.length > 0
+    ) {
+      current.name = functionValue.name;
+    }
+    // Argument pieces are appended in arrival order, including an initial "".
+    if (typeof functionValue?.arguments === "string") {
+      current.arguments += functionValue.arguments;
+    }
+    choice.toolCalls.set(callIndex, current);
+  }
+}
+
+/**
+ * Reads the tool-call index from one delta object.
+ *
+ * @param call One `delta.tool_calls` element.
+ * @returns A non-negative index. A missing index is the first call.
+ */
+function readToolCallIndex(call: { readonly [key: string]: JsonValue }): number {
+  // Providers omit the index only when the delta contains the first call.
+  if (!Object.hasOwn(call, "index")) {
+    return defaultToolCallIndex;
+  }
+  const index = call.index;
+  if (typeof index === "number" && Number.isSafeInteger(index) && index >= 0) {
+    return index;
+  }
+  // A present but unusable index would otherwise collapse into call 0 and
+  // concatenate a different function's arguments.
+  throw invalidStream();
+}
+
+/**
+ * Returns complete function calls in index order.
+ *
+ * A fragment that never received an id or a name cannot be answered. The
+ * stream fails instead of omitting that call from the assembled message.
+ *
+ * @param choice Assembled choice.
+ * @returns Wire function calls.
+ */
+function wireToolCalls(choice: AccumulatedChoice): JsonValue[] {
+  const ordered = [...choice.toolCalls.entries()].sort((left, right) => left[0] - right[0]);
+  const calls: JsonValue[] = [];
+  for (const [, call] of ordered) {
+    if (call.id === undefined || call.name === undefined) {
+      throw invalidStream();
+    }
+    calls.push({
+      id: call.id,
+      type: functionToolType,
+      function: { name: call.name, arguments: call.arguments },
+    });
+  }
+  return calls;
 }
 
 /**

@@ -5,14 +5,27 @@ import {
   isOpenIdentifier,
   ModelInteractionError,
   type MessageEntry,
+  type ToolCall,
 } from "@evolutos/mconet-core-domain";
 
 import { mapMessageRoleToWire, mapWireRoleToDomain } from "./map-message-role.js";
 import { mapTextMessageContentToWire, mapWireTextToDomain } from "./map-text-message-content.js";
-import { OpenAIChatMessageDTO } from "./openai-chat-message-dto.js";
+import { OpenAIChatMessageDTO, type OpenAIChatFunctionCall } from "./openai-chat-message-dto.js";
 
 /** Stable code for a request value that is not a message-entry leaf. */
 const invalidMessageEntryCode = "invalid_message_entry";
+
+/** Stable code when a tool result does not name the call it answers. */
+const missingToolCallIdCode = "missing_tool_call_id";
+
+/** Stable code when tool facts are attached to a role that cannot carry them. */
+const unexpectedToolCallCode = "unexpected_tool_call";
+
+/** Role that answers one earlier function call. */
+const toolRoleId = "message.tool";
+
+/** Role that may request function calls. */
+const assistantRoleId = "message.assistant";
 
 /** Fixed discriminator written on every entry this mapper creates. */
 const messageEntryKind = "message.entry";
@@ -45,9 +58,10 @@ const emptyExtensions: MessageEntry["extensions"] = Object.freeze({});
  * because a request must not send unknown members.
  *
  * @param entry One leaf of a request message document.
- * @returns A message whose `role` and `content` are the only wire members.
+ * @returns A message whose wire members are the role, text, and any tool facts.
  * @throws ModelInteractionError When `entry` is not a message-entry leaf, its
- *   role has no wire spelling, or any content value is not text.
+ *   role has no wire spelling, any content value is not text, or tool facts do
+ *   not belong on that role.
  */
 export function mapMessageEntryToWire(entry: MessageEntry): OpenAIChatMessageDTO {
   // The domain guard rejects containers, accessors, and an empty content list
@@ -71,8 +85,9 @@ export function mapMessageEntryToWire(entry: MessageEntry): OpenAIChatMessageDTO
     // content mapper and leaves no partial message to send.
     segments.push(mapTextMessageContentToWire(content));
   }
+  const toolFields = toolFieldsForRequest(entry);
 
-  return new OpenAIChatMessageDTO(role, segments.join(exactContentSeparator));
+  return new OpenAIChatMessageDTO(role, segments.join(exactContentSeparator), {}, toolFields);
 }
 
 /**
@@ -88,7 +103,7 @@ export function mapMessageEntryToWire(entry: MessageEntry): OpenAIChatMessageDTO
  * @param contentId Document-local identity for its single text content.
  * @param rolePath JSON Pointer of the message `role` member, used only when the spelling is rejected.
  * @returns A frozen entry with one content value and empty relations, metadata, and extensions.
- * @throws ModelInteractionError When `role` is not `assistant`, `system`, or `user`.
+ * @throws ModelInteractionError When `role` is not `assistant`, `system`, `tool`, or `user`.
  * @throws TypeError When either identity is not an open identifier.
  */
 export function mapWireMessageToDomain(
@@ -105,6 +120,9 @@ export function mapWireMessageToDomain(
 
   const role = mapWireRoleToDomain(message.role, rolePath);
   const content = mapWireTextToDomain(message.content, contentId);
+  // Copy call facts without parsing argument text. An absent list stays absent
+  // so a normal assistant message does not grow an empty toolCalls member.
+  const toolCalls = message.toolCalls?.map((call) => domainCall(call));
   // One wire string is one content value. Freezing the array preserves that
   // order and stops a later reader from inserting another segment.
   return Object.freeze({
@@ -115,5 +133,82 @@ export function mapWireMessageToDomain(
     relations: emptyRelations,
     metadata: emptyMetadata,
     extensions: emptyExtensions,
+    ...(message.toolCallId === undefined ? {} : { toolCallId: message.toolCallId }),
+    ...(toolCalls === undefined ? {} : { toolCalls: Object.freeze(toolCalls) }),
+  });
+}
+
+/**
+ * Returns the tool members that belong on this request entry.
+ *
+ * A tool result must name its call. Only an assistant entry may request calls.
+ * Any other combination fails before a partial message is built.
+ *
+ * @param entry Validated request entry.
+ * @returns Call id or function calls to write, with absent facts omitted.
+ */
+function toolFieldsForRequest(entry: MessageEntry): {
+  readonly toolCallId?: string;
+  readonly toolCalls?: readonly OpenAIChatFunctionCall[];
+} {
+  const toolCallId = entry.toolCallId;
+  const toolCalls = entry.toolCalls;
+  if (entry.role.id === toolRoleId) {
+    // A tool result answers one earlier call. It cannot itself request calls,
+    // and the service cannot route the result without the call id.
+    if (toolCalls !== undefined) {
+      throw toolFactError(
+        unexpectedToolCallCode,
+        "A tool result must not request further function calls.",
+      );
+    }
+    if (toolCallId === undefined) {
+      throw toolFactError(missingToolCallIdCode, "A tool result must name toolCallId.");
+    }
+    return { toolCallId };
+  }
+  // A call id belongs only on a tool result. Function calls belong only on
+  // the assistant. Any other placement is not a chat-completions message.
+  if (toolCallId !== undefined || (toolCalls !== undefined && entry.role.id !== assistantRoleId)) {
+    throw toolFactError(
+      unexpectedToolCallCode,
+      "Tool call facts are only valid on an assistant request or a tool result.",
+    );
+  }
+  if (toolCalls === undefined) {
+    return {};
+  }
+  return {
+    toolCalls: toolCalls.map((call) => domainCall(call)),
+  };
+}
+
+/** Copies one domain call into the wire carrier shape. */
+function domainCall(call: ToolCall | OpenAIChatFunctionCall): OpenAIChatFunctionCall {
+  // The three wire fields are copied as stored. Argument text is not parsed,
+  // and no extra carrier field is introduced.
+  return {
+    id: call.id,
+    name: call.name,
+    arguments: call.arguments,
+  };
+}
+
+/**
+ * Returns a protocol-adaptation failure for tool facts that cannot be sent.
+ *
+ * @param code Stable error code.
+ * @param message Technical summary that does not include argument text.
+ * @returns The interaction error.
+ */
+function toolFactError(code: string, message: string): ModelInteractionError {
+  // Tool-fact failures are request errors discovered while adapting the
+  // protocol, before any bytes are sent.
+  return new ModelInteractionError({
+    message,
+    category: "invalid_request",
+    phase: "protocol_adaptation",
+    code,
+    diagnostics: [],
   });
 }

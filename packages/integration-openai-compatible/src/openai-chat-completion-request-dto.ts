@@ -1,6 +1,6 @@
 // Copyright © 2026 Mcont.
 
-import type { JsonValue } from "@evolutos/mconet-core-domain";
+import type { JsonValue, ToolDeclaration } from "@evolutos/mconet-core-domain";
 
 import { OpenAIChatMessageDTO } from "./openai-chat-message-dto.js";
 
@@ -16,6 +16,8 @@ const jsonNegativeZeroMessage = "JSON number must not be negative zero.";
 /** Failure used when an integer is outside the binary64 safe range. */
 const jsonSafeIntegerMessage = "JSON integer must be within the interoperable safe range.";
 
+/** Wire type written for every declared function tool. */
+const functionToolType = "function";
 
 /**
  * Optional request members. Each field is omitted from the body when absent.
@@ -40,6 +42,9 @@ interface OpenAIChatCompletionRequestOptions {
 
   /** When true, the service responds with server-sent events. Omission means false. */
   readonly stream?: boolean;
+
+  /** Function tools the model may call. Omission leaves the service without tools. */
+  readonly tools?: readonly ToolDeclaration[];
 }
 
 /**
@@ -74,6 +79,9 @@ export class OpenAIChatCompletionRequestDTO {
 
   /** Whether the service should stream events. Defaults to false. */
   public readonly stream: boolean;
+
+  /** Function tools when the request declares them. */
+  public readonly tools?: readonly ToolDeclaration[];
 
   /**
    * Creates one request from the model, messages, and any optional members.
@@ -121,6 +129,10 @@ export class OpenAIChatCompletionRequestDTO {
       this.seed = seed;
     }
     this.stream = requireOptionalStream(options.stream);
+    const tools = copyTools(options.tools);
+    if (tools !== undefined) {
+      this.tools = tools;
+    }
     Object.freeze(this);
   }
 
@@ -139,6 +151,16 @@ export class OpenAIChatCompletionRequestDTO {
       model: this.model,
       messages: this.messages.map((message) => message.toJson()),
     };
+    if (this.tools !== undefined) {
+      body.tools = this.tools.map((tool) => ({
+        type: functionToolType,
+        function: {
+          name: tool.name,
+          ...(tool.description === undefined ? {} : { description: tool.description }),
+          parameters: tool.parameters,
+        },
+      }));
+    }
     if (this.temperature !== undefined) {
       body.temperature = this.temperature;
     }
@@ -247,6 +269,57 @@ function copyStop(value: readonly string[] | undefined): readonly string[] | und
  * @param value Candidate stream flag.
  * @returns The flag to write on the request.
  */
+/**
+ * Copies function declarations, or returns undefined when they are omitted.
+ *
+ * An empty list is not the same request as omitting tools, so it is rejected.
+ *
+ * @param value Candidate declaration list.
+ * @returns A frozen non-empty list, or undefined when the member is omitted.
+ */
+function copyTools(
+  value: readonly ToolDeclaration[] | undefined,
+): readonly ToolDeclaration[] | undefined {
+  // Omission leaves tools off the request body.
+  if (value === undefined) {
+    return undefined;
+  }
+  if (!Array.isArray(value) || Object.getPrototypeOf(value) !== Array.prototype) {
+    throw new TypeError(`${requestOwner} tools must be an array or undefined.`);
+  }
+  // An empty list is a different request from omitting tools, so it is rejected.
+  if (value.length === 0) {
+    throw new RangeError(`${requestOwner} tools must not be empty; use undefined to omit them.`);
+  }
+  const copy: ToolDeclaration[] = [];
+  const names = new Set<string>();
+  for (const tool of value) {
+    if (
+      typeof tool !== "object" ||
+      tool === null ||
+      typeof tool.name !== "string" ||
+      tool.name.length === 0 ||
+      (tool.description !== undefined && typeof tool.description !== "string") ||
+      typeof tool.parameters !== "object" ||
+      tool.parameters === null ||
+      Array.isArray(tool.parameters)
+    ) {
+      throw new TypeError(`${requestOwner} tools must contain a name and parameter object.`);
+    }
+    // The model selects a function by name, so the list cannot contain two.
+    if (names.has(tool.name)) {
+      throw new TypeError(`${requestOwner} tools must not repeat a function name.`);
+    }
+    names.add(tool.name);
+    copy.push({
+      name: tool.name,
+      ...(tool.description === undefined ? {} : { description: tool.description }),
+      parameters: tool.parameters,
+    });
+  }
+  return Object.freeze(copy);
+}
+
 function requireOptionalStream(value: unknown): boolean {
   if (value === undefined) {
     return false;

@@ -10,6 +10,7 @@ import {
   mapSystemMessageRoleToWire,
   mapSystemWireRoleToDomain,
 } from "./map-system-message-role.js";
+import { mapToolMessageRoleToWire, mapToolWireRoleToDomain } from "./map-tool-message-role.js";
 import { mapUserMessageRoleToWire, mapUserWireRoleToDomain } from "./map-user-message-role.js";
 import { invalidProtocolResponse } from "./wire.js";
 
@@ -22,18 +23,18 @@ const unsupportedMessageRoleCode = "unsupported_message_role";
  * The order is alphabetical so failure text does not depend on which branch
  * was checked last.
  */
-const supportedWireRoles = "assistant, system, or user";
+const supportedWireRoles = "assistant, system, tool, or user";
 
 /**
  * Returns the wire spelling for one request message role.
  *
  * Only `role.id` selects the spelling. `semantic` and `rawValue` never turn an
- * unknown identifier into system, user, or assistant.
+ * unknown identifier into system, user, assistant, or tool.
  *
  * @param role Role of one request message entry.
- * @returns `system`, `user`, or `assistant`.
+ * @returns `system`, `user`, `assistant`, or `tool`.
  */
-export function mapMessageRoleToWire(role: MessageRole): "assistant" | "system" | "user" {
+export function mapMessageRoleToWire(role: MessageRole): "assistant" | "system" | "tool" | "user" {
   if (role.id === "message.system") {
     return mapSystemMessageRoleToWire(role);
   }
@@ -42,6 +43,10 @@ export function mapMessageRoleToWire(role: MessageRole): "assistant" | "system" 
   }
   if (role.id === "message.assistant") {
     return mapAssistantMessageRoleToWire(role);
+  }
+  if (role.id === "message.tool") {
+    // The tool branch owns only the standard tool identifier.
+    return mapToolMessageRoleToWire(role);
   }
   // The identifier is SDK-side request data, so naming it tells the caller
   // which entry needs a different role. Descriptive fields are not a fallback.
@@ -74,6 +79,9 @@ export function mapWireRoleToDomain(spelling: string, path: string): MessageRole
   }
   if (spelling === "assistant") {
     return mapAssistantWireRoleToDomain(spelling);
+  }
+  if (spelling === "tool") {
+    return mapToolWireRoleToDomain(spelling);
   }
   throw invalidProtocolResponse(path, `must be ${supportedWireRoles}`);
 }

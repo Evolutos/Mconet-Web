@@ -12,6 +12,7 @@ import {
   type ProcessingResult,
   type TaskGroupNode,
   type TaskNode,
+  type ToolDeclaration,
 } from "@evolutos/mconet-core-domain";
 import type { ProtocolExecutionPlan, ProtocolRequestPlan } from "@evolutos/mconet-core-spi";
 
@@ -36,6 +37,9 @@ const duplicateGenerationParametersCode = "duplicate_generation_parameters";
 
 /** Stable code when a task leaf has no chat-completions representation. */
 const unsupportedTaskNodeCode = "unsupported_task_node";
+
+/** Stable code when two declarations use the same function name. */
+const duplicateToolDeclarationCode = "duplicate_tool_declaration";
 
 /** Stable code when the selected model name is not text. */
 const invalidModelNameCode = "invalid_model_name";
@@ -118,9 +122,12 @@ export function buildOpenAIChatCompletionRequest(input: {
     return { diagnostics: options.diagnostics };
   }
 
-  const stream = input.plan.extensions.stream === true;
+  const stream = input.plan.extensions?.stream === true;
   const requestBody = new OpenAIChatCompletionRequestDTO(modelName, messages, {
     ...options.options,
+    // An empty declaration list is omitted. Writing `tools: []` would be a
+    // different request from a conversation that declares no functions.
+    ...(collected.tools.length === 0 ? {} : { tools: collected.tools }),
     ...(stream ? { stream: true } : {}),
   }).toJson();
   return {
@@ -153,6 +160,7 @@ function isTaskContainer(node: TaskNode): node is TaskGroupNode {
 /** Task facts needed to build one chat request. */
 interface CollectedTaskPayload {
   readonly documents: readonly MessageDocument[];
+  readonly tools: readonly ToolDeclaration[];
   readonly parameters?: GenerationParameters;
   readonly diagnostics?: ProcessingResult<ProtocolRequestPlan>["diagnostics"];
 }
@@ -165,16 +173,36 @@ interface CollectedTaskPayload {
  */
 function collectTaskPayload(root: TaskNode): CollectedTaskPayload {
   const documents: MessageDocument[] = [];
+  const tools: ToolDeclaration[] = [];
+  const toolNames = new Set<string>();
   let parameters: GenerationParameters | undefined;
   const pending: TaskNode[] = [root];
   let node = pending.pop();
   while (node !== undefined) {
     if (isConversationInput(node)) {
       documents.push(node.messages);
+      for (const tool of node.tools ?? []) {
+        // Names are collected across every conversation input. A repeated name
+        // would make the model's selection ambiguous.
+        if (toolNames.has(tool.name)) {
+          return {
+            documents,
+            tools,
+            diagnostics: failure(
+              duplicateToolDeclarationCode,
+              "Each declared function name can appear only once.",
+              "task.document",
+            ).diagnostics,
+          };
+        }
+        toolNames.add(tool.name);
+        tools.push(tool);
+      }
     } else if (isGenerationParametersNode(node)) {
       if (parameters !== undefined) {
         return {
           documents,
+          tools,
           diagnostics: failure(
             duplicateGenerationParametersCode,
             "Only one generation parameter leaf can be mapped.",
@@ -191,6 +219,7 @@ function collectTaskPayload(root: TaskNode): CollectedTaskPayload {
     } else {
       return {
         documents,
+        tools,
         diagnostics: failure(
           unsupportedTaskNodeCode,
           "Task leaf is not supported by the chat completions request.",
@@ -200,7 +229,7 @@ function collectTaskPayload(root: TaskNode): CollectedTaskPayload {
     }
     node = pending.pop();
   }
-  return parameters === undefined ? { documents } : { documents, parameters };
+  return parameters === undefined ? { documents, tools } : { documents, tools, parameters };
 }
 
 /**

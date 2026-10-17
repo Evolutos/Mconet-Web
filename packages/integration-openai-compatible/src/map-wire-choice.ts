@@ -33,7 +33,7 @@ const choiceContentIdSuffix = "-text";
  *
  * @param choice One parsed response choice.
  * @returns A frozen entry whose text is the choice message content.
- * @throws ModelInteractionError When the message role is not `assistant`, `system`, or `user`.
+ * @throws ModelInteractionError When the message role is not `assistant`, `system`, `tool`, or `user`.
  */
 export function mapWireChoiceToMessageEntry(choice: OpenAIChatCompletionChoiceDTO): MessageEntry {
   // The role failure names this choice by the index the service assigned.

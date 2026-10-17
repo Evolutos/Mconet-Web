@@ -106,6 +106,7 @@ export { resolveIntegrationBinding } from "./resolve-integration-binding.js";
 export type { MappedStopSequences } from "./map-stop-sequences.js";
 export { mapTextMessageContentToWire, mapWireTextToDomain } from "./map-text-message-content.js";
 export { mapTemperatureToWire } from "./map-temperature.js";
+export { mapToolMessageRoleToWire, mapToolWireRoleToDomain } from "./map-tool-message-role.js";
 export type { MappedTemperature } from "./map-temperature.js";
 export { mapTopPToWire } from "./map-top-p.js";
 export type { MappedTopP } from "./map-top-p.js";
