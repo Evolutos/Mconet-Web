@@ -4,6 +4,7 @@ import { expect, expectTypeOf, it } from "vitest";
 
 import type {
   CompatibilityPolicy,
+  InteractionMode,
   InteractionResourceLimits,
   ServiceAccess,
 } from "@evolutos/mconet-core-domain";
@@ -16,6 +17,7 @@ it("defines exactly the single-interaction option surface", () => {
   // Exact equality prevents reusable Client defaults, request payloads, resolved
   // signals, credentials, or execution results entering this public boundary.
   expectTypeOf<InteractionOptions>().toEqualTypeOf<{
+    readonly mode?: InteractionMode;
     readonly components?: RuntimeComponents;
     readonly serviceAccessOverride?: ServiceAccess;
     readonly compatibilityPolicy?: CompatibilityPolicy;

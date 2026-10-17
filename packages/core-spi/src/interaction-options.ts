@@ -2,6 +2,7 @@
 
 import type {
   CompatibilityPolicy,
+  InteractionMode,
   InteractionResourceLimits,
   ServiceAccess,
 } from "@evolutos/mconet-core-domain";
@@ -19,6 +20,14 @@ import type { RuntimeComponents } from "./runtime-components.js";
  * must never be written back into reusable Client configuration.
  */
 export interface InteractionOptions {
+  /**
+   * Optional interaction mode for this call.
+   *
+   * Omission selects the client default, or `unary` when the client has none.
+   * `server_stream` is the text streaming mode.
+   */
+  readonly mode?: InteractionMode;
+
   /** Optional direct components with precedence above reusable Client choices. */
   readonly components?: RuntimeComponents;
 

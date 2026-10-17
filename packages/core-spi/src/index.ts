@@ -38,12 +38,17 @@ export type { PlannedComponentSelection } from "./planned-component-selection.js
 export type { ProtocolExecutionPlan } from "./protocol-execution-plan.js";
 export type { ProtocolRequestPlan } from "./protocol-request-plan.js";
 export type { RuntimeComponent } from "./runtime-component.js";
+export type { ServerStreamReadInput, ServerStreamReader } from "./server-stream-reader.js";
 export type { RuntimeComponents } from "./runtime-components.js";
 export type { SelectedComponent } from "./selected-component.js";
 export type { ServiceAccessResolver } from "./service-access-resolver.js";
 export type { TaskMatch } from "./task-match.js";
 export type { TaskProtocolAdapter } from "./task-protocol-adapter.js";
 export type { Transport } from "./transport.js";
+export type {
+  StreamingByteTransport,
+  StreamingTransportResponse,
+} from "./streaming-byte-transport.js";
 export type { TransportBody } from "./transport-body.js";
 export type { TransportContext } from "./transport-context.js";
 export type { TransportOutcome } from "./transport-outcome.js";

@@ -8,6 +8,7 @@ import type { ModelIntegrationResolver } from "./model-integration-resolver.js";
 import type { PayloadDecoder } from "./payload-decoder.js";
 import type { PayloadEncoder } from "./payload-encoder.js";
 import type { RuntimeComponents } from "./runtime-components.js";
+import type { ServerStreamReader } from "./server-stream-reader.js";
 import type { ServiceAccessResolver } from "./service-access-resolver.js";
 import type { TaskProtocolAdapter } from "./task-protocol-adapter.js";
 import type { Transport } from "./transport.js";
@@ -23,6 +24,7 @@ it("defines only the supported optional component injection surface", () => {
     readonly successPayloadDecoder?: PayloadDecoder;
     readonly errorPayloadDecoder?: PayloadDecoder;
     readonly transport?: Transport;
+    readonly serverStreamReader?: ServerStreamReader;
     readonly authorizationHandlerResolver?: AuthorizationHandlerResolver;
     readonly authorizationHandlers?: readonly AuthorizationHandler[];
   }>();
