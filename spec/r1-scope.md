@@ -4,24 +4,26 @@ This file is the frozen R1 scope. A change to the supported or rejected set belo
 
 ## Supported
 
-| Dimension           | Supported value                                                                       |
-| ------------------- | ------------------------------------------------------------------------------------- |
-| Task                | `conversation.generate`                                                               |
-| Message             | `system`, `user`, `assistant`, text content                                           |
-| Mode                | `unary`, `server_stream`                                                              |
-| Wire format         | JSON                                                                                  |
-| Transport           | HTTP and HTTPS `fetch`                                                                |
-| Authorization       | no authorization, header API key, Bearer                                              |
-| Default integration | one OpenAI-compatible text protocol                                                   |
-| Configuration       | client defaults plus one call override                                                |
-| Output              | text, server-stream text fragments, finish reason, usage, model and response metadata |
+| Dimension           | Supported value                                                                                      |
+| ------------------- | ---------------------------------------------------------------------------------------------------- |
+| Task                | `conversation.generate`                                                                              |
+| Message             | `system`, `user`, `assistant`, and `tool` text; assistant function calls; function tool declarations |
+| Mode                | `unary`, `server_stream`                                                                             |
+| Wire format         | JSON                                                                                                 |
+| Transport           | HTTP and HTTPS `fetch`                                                                               |
+| Authorization       | no authorization, header API key, Bearer                                                             |
+| Default integration | one OpenAI-compatible text protocol                                                                  |
+| Configuration       | client defaults plus one call override                                                               |
+| Output              | text, server-stream text fragments, finish reason, usage, model and response metadata                |
+
+`interactWithTools` runs only functions the caller registered for that call, appends each result as a tool message, and stops after four model calls.
 
 ## Rejected
 
 | Dimension     | Rejected value                                                 |
 | ------------- | -------------------------------------------------------------- |
 | Task          | embedding, rerank, image, audio, video, custom binary tasks    |
-| Message       | tool, image, audio, video, and file content                    |
+| Message       | image, audio, video, and file content                          |
 | Mode          | `client_stream`, `duplex`, `long_running`                      |
 | Wire format   | Protobuf, XML, custom binary                                   |
 | Transport     | WebSocket, WebTransport, gRPC                                  |
@@ -36,7 +38,7 @@ Rejected task, message content, and mode values fail with a stable error before 
 
 - automatic retry, backoff, circuit breaking, load balancing, and business rate limits
 - automatic model or protocol switching
-- an agent loop and actual tool execution
+- an open-ended agent planner, and execution of a function the caller did not register
 - session persistence, history trimming, long-term memory, and retrieval
 - automatic repair of a business schema
 - placing a long-lived model credential in the browser by default
