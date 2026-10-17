@@ -42,6 +42,9 @@
 | `client` | `OpenAICompatibleClientInput`    | type  |
 | `client` | `RawResponseSnapshot`            | type  |
 | `client` | `redactRawResponse`              | value |
+| `client` | `streamText`                     | value |
+| `client` | `TextStreamEvent`                | type  |
+| `client` | `TextStreamInteraction`          | type  |
 
 ## codec-json
 
@@ -170,6 +173,7 @@
 | `core-domain` | `validateConversationTaskNodeSupport` | value |
 | `core-domain` | `validateConversationTaskTypeSupport` | value |
 | `core-domain` | `validateEmptyArtifactCatalogSupport` | value |
+| `core-domain` | `validateTextInteractionModeSupport`  | value |
 | `core-domain` | `validateTextMessageContentSupport`   | value |
 | `core-domain` | `validateUnaryInteractionModeSupport` | value |
 
@@ -286,7 +290,11 @@
 | `core-spi` | `RuntimeComponent`               | type  |
 | `core-spi` | `RuntimeComponents`              | type  |
 | `core-spi` | `SelectedComponent`              | type  |
+| `core-spi` | `ServerStreamReadInput`          | type  |
+| `core-spi` | `ServerStreamReader`             | type  |
 | `core-spi` | `ServiceAccessResolver`          | type  |
+| `core-spi` | `StreamingByteTransport`         | type  |
+| `core-spi` | `StreamingTransportResponse`     | type  |
 | `core-spi` | `TaskMatch`                      | type  |
 | `core-spi` | `TaskProtocolAdapter`            | type  |
 | `core-spi` | `Transport`                      | type  |
@@ -312,6 +320,7 @@
 | `integration-openai-compatible` | `createOpenAIChatCompletionAdapter`    | value |
 | `integration-openai-compatible` | `createOpenAIChatFixtureError`         | value |
 | `integration-openai-compatible` | `createOpenAIChatFixtureRequest`       | value |
+| `integration-openai-compatible` | `createOpenAIChatServerStreamReader`   | value |
 | `integration-openai-compatible` | `DefaultOpenAIChatBindingRoles`        | type  |
 | `integration-openai-compatible` | `IntegrationChainMatcher`              | type  |
 | `integration-openai-compatible` | `IntegrationTypeKey`                   | type  |
@@ -351,6 +360,7 @@
 | `integration-openai-compatible` | `matchesContentPolicyError`            | value |
 | `integration-openai-compatible` | `matchesConversationGenerateTask`      | value |
 | `integration-openai-compatible` | `matchesOpenAIChatCompletionsProtocol` | value |
+| `integration-openai-compatible` | `matchesTextChatInteractionMode`       | value |
 | `integration-openai-compatible` | `matchesUnaryInteractionMode`          | value |
 | `integration-openai-compatible` | `matchIntegrationChain`                | value |
 | `integration-openai-compatible` | `matchIntegrationType`                 | value |
@@ -384,6 +394,7 @@
 | `integration-openai-compatible` | `prepareOpenAIChatCompletionPlan`      | value |
 | `integration-openai-compatible` | `resolveIntegrationBinding`            | value |
 | `integration-openai-compatible` | `serializeIntegrationTypeKey`          | value |
+| `integration-openai-compatible` | `SERVER_STREAM_INTERACTION_MODE_ID`    | value |
 | `integration-openai-compatible` | `UNARY_INTERACTION_MODE_ID`            | value |
 
 ## testing
@@ -442,27 +453,28 @@
 
 ## transport-fetch-shared
 
-| Package                  | Name                           | Kind  |
-| ------------------------ | ------------------------------ | ----- |
-| `transport-fetch-shared` | `bridgeCallerAbortSignal`      | value |
-| `transport-fetch-shared` | `bridgeDeadlineSignal`         | value |
-| `transport-fetch-shared` | `CallerAbortBridge`            | type  |
-| `transport-fetch-shared` | `DeadlineAbortBridge`          | type  |
-| `transport-fetch-shared` | `FETCH_HTTP_METHOD`            | value |
-| `transport-fetch-shared` | `FetchBaseUrl`                 | type  |
-| `transport-fetch-shared` | `FetchHeaderField`             | type  |
-| `transport-fetch-shared` | `FetchHttpMethod`              | type  |
-| `transport-fetch-shared` | `FetchNetworkFailureStage`     | type  |
-| `transport-fetch-shared` | `FetchResponseBodySource`      | type  |
-| `transport-fetch-shared` | `mapFetchAbortError`           | value |
-| `transport-fetch-shared` | `mapFetchBaseUrl`              | value |
-| `transport-fetch-shared` | `mapFetchBody`                 | value |
-| `transport-fetch-shared` | `mapFetchHeaders`              | value |
-| `transport-fetch-shared` | `mapFetchHttpMethod`           | value |
-| `transport-fetch-shared` | `mapFetchNetworkError`         | value |
-| `transport-fetch-shared` | `mapFetchQuery`                | value |
-| `transport-fetch-shared` | `mapFetchResponseMediaType`    | value |
-| `transport-fetch-shared` | `mapFetchSafeHeaderSummary`    | value |
-| `transport-fetch-shared` | `mapFetchStatus`               | value |
-| `transport-fetch-shared` | `readBoundedFetchResponseBody` | value |
-| `transport-fetch-shared` | `readFetchResponseBody`        | value |
+| Package                  | Name                              | Kind  |
+| ------------------------ | --------------------------------- | ----- |
+| `transport-fetch-shared` | `bridgeCallerAbortSignal`         | value |
+| `transport-fetch-shared` | `bridgeDeadlineSignal`            | value |
+| `transport-fetch-shared` | `CallerAbortBridge`               | type  |
+| `transport-fetch-shared` | `DeadlineAbortBridge`             | type  |
+| `transport-fetch-shared` | `FETCH_HTTP_METHOD`               | value |
+| `transport-fetch-shared` | `FetchBaseUrl`                    | type  |
+| `transport-fetch-shared` | `FetchHeaderField`                | type  |
+| `transport-fetch-shared` | `FetchHttpMethod`                 | type  |
+| `transport-fetch-shared` | `FetchNetworkFailureStage`        | type  |
+| `transport-fetch-shared` | `FetchResponseBodySource`         | type  |
+| `transport-fetch-shared` | `iterateBoundedFetchResponseBody` | value |
+| `transport-fetch-shared` | `mapFetchAbortError`              | value |
+| `transport-fetch-shared` | `mapFetchBaseUrl`                 | value |
+| `transport-fetch-shared` | `mapFetchBody`                    | value |
+| `transport-fetch-shared` | `mapFetchHeaders`                 | value |
+| `transport-fetch-shared` | `mapFetchHttpMethod`              | value |
+| `transport-fetch-shared` | `mapFetchNetworkError`            | value |
+| `transport-fetch-shared` | `mapFetchQuery`                   | value |
+| `transport-fetch-shared` | `mapFetchResponseMediaType`       | value |
+| `transport-fetch-shared` | `mapFetchSafeHeaderSummary`       | value |
+| `transport-fetch-shared` | `mapFetchStatus`                  | value |
+| `transport-fetch-shared` | `readBoundedFetchResponseBody`    | value |
+| `transport-fetch-shared` | `readFetchResponseBody`           | value |
