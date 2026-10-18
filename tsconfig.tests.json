@@ -1,0 +1,11 @@
+// Copyright © 2026 Mcont.
+{
+  // Editors need every test file to belong to a tsconfig. Typechecking them is
+  // intentionally left to Vitest; this config only marks them as included.
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "noCheck": true
+  },
+  "include": ["packages/*/src/**/*.test.ts", "packages/*/src/**/*.spec.ts"],
+  "exclude": ["**/dist/**", "**/node_modules/**"]
+}

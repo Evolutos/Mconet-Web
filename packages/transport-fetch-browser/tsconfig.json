@@ -1,0 +1,7 @@
+// Copyright © 2026 Mcont.
+{
+  // Nearest config for this package. Editors use it instead of a root build
+  // config and typecheck this source with the same runtime library as the build.
+  "extends": "../../tsconfig.browser.json",
+  "include": ["src/**/*.ts"]
+}

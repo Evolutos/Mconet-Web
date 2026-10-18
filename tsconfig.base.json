@@ -18,5 +18,16 @@
     "noImplicitOverride": true,
     "verbatimModuleSyntax": true,
     "isolatedModules": true
-  }
+  },
+  // Generated declarations and installed packages are not source. Test files are
+  // included by tsconfig.tests.json so this config does not typecheck them.
+  "exclude": [
+    "**/dist/**",
+    "**/node_modules/**",
+    "coverage/**",
+    "local/**",
+    ".artifacts/**",
+    "**/*.test.ts",
+    "**/*.spec.ts"
+  ]
 }
