@@ -69,9 +69,6 @@ importers:
       '@evolutos/mconet-core-spi':
         specifier: workspace:*
         version: link:../../packages/core-spi
-      '@evolutos/mconet-integration-openai-compatible':
-        specifier: workspace:*
-        version: link:../../packages/integration-openai-compatible
     devDependencies:
       vite:
         specifier: 8.3.2
@@ -91,9 +88,6 @@ importers:
       '@evolutos/mconet-core-spi':
         specifier: workspace:*
         version: link:../../packages/core-spi
-      '@evolutos/mconet-integration-openai-compatible':
-        specifier: workspace:*
-        version: link:../../packages/integration-openai-compatible
 
   examples/custom-transport:
     dependencies:

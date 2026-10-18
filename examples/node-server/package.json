@@ -8,8 +8,7 @@
     "@evolutos/mconet-auth-basic": "workspace:*",
     "@evolutos/mconet-client": "workspace:*",
     "@evolutos/mconet-core-domain": "workspace:*",
-    "@evolutos/mconet-core-spi": "workspace:*",
-    "@evolutos/mconet-integration-openai-compatible": "workspace:*"
+    "@evolutos/mconet-core-spi": "workspace:*"
   },
   "license": "UNLICENSED"
 }

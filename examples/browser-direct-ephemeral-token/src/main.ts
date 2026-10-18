@@ -1,10 +1,9 @@
 // Copyright © 2026 Mcont.
 
-import { BearerAuthorizationHandler, bearerAuthorizationKind } from "@evolutos/mconet-auth-basic";
-import { createDefaultClient, interactWithText } from "@evolutos/mconet-client";
+import { bearerAuthorizationKind } from "@evolutos/mconet-auth-basic";
+import { createOpenAICompatibleClient, interactWithText } from "@evolutos/mconet-client";
 import { SecretValue } from "@evolutos/mconet-core-domain";
 import type { CredentialSource } from "@evolutos/mconet-core-spi";
-import { createOpenAIChatCompletionAdapter } from "@evolutos/mconet-integration-openai-compatible";
 
 /**
  * Direct browser call premises.
@@ -28,8 +27,9 @@ const providerTarget = {
 /**
  * Builds a client that reads one ephemeral token through a credential source.
  *
- * The token is not stored on the module. The Bearer handler is the component
- * that may later reveal it, and only for that call.
+ * The token is not stored on the module. The OpenAI-compatible factory
+ * installs the chat codecs, the server-stream reader, and the Bearer handler.
+ * The handler may reveal the token only for that call.
  *
  * @param ephemeralToken Short-lived token supplied by the page for one call.
  * @returns A client aimed at the CORS-enabled provider.
@@ -38,20 +38,14 @@ export function createEphemeralTokenClient(ephemeralToken: string) {
   const credentialSource: CredentialSource = {
     getCredential: () => Promise.resolve(new SecretValue(ephemeralToken)),
   };
-  return createDefaultClient({
-    adapter: createOpenAIChatCompletionAdapter(),
-    components: {
-      authorizationHandlers: [new BearerAuthorizationHandler()],
-    },
-    clientConfiguration: {
-      defaultTarget: providerTarget,
-      defaultServiceAccess: {
-        endpoint: { kind: "absolute", value: providerEndpoint },
-        authorization: { kind: bearerAuthorizationKind, credentialSource },
-        headers: [],
-        query: [],
-        extensions: {},
-      },
+  return createOpenAICompatibleClient({
+    target: providerTarget,
+    serviceAccess: {
+      endpoint: { kind: "absolute", value: providerEndpoint },
+      authorization: { kind: bearerAuthorizationKind, credentialSource },
+      headers: [],
+      query: [],
+      extensions: {},
     },
   });
 }

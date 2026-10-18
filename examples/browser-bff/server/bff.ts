@@ -7,7 +7,8 @@ import { createServer } from "node:http";
  *
  * The vendor credential is read from the server environment when a browser
  * request arrives. It is not written into the response, and this module is not
- * a Vite input.
+ * a Vite input. The chat client appends `/chat/completions` to the `/bff`
+ * base, so the accepted path is `/bff/chat/completions`.
  */
 const server = createServer((request, response) => {
   const vendorCredential = process.env["VENDOR_API_KEY"];

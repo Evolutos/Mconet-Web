@@ -2,11 +2,10 @@
 
 import { createServer } from "node:http";
 
-import { BearerAuthorizationHandler, bearerAuthorizationKind } from "@evolutos/mconet-auth-basic";
-import { createDefaultClient } from "@evolutos/mconet-client";
+import { bearerAuthorizationKind } from "@evolutos/mconet-auth-basic";
+import { createOpenAICompatibleClient } from "@evolutos/mconet-client";
 import { SecretValue } from "@evolutos/mconet-core-domain";
 import type { CredentialSource } from "@evolutos/mconet-core-spi";
-import { createOpenAIChatCompletionAdapter } from "@evolutos/mconet-integration-openai-compatible";
 
 /**
  * Node server entry.
@@ -39,7 +38,9 @@ function readVendorCredential(): string {
  * Creates the server client after the credential is available.
  *
  * The credential source closes over the server value. Callers do not pass it
- * in from a browser.
+ * in from a browser. The OpenAI-compatible factory installs the chat codecs,
+ * the server-stream reader, and the authorization handlers. Node's export
+ * condition selects the Node Fetch transport.
  *
  * @returns A Node client that can authorize with the server credential.
  */
@@ -47,20 +48,14 @@ export function createServerClient() {
   const credentialSource: CredentialSource = {
     getCredential: () => Promise.resolve(new SecretValue(readVendorCredential())),
   };
-  return createDefaultClient({
-    adapter: createOpenAIChatCompletionAdapter(),
-    components: {
-      authorizationHandlers: [new BearerAuthorizationHandler()],
-    },
-    clientConfiguration: {
-      defaultTarget: providerTarget,
-      defaultServiceAccess: {
-        endpoint: { kind: "absolute", value: "https://provider.example.test/v1" },
-        authorization: { kind: bearerAuthorizationKind, credentialSource },
-        headers: [],
-        query: [],
-        extensions: {},
-      },
+  return createOpenAICompatibleClient({
+    target: providerTarget,
+    serviceAccess: {
+      endpoint: { kind: "absolute", value: "https://provider.example.test/v1" },
+      authorization: { kind: bearerAuthorizationKind, credentialSource },
+      headers: [],
+      query: [],
+      extensions: {},
     },
   });
 }
