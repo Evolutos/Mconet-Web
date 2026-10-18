@@ -3,30 +3,20 @@
 import {
   validateConversationTaskNodeSupport,
   validateConversationTaskTypeSupport,
-  validateEmptyArtifactCatalogSupport,
-  validateTextMessageContentSupport,
+  validateImageArtifactSupport,
   validateTextInteractionModeSupport,
-  type ConversationInputNode,
   type InteractionMode,
   type ProcessingResult,
-  type TaskDocument,
-  type TaskNode,
 } from "@evolutos/mconet-core-domain";
 
 import type { InteractionContext } from "./interaction-context.js";
 
-/** Conversation input leaf. Other leaves are not message sources. */
-const conversationInputKind = "task.input.conversation";
-
-/** Container composition. Groups are walked; they are not themselves messages. */
-const containerComposition = "container";
-
 /**
  * Schedules the R1 validators for one normalized interaction.
  *
- * The order is fixed: interaction mode, task type, task nodes, text content,
- * then an empty artifact catalog. The first failure stops the schedule. This
- * stage does not call a transport, read a credential, or repair the request.
+ * The order is fixed: interaction mode, task type, task nodes, then text and
+ * referenced image artifacts. The first failure stops the schedule. This stage
+ * does not call a transport, read a credential, or repair the request.
  *
  * @param input Normalized context and the interaction mode to validate.
  * @returns The same context when every gate passes, or diagnostics and no value.
@@ -52,49 +42,14 @@ export function validateR1Interaction(input: {
     return { diagnostics: nodeResult.diagnostics };
   }
 
-  const textResult = validateConversationText(task.document);
-  if (textResult !== undefined) {
-    return textResult;
-  }
-
-  const artifactResult = validateEmptyArtifactCatalogSupport(task.artifacts);
-  if (artifactResult.value === undefined) {
-    return { diagnostics: artifactResult.diagnostics };
+  // Image support runs after mode, task type, and node shape, so a rejected
+  // mode does not inspect the catalog. Text and referenced images pass here;
+  // other content still fails before a credential is read.
+  const imageResult = validateImageArtifactSupport(task.document, task.artifacts);
+  if (imageResult.value === undefined) {
+    return { diagnostics: imageResult.diagnostics };
   }
 
   // The normalized context is already the executable request. Do not copy it.
   return { diagnostics: [], value: input.context };
-}
-
-/**
- * Validates text content in every conversation input, in preorder.
- *
- * @param document Task document whose conversation leaves carry messages.
- * @returns Diagnostics when a message contains non-text content.
- */
-function validateConversationText(
-  document: TaskDocument,
-): ProcessingResult<InteractionContext> | undefined {
-  const pending: TaskNode[] = [document.root];
-  let node = pending.pop();
-  while (node !== undefined) {
-    if (isConversationInput(node)) {
-      const textResult = validateTextMessageContentSupport(node.messages);
-      if (textResult.value === undefined) {
-        return { diagnostics: textResult.diagnostics };
-      }
-    } else if (node.composition === containerComposition && "children" in node) {
-      // Reverse a shallow copy so the stack restores left-to-right child order.
-      for (const child of node.children.slice().reverse()) {
-        pending.push(child);
-      }
-    }
-    node = pending.pop();
-  }
-  return undefined;
-}
-
-/** Narrows one task node to a conversation input leaf. */
-function isConversationInput(node: TaskNode): node is ConversationInputNode {
-  return node.kind === conversationInputKind && node.composition === "leaf";
 }

@@ -46,6 +46,7 @@ import { resolveInteractionDeadline } from "./resolve-interaction-deadline.js";
 import { resolveInteractionSignal } from "./resolve-interaction-signal.js";
 import { scheduleApplyAuthorization } from "./schedule-apply-authorization.js";
 import { scheduleAuthorizationHandlerResolution } from "./schedule-authorization-handler-resolution.js";
+import { materializeImageArtifactSources } from "./materialize-image-artifact-sources.js";
 import { scheduleBuildRequest } from "./schedule-build-request.js";
 import { scheduleCapabilityValidation } from "./schedule-capability-validation.js";
 import { scheduleComponentSelection } from "./schedule-component-selection.js";
@@ -287,10 +288,23 @@ async function runUnaryInteraction(
     authorizationHandlers: input.authorizationHandlers,
     capabilityResolution,
   });
+  // Image sources are read after validation and before the model credential.
+  // The fetch therefore cannot send that credential. An empty catalog returns
+  // the same request and does not call fetch.
+  const materialized = await materializeImageArtifactSources({
+    request: validated.request,
+    fetchImpl: globalThis.fetch.bind(globalThis),
+    signal,
+  });
+  if (signal.aborted) {
+    termination.terminate({ kind: "cancel", reason: signal.reason });
+    throw captureUnknownInteractionFailure(signal.reason, "transport");
+  }
+  const requestWithImages = requireValue(materialized, "validation");
   const requestPlan = requireValue(
     scheduleBuildRequest({
       adapter: snapshot.taskProtocolAdapter,
-      request: validated.request,
+      request: requestWithImages,
       plan,
     }),
     "planning",
