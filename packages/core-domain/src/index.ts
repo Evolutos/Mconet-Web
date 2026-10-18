@@ -14,7 +14,12 @@ export { MessageEntryBuilder } from "./message-entry-builder.js";
 export { isMessageEntry } from "./message-entry.js";
 export { isMessageGroup } from "./message-group.js";
 export { isMessageRole } from "./message-role.js";
+export {
+  isArtifactMessageContent,
+  type ArtifactMessageContent,
+} from "./artifact-message-content.js";
 export { isTextMessageContent } from "./text-message-content.js";
+export { validateImageArtifactSupport } from "./validate-image-artifact-support.js";
 export { validateTextMessageContentSupport } from "./validate-text-message-content-support.js";
 export { validateEmptyArtifactCatalogSupport } from "./validate-empty-artifact-catalog-support.js";
 export { validateConversationTaskTypeSupport } from "./validate-conversation-task-type-support.js";

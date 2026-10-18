@@ -13,8 +13,7 @@ import { isJsonRecord } from "./model-descriptor.js";
 import { isTaskDescriptor } from "./task-descriptor.js";
 import type { TaskDescriptor } from "./task-descriptor.js";
 import { isTaskDocument, type TaskDocument } from "./task-document.js";
-import { validateEmptyArtifactCatalogSupport } from "./validate-empty-artifact-catalog-support.js";
-import { validateTextMessageContentSupport } from "./validate-text-message-content-support.js";
+import { validateImageArtifactSupport } from "./validate-image-artifact-support.js";
 
 /**
  * Immutable model-task request for conversation generation.
@@ -37,9 +36,9 @@ export interface ConversationTaskRequest extends ModelTaskRequest {
  *
  * Validation composes the complete descriptor and Task-document boundaries, then
  * applies the current conversation range: at least one input MessageDocument,
- * text-only Message content, valid generation settings, and an empty Artifact
- * scope. Unknown Task-node kinds remain preserved for their later explicit range
- * gate. No defaults, normalization, mapping, I/O, or mutation are performed.
+ * text or referenced image content, and valid generation settings. Unknown
+ * Task-node kinds remain preserved for their later explicit range gate. No
+ * defaults, normalization, mapping, I/O, or mutation are performed.
  *
  * @param value Untrusted Task request to validate.
  * @returns Whether the value satisfies the supported {@link ConversationTaskRequest} contract.
@@ -72,7 +71,10 @@ export function isConversationTaskRequest(value: unknown): value is Conversation
 
   // Scope-specific node checks run only after the whole Task tree is valid, so
   // each typed payload may safely delegate to its own complete validator.
-  return hasSupportedConversationNodes(documentDescriptor.value);
+  return hasSupportedConversationNodes(
+    documentDescriptor.value,
+    artifactsDescriptor.value as ArtifactCatalog,
+  );
 }
 
 /** Validates the open descriptor and its exact conversation Task identity. */
@@ -88,7 +90,7 @@ function hasConversationDescriptor(value: unknown): boolean {
   return isDataDescriptor(typeDescriptor) && typeDescriptor.value === "conversation.generate";
 }
 
-/** Validates the explicit empty Artifact range without inspecting Artifact data. */
+/** Validates a dense Artifact collection. Image support is applied with the messages. */
 function isSupportedArtifactCatalog(value: unknown): value is ArtifactCatalog {
   const descriptors = getRecordDescriptors(value);
   const artifactsDescriptor = descriptors?.artifacts;
@@ -96,25 +98,23 @@ function isSupportedArtifactCatalog(value: unknown): value is ArtifactCatalog {
     return false;
   }
 
-  const artifactDescriptors = getDenseArrayDescriptors(artifactsDescriptor.value);
-  if (artifactDescriptors === undefined || artifactDescriptors.length !== 0) {
-    return false;
-  }
-
-  try {
-    const catalog = value as ArtifactCatalog;
-    // Reuse the dedicated current-range gate. Identity equality proves it saw
-    // this exact empty Catalog rather than a fabricated replacement value.
-    return validateEmptyArtifactCatalogSupport(catalog).value === catalog;
-  } catch {
-    // A stateful Proxy that changes after descriptor capture is invalid instead
-    // of exposing an accessor exception through the public predicate.
-    return false;
-  }
+  // An empty collection is the text-only scope. A non-empty collection is
+  // accepted here and then restricted to referenced images with the messages.
+  return getDenseArrayDescriptors(artifactsDescriptor.value) !== undefined;
 }
 
 /** Traverses validated Task nodes and applies typed conversation payload ranges. */
-function hasSupportedConversationNodes(document: TaskDocument): boolean {
+function hasSupportedConversationNodes(document: TaskDocument, catalog: ArtifactCatalog): boolean {
+  try {
+    // Image references are checked against this request's catalog before node
+    // payloads are trusted. A hostile proxy read fails closed.
+    if (validateImageArtifactSupport(document, catalog).value === undefined) {
+      return false;
+    }
+  } catch {
+    return false;
+  }
+
   const documentDescriptors = getRecordDescriptors(document);
   const rootDescriptor = documentDescriptors?.root;
   if (!isDataDescriptor(rootDescriptor)) {
@@ -189,7 +189,7 @@ function hasSupportedConversationNodes(document: TaskDocument): boolean {
   return conversationInputCount > 0;
 }
 
-/** Validates one stored input MessageDocument and its text-only request range. */
+/** Validates one stored input MessageDocument. Image content is checked with the catalog. */
 function hasSupportedMessageInput(descriptor: PropertyDescriptor | undefined): boolean {
   if (!isDataDescriptor(descriptor) || !isMessageDocument(descriptor.value)) {
     return false;
@@ -198,17 +198,6 @@ function hasSupportedMessageInput(descriptor: PropertyDescriptor | undefined): b
   const document = descriptor.value;
   const descriptors = getRecordDescriptors(document);
   const purposeDescriptor = descriptors?.purpose;
-  if (!isDataDescriptor(purposeDescriptor) || purposeDescriptor.value !== "input") {
-    return false;
-  }
-
-  try {
-    // The dedicated range traversal returns the same document only when every
-    // content item is supported text and no diagnostic replaced the value.
-    return validateTextMessageContentSupport(document).value === document;
-  } catch {
-    // A stateful Message Proxy may change after structural descriptor checks;
-    // direct traversal failures remain invalid input rather than escaping.
-    return false;
-  }
+  // Output documents stay representable and are outside this request range.
+  return isDataDescriptor(purposeDescriptor) && purposeDescriptor.value === "input";
 }

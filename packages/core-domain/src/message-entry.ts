@@ -1,5 +1,6 @@
 // Copyright © 2026 Mcont.
 
+import { isArtifactMessageContent } from "./artifact-message-content.js";
 import type { MessageContent } from "./message-content.js";
 import type { MessageElementBase } from "./message-element-base.js";
 import { isJsonRecord } from "./model-descriptor.js";
@@ -156,10 +157,13 @@ function isMessageContentValue(value: unknown): value is MessageContent {
     return false;
   }
 
-  // The standard text discriminator must satisfy the concrete text validator;
-  // other open kinds retain only the shared unknown-content representation.
+  // Standard text and artifact discriminators must satisfy their concrete
+  // validators. Other open kinds retain only the shared unknown-content shape.
   if (kindDescriptor.value === "content.text") {
     return isTextMessageContent(value);
+  }
+  if (kindDescriptor.value === "content.artifact") {
+    return isArtifactMessageContent(value);
   }
 
   const idDescriptor = descriptors.id;
