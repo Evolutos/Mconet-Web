@@ -18,6 +18,7 @@ export { interactWithText } from "./interact-with-text.js";
 export { interactWithTools } from "./interact-with-tools.js";
 export { streamText } from "./stream-text.js";
 export type {
+  ConversationImage,
   ConversationMessage,
   ConversationRequestInput,
   ConversationTool,
