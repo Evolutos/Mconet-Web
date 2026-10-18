@@ -4,17 +4,17 @@ This file is the frozen R1 scope. A change to the supported or rejected set belo
 
 ## Supported
 
-| Dimension           | Supported value                                                                                      |
-| ------------------- | ---------------------------------------------------------------------------------------------------- |
-| Task                | `conversation.generate`                                                                              |
-| Message             | `system`, `user`, `assistant`, and `tool` text; assistant function calls; function tool declarations |
-| Mode                | `unary`, `server_stream`                                                                             |
-| Wire format         | JSON                                                                                                 |
-| Transport           | HTTP and HTTPS `fetch`                                                                               |
-| Authorization       | no authorization, header API key, Bearer                                                             |
-| Default integration | one OpenAI-compatible text protocol                                                                  |
-| Configuration       | client defaults plus one call override                                                               |
-| Output              | text, server-stream text fragments, finish reason, usage, model and response metadata                |
+| Dimension           | Supported value                                                                                                                                         |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Task                | `conversation.generate`                                                                                                                                 |
+| Message             | `system`, `user`, `assistant`, and `tool` text; `content.artifact` references to `artifact.image`; assistant function calls; function tool declarations |
+| Mode                | `unary`, `server_stream`                                                                                                                                |
+| Wire format         | JSON                                                                                                                                                    |
+| Transport           | HTTP and HTTPS `fetch`                                                                                                                                  |
+| Authorization       | no authorization, header API key, Bearer                                                                                                                |
+| Default integration | one OpenAI-compatible text protocol                                                                                                                     |
+| Configuration       | client defaults plus one call override                                                                                                                  |
+| Output              | text, image artifacts recovered from the response, server-stream text fragments, finish reason, usage, model and response metadata                      |
 
 `interactWithTools` runs only functions the caller registered for that call, appends each result as a tool message, and stops after four model calls.
 
@@ -23,14 +23,14 @@ This file is the frozen R1 scope. A change to the supported or rejected set belo
 | Dimension     | Rejected value                                                 |
 | ------------- | -------------------------------------------------------------- |
 | Task          | embedding, rerank, image, audio, video, custom binary tasks    |
-| Message       | image, audio, video, and file content                          |
+| Message       | audio, video, and file content                                 |
 | Mode          | `client_stream`, `duplex`, `long_running`                      |
 | Wire format   | Protobuf, XML, custom binary                                   |
 | Transport     | WebSocket, WebTransport, gRPC                                  |
 | Authorization | automatic OAuth refresh, body or chunk signatures              |
 | Integration   | guessing among provider protocols                              |
 | Configuration | a global mutable registry or changing components during a call |
-| Output        | artifacts, operation handles                                   |
+| Output        | non-image artifacts, operation handles                         |
 
 Rejected task, message content, and mode values fail with a stable error before a credential is read and before network I/O.
 

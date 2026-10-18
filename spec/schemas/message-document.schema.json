@@ -85,6 +85,7 @@
           "items": {
             "oneOf": [
               { "$ref": "#/$defs/textMessageContent" },
+              { "$ref": "#/$defs/artifactMessageContent" },
               { "$ref": "#/$defs/unknownMessageContent" }
             ]
           }
@@ -129,13 +130,34 @@
       "required": ["id", "kind", "text", "metadata", "extensions"],
       "additionalProperties": true
     },
+    "artifactMessageContent": {
+      "description": "Catalog-local artifact reference. Bytes and URIs stay on the artifact, not on this content value.",
+      "type": "object",
+      "properties": {
+        "id": { "$ref": "#/$defs/openIdentifier" },
+        "kind": { "const": "content.artifact" },
+        "artifactId": { "$ref": "#/$defs/openIdentifier" },
+        "metadata": { "$ref": "#/$defs/jsonRecord" },
+        "extensions": { "$ref": "#/$defs/jsonRecord" },
+        "composition": false,
+        "children": false,
+        "role": false,
+        "content": false,
+        "text": false
+      },
+      "required": ["id", "kind", "artifactId", "metadata", "extensions"],
+      "additionalProperties": true
+    },
     "unknownMessageContent": {
       "description": "Integration-defined or future content retained without semantic coercion.",
       "type": "object",
       "properties": {
         "id": { "$ref": "#/$defs/openIdentifier" },
         "kind": {
-          "allOf": [{ "$ref": "#/$defs/openIdentifier" }, { "not": { "const": "content.text" } }]
+          "allOf": [
+            { "$ref": "#/$defs/openIdentifier" },
+            { "not": { "enum": ["content.text", "content.artifact"] } }
+          ]
         },
         "raw": { "$ref": "#/$defs/rawPayload" },
         "metadata": { "$ref": "#/$defs/jsonRecord" },
