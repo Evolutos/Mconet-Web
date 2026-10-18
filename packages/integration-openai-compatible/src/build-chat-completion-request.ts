@@ -2,11 +2,13 @@
 
 import {
   ModelInteractionError,
-  validateEmptyArtifactCatalogSupport,
+  validateImageArtifactSupport,
   type CompatibilityPolicy,
   type ConversationInputNode,
   type GenerationParameters,
   type GenerationParametersNode,
+  type ArtifactCatalog,
+  type JsonValue,
   type MessageDocument,
   type ModelRequest,
   type ProcessingResult,
@@ -14,7 +16,12 @@ import {
   type TaskNode,
   type ToolDeclaration,
 } from "@evolutos/mconet-core-domain";
-import type { ProtocolExecutionPlan, ProtocolRequestPlan } from "@evolutos/mconet-core-spi";
+import type {
+  ErasedRuntimeValue,
+  MessageRequestMapper,
+  ProtocolExecutionPlan,
+  ProtocolRequestPlan,
+} from "@evolutos/mconet-core-spi";
 
 import { mapMaxOutputTokensToWire } from "./map-max-output-tokens.js";
 import { mapMessageDocumentToWire } from "./map-message-document.js";
@@ -22,7 +29,10 @@ import { mapSeedToWire } from "./map-seed.js";
 import { mapStopSequencesToWire } from "./map-stop-sequences.js";
 import { mapTemperatureToWire } from "./map-temperature.js";
 import { mapTopPToWire } from "./map-top-p.js";
-import { OpenAIChatCompletionRequestDTO } from "./openai-chat-completion-request-dto.js";
+import {
+  openAIChatCompletionRequestJson,
+  OpenAIChatCompletionRequestDTO,
+} from "./openai-chat-completion-request-dto.js";
 import type { OpenAIChatMessageDTO } from "./openai-chat-message-dto.js";
 import { OPENAI_CHAT_REQUEST_TYPE_ID } from "./prepare-chat-completion-plan.js";
 
@@ -31,6 +41,9 @@ const missingConversationInputCode = "missing_conversation_input";
 
 /** Stable code when mapped messages cannot form a request. */
 const emptyProtocolMessagesCode = "empty_protocol_messages";
+
+/** Stable code when an injected mapper does not return JSON messages. */
+const invalidMessageDocumentCode = "invalid_message_document";
 
 /** Stable code when two generation-parameter leaves are present. */
 const duplicateGenerationParametersCode = "duplicate_generation_parameters";
@@ -68,17 +81,24 @@ const strictParameterPolicy: CompatibilityPolicy = { mode: "strict" };
  * function does not stringify it, read a credential, authorize a header, or
  * send it. The supplied execution plan is returned by reference.
  *
- * @param input Model request and the plan that governed this mapping.
+ * An omitted `messageRequestMapper` keeps OpenAI `image_url` messages. A
+ * supplied mapper replaces only that message list. This function does not
+ * select Ollama or any other protocol from the model name.
+ *
+ * @param input Model request, the plan that governed this mapping, and the optional message mapper.
  * @returns The request plan, or error diagnostics and no payload.
  */
 export function buildOpenAIChatCompletionRequest(input: {
   readonly request: ModelRequest;
   readonly plan: ProtocolExecutionPlan;
+  readonly messageRequestMapper?: MessageRequestMapper;
 }): ProcessingResult<ProtocolRequestPlan> {
-  const artifactResult = validateEmptyArtifactCatalogSupport(input.request.task.artifacts);
+  const artifactResult = validateImageArtifactSupport(
+    input.request.task.document,
+    input.request.task.artifacts,
+  );
   if (artifactResult.value === undefined) {
-    // Artifacts are unsupported on this path. Return the domain diagnostic
-    // without reading artifact sources.
+    // Non-image artifacts and dangling references fail before sources are read.
     return { diagnostics: artifactResult.diagnostics };
   }
 
@@ -94,17 +114,19 @@ export function buildOpenAIChatCompletionRequest(input: {
     );
   }
 
-  const messages: OpenAIChatMessageDTO[] = [];
-  for (const document of collected.documents) {
-    const mapped = mapDocument(document);
-    if (mapped.diagnostics !== undefined) {
-      return { diagnostics: mapped.diagnostics };
-    }
-    for (const message of mapped.messages) {
-      messages.push(message);
-    }
+  const mappedMessages = mapMessages(
+    collected.documents,
+    input.request.task.artifacts,
+    input.messageRequestMapper,
+  );
+  if (mappedMessages.diagnostics !== undefined) {
+    return { diagnostics: mappedMessages.diagnostics };
   }
-  if (messages.length === 0) {
+  const messageCount =
+    mappedMessages.wireMessages === undefined
+      ? mappedMessages.messages.length
+      : mappedMessages.wireMessages.length;
+  if (messageCount === 0) {
     return failure(
       emptyProtocolMessagesCode,
       "Chat completions requires at least one message.",
@@ -123,13 +145,29 @@ export function buildOpenAIChatCompletionRequest(input: {
   }
 
   const stream = input.plan.extensions?.stream === true;
-  const requestBody = new OpenAIChatCompletionRequestDTO(modelName, messages, {
+  const requestFields = {
     ...options.options,
     // An empty declaration list is omitted. Writing `tools: []` would be a
     // different request from a conversation that declares no functions.
     ...(collected.tools.length === 0 ? {} : { tools: collected.tools }),
     ...(stream ? { stream: true } : {}),
-  }).toJson();
+  };
+  // The default path still builds OpenAI message DTOs. An injected mapper has
+  // already serialized its own message objects, so those replace the list.
+  const requestBody =
+    mappedMessages.wireMessages === undefined
+      ? new OpenAIChatCompletionRequestDTO(
+          modelName,
+          mappedMessages.messages,
+          requestFields,
+        ).toJson()
+      : openAIChatCompletionRequestJson({
+          model: modelName,
+          messages: mappedMessages.wireMessages,
+          stream,
+          ...options.options,
+          ...(collected.tools.length === 0 ? {} : { tools: collected.tools }),
+        });
   return {
     diagnostics: [],
     value: Object.freeze({
@@ -232,34 +270,138 @@ function collectTaskPayload(root: TaskNode): CollectedTaskPayload {
   return parameters === undefined ? { documents, tools } : { documents, tools, parameters };
 }
 
+/** Messages for one chat body, either as OpenAI DTOs or as injected JSON. */
+interface MappedMessages {
+  readonly messages: readonly OpenAIChatMessageDTO[];
+
+  /** Present only when an injected mapper supplied the message list. */
+  readonly wireMessages?: readonly JsonValue[];
+
+  readonly diagnostics?: ProcessingResult<ProtocolRequestPlan>["diagnostics"];
+}
+
 /**
- * Maps one message document, converting a thrown protocol error into diagnostics.
+ * Maps every conversation document into the message list for one request.
  *
- * @param document Conversation input document.
+ * Without an injected mapper, each document becomes OpenAI chat messages.
+ * With one, the mapper's fragment replaces that list. A thrown protocol error
+ * becomes a diagnostic and no partial body is returned.
+ *
+ * @param documents Conversation inputs in send order.
+ * @param catalog Catalog that resolves image references.
+ * @param messageRequestMapper Optional replacement for the OpenAI message list.
  * @returns Mapped messages, or diagnostics when mapping fails.
  */
-function mapDocument(document: MessageDocument): {
-  readonly messages: readonly OpenAIChatMessageDTO[];
-  readonly diagnostics?: ProcessingResult<ProtocolRequestPlan>["diagnostics"];
-} {
-  try {
-    return { messages: mapMessageDocumentToWire(document) };
-  } catch (error) {
-    if (error instanceof ModelInteractionError) {
+function mapMessages(
+  documents: readonly MessageDocument[],
+  catalog: ArtifactCatalog,
+  messageRequestMapper: MessageRequestMapper | undefined,
+): MappedMessages {
+  // Omission keeps the general OpenAI message list, including image_url parts.
+  // Injection replaces that list only. Model, tools, and sampling stay here,
+  // and this builder does not choose a protocol from the model name.
+  if (messageRequestMapper === undefined) {
+    const messages: OpenAIChatMessageDTO[] = [];
+    for (const document of documents) {
+      try {
+        for (const message of mapMessageDocumentToWire(document, catalog)) {
+          messages.push(message);
+        }
+      } catch (error) {
+        const diagnostics = mappingFailure(error);
+        if (diagnostics !== undefined) {
+          return { messages: [], diagnostics };
+        }
+        throw error;
+      }
+    }
+    return { messages };
+  }
+
+  const wireMessages: JsonValue[] = [];
+  for (const document of documents) {
+    let fragment: ErasedRuntimeValue;
+    try {
+      fragment = messageRequestMapper.mapRequest(document, catalog);
+    } catch (error) {
+      const diagnostics = mappingFailure(error);
+      if (diagnostics !== undefined) {
+        return { messages: [], diagnostics };
+      }
+      throw error;
+    }
+    // Copy the fragment into JSON so the request body does not share objects
+    // with the mapper. A non-JSON fragment fails closed instead of being sent.
+    const copied = copyJsonMessages(fragment.value);
+    if (copied === undefined) {
       return {
         messages: [],
-        diagnostics: [
-          {
-            code: error.code,
-            severity: "error",
-            phase: error.phase,
-            message: error.message,
-          },
-        ],
+        diagnostics: failure(
+          invalidMessageDocumentCode,
+          "Injected message mapper must return JSON message objects.",
+          "messages",
+        ).diagnostics,
       };
     }
-    throw error;
+    for (const message of copied) {
+      wireMessages.push(message);
+    }
   }
+  return { messages: [], wireMessages };
+}
+
+/**
+ * Copies a mapper fragment when it is a JSON array of message objects.
+ *
+ * @param value Fragment `value` from an injected mapper.
+ * @returns Detached JSON messages, or `undefined` when the fragment is not that list.
+ */
+function copyJsonMessages(value: unknown): readonly JsonValue[] | undefined {
+  // Stringify and parse detaches the fragment and rejects values JSON cannot
+  // carry. Each element must be a message object, not a string or array.
+  let encoded: string;
+  try {
+    encoded = JSON.stringify(value);
+  } catch {
+    return undefined;
+  }
+  if (typeof encoded !== "string") {
+    return undefined;
+  }
+  const parsed: unknown = JSON.parse(encoded);
+  if (!Array.isArray(parsed)) {
+    return undefined;
+  }
+  for (const item of parsed) {
+    if (typeof item !== "object" || item === null || Array.isArray(item)) {
+      return undefined;
+    }
+  }
+  return parsed as JsonValue[];
+}
+
+/**
+ * Converts a mapping throw into diagnostics.
+ *
+ * @param error Value thrown by a message mapper.
+ * @returns Diagnostics for a protocol error, or `undefined` when the caller should rethrow.
+ */
+function mappingFailure(
+  error: unknown,
+): ProcessingResult<ProtocolRequestPlan>["diagnostics"] | undefined {
+  // Only a protocol error becomes a diagnostic. Any other throw is a defect
+  // and must not be rewritten into a partial request.
+  if (!(error instanceof ModelInteractionError)) {
+    return undefined;
+  }
+  return [
+    {
+      code: error.code,
+      severity: "error",
+      phase: error.phase,
+      message: error.message,
+    },
+  ];
 }
 
 /** Optional request members accepted by the chat-completions body. */

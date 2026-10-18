@@ -26,6 +26,8 @@ export { OpenAIChatCompletionRequestDTO } from "./openai-chat-completion-request
 export { OpenAIChatCompletionResponseDTO } from "./openai-chat-completion-response-dto.js";
 export { OpenAIChatCompletionUsageDTO } from "./openai-chat-completion-usage-dto.js";
 export { OpenAIChatMessageDTO } from "./openai-chat-message-dto.js";
+export type { OpenAIChatContentPart } from "./openai-chat-message-dto.js";
+export { OpenAIChatMessageResponseMapper } from "./openai-chat-message-response-mapper.js";
 export {
   mapAssistantMessageRoleToWire,
   mapAssistantWireRoleToDomain,
@@ -88,6 +90,10 @@ export {
   matchesConversationGenerateTask,
 } from "./match-task-type.js";
 export { mapMessageEntryToWire, mapWireMessageToDomain } from "./map-message-entry.js";
+export {
+  OllamaChatMessageRequestMapper,
+  type OllamaChatMessage,
+} from "./map-ollama-chat-message.js";
 export { matchIntegrationChain } from "./match-integration-chain.js";
 export type { IntegrationChainMatcher } from "./match-integration-chain.js";
 export { matchIntegrationType } from "./match-integration-type.js";

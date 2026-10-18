@@ -50,8 +50,20 @@ const knownMessageMembers: ReadonlySet<string> = new Set([
 /** Name used when extension failures identify this wire value. */
 const messageOwner = "OpenAIChatMessageDTO";
 
-/** Expectation used when message text is neither a string nor an absent tool-call body. */
-const contentExpectation = "must be a string";
+/** Expectation used when message text is neither a string, content parts, nor an absent tool-call body. */
+const contentExpectation = "must be a string or content parts";
+
+/** Wire content-part type for text. */
+const textPartType = "text";
+
+/** Wire content-part type for an image URL or data URI. */
+const imageUrlPartType = "image_url";
+
+/** Nested member that carries an image URL. */
+const imageUrlMember = "image_url";
+
+/** Nested member that carries the URL string. */
+const urlMember = "url";
 
 /** Expectation used when a tool call is not the function shape. */
 const functionToolExpectation = "must be a function tool call";
@@ -71,6 +83,16 @@ export interface OpenAIChatFunctionCall {
   /** Raw JSON argument text. */
   readonly arguments: string;
 }
+
+/**
+ * One ordered content part.
+ *
+ * Text parts keep their characters. Image parts keep the `image_url` URL, which
+ * may be an absolute http(s) URL or a `data:` URI.
+ */
+export type OpenAIChatContentPart =
+  | { readonly type: "text"; readonly text: string }
+  | { readonly type: "image_url"; readonly url: string };
 
 /** Optional tool members supplied beside the frozen role and content. */
 interface OpenAIChatMessageToolFields {
@@ -97,6 +119,14 @@ export class OpenAIChatMessageDTO {
   /** Message text exactly as sent or received. An omitted tool-call body is stored as empty. */
   public readonly content: string;
 
+  /**
+   * Ordered text and image parts.
+   *
+   * Present when the message carries an image. A text-only message leaves this
+   * absent and keeps `content` as the single wire string.
+   */
+  public readonly contentParts?: readonly OpenAIChatContentPart[];
+
   /** Call id when this message is a tool result. */
   public readonly toolCallId?: string;
 
@@ -116,12 +146,14 @@ export class OpenAIChatMessageDTO {
    * @param content Message text.
    * @param extensions Response members outside the frozen shape.
    * @param toolFields Optional call id or function calls. An omitted field stays absent.
+   * @param contentParts Ordered parts when the message includes an image. Omitted for text-only messages.
    */
   public constructor(
     role: string,
     content: string,
     extensions: Extensions = {},
     toolFields: OpenAIChatMessageToolFields = {},
+    contentParts?: readonly OpenAIChatContentPart[],
   ) {
     if (typeof role !== "string") {
       throw new TypeError(`${messageOwner} role must be a string.`);
@@ -145,6 +177,9 @@ export class OpenAIChatMessageDTO {
     if (toolCalls !== undefined) {
       this.toolCalls = toolCalls;
     }
+    if (contentParts !== undefined) {
+      this.contentParts = Object.freeze(contentParts.map((part) => Object.freeze({ ...part })));
+    }
     this.extensions = snapshotExtensions(extensions, messageOwner);
     Object.freeze(this);
   }
@@ -161,9 +196,7 @@ export class OpenAIChatMessageDTO {
   public toJson(): { readonly [key: string]: JsonValue } {
     const body: { [key: string]: JsonValue } = {
       role: this.role,
-      // Chat completions uses null, not "", when an assistant turn exists only
-      // to request function calls.
-      content: this.toolCalls !== undefined && this.content.length === 0 ? null : this.content,
+      content: wireContent(this),
     };
     if (this.toolCallId !== undefined) {
       body[toolCallIdMember] = this.toolCallId;
@@ -199,14 +232,39 @@ export class OpenAIChatMessageDTO {
     const content = readContent(document, path, toolCalls !== undefined);
     return new OpenAIChatMessageDTO(
       role,
-      content,
+      content.text,
       unknownMembers(document, knownMessageMembers, messageOwner),
       {
         ...(toolCallId === undefined ? {} : { toolCallId }),
         ...(toolCalls === undefined ? {} : { toolCalls }),
       },
+      content.parts,
     );
   }
+}
+
+/**
+ * Returns the `content` member.
+ *
+ * Image messages use an ordered part array. Text-only messages stay a string,
+ * and an assistant tool call with no text stays `null`.
+ *
+ * @param message Message being written.
+ * @returns The wire content value.
+ */
+function wireContent(message: OpenAIChatMessageDTO): JsonValue {
+  // Parts are written only when an image is present. A text-only message
+  // stays a string so the request shape does not change.
+  if (message.contentParts !== undefined && message.contentParts.length > 0) {
+    return message.contentParts.map((part) =>
+      part.type === textPartType
+        ? { type: textPartType, text: part.text }
+        : { type: imageUrlPartType, image_url: { url: part.url } },
+    );
+  }
+  // Chat completions uses null, not "", when an assistant turn exists only
+  // to request function calls.
+  return message.toolCalls !== undefined && message.content.length === 0 ? null : message.content;
 }
 
 /**
@@ -218,30 +276,95 @@ export class OpenAIChatMessageDTO {
  * @param document Decoded message object.
  * @param path JSON Pointer of the message.
  * @param toolCallsPresent Whether function calls were present on this message.
- * @returns The message text.
+ * @returns The joined text and, when the wire value is an array, its parts.
  */
 function readContent(
   document: Readonly<Record<string, unknown>>,
   path: string,
   toolCallsPresent: boolean,
-): string {
-  // A tool-call message may omit content. Any other message must carry text.
+): { readonly text: string; readonly parts?: readonly OpenAIChatContentPart[] } {
+  // A tool-call message may omit content. Any other message must carry text or parts.
   if (!Object.hasOwn(document, messageContentMember)) {
     if (toolCallsPresent) {
-      return "";
+      return { text: "" };
     }
     throw invalidProtocolResponse(childPath(path, messageContentMember), contentExpectation);
   }
   const descriptor = Object.getOwnPropertyDescriptor(document, messageContentMember);
   const value = descriptor !== undefined && "value" in descriptor ? descriptor.value : undefined;
   if (typeof value === "string") {
-    return value;
+    return { text: value };
   }
   // Null is the wire spelling of an empty tool-call body, stored here as "".
   if (value === null && toolCallsPresent) {
-    return "";
+    return { text: "" };
+  }
+  // A string is the text-only shape. An array is text and image parts in
+  // wire order. Anything else is outside this content profile.
+  if (Array.isArray(value)) {
+    return readContentParts(value, childPath(path, messageContentMember));
   }
   throw invalidProtocolResponse(childPath(path, messageContentMember), contentExpectation);
+}
+
+/**
+ * Reads an ordered content array of text and image_url parts.
+ *
+ * @param value Decoded `content` array.
+ * @param path JSON Pointer of the content member.
+ * @returns Joined text plus the parts in wire order.
+ */
+function readContentParts(
+  value: readonly unknown[],
+  path: string,
+): { readonly text: string; readonly parts: readonly OpenAIChatContentPart[] } {
+  if (value.length === 0) {
+    throw invalidProtocolResponse(path, contentExpectation);
+  }
+  const parts: OpenAIChatContentPart[] = [];
+  const texts: string[] = [];
+  for (let index = 0; index < value.length; index += 1) {
+    const part = readContentPart(value[index], childPath(path, String(index)));
+    parts.push(part);
+    // Text is also joined into the string slot so a reader that only uses
+    // content still sees the words. Image parts are not copied into that string.
+    if (part.type === textPartType) {
+      texts.push(part.text);
+    }
+  }
+  return { text: texts.join(""), parts };
+}
+
+/**
+ * Reads one text or image_url part.
+ *
+ * @param value Decoded part.
+ * @param path JSON Pointer of the part.
+ * @returns The part.
+ */
+function readContentPart(value: unknown, path: string): OpenAIChatContentPart {
+  const part = requireObject(value, path);
+  const type = requireString(part, "type", path);
+  if (type === textPartType) {
+    return { type: textPartType, text: requireString(part, textPartType, path) };
+  }
+  // image_url stores the URL only. This reader does not fetch it or decode
+  // a data URI; response recovery does that in the message mapper.
+  if (type === imageUrlPartType) {
+    const imageUrl = requireObject(
+      Object.hasOwn(part, imageUrlMember) ? part[imageUrlMember] : undefined,
+      childPath(path, imageUrlMember),
+    );
+    const url = requireString(imageUrl, urlMember, childPath(path, imageUrlMember));
+    if (url.length === 0) {
+      throw invalidProtocolResponse(
+        childPath(childPath(path, imageUrlMember), urlMember),
+        "must be a non-empty string",
+      );
+    }
+    return { type: imageUrlPartType, url };
+  }
+  throw invalidProtocolResponse(childPath(path, "type"), contentExpectation);
 }
 
 /**

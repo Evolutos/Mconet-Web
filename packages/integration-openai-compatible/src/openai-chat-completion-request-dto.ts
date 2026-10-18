@@ -146,39 +146,100 @@ export class OpenAIChatCompletionRequestDTO {
    */
   public toJson(): { readonly [key: string]: JsonValue } {
     // Insertion order follows the frozen profile so the encoded bytes are stable
-    // for the same request.
-    const body: { [key: string]: JsonValue } = {
+    // for the same request. Optional members are included only when present.
+    return openAIChatCompletionRequestJson({
       model: this.model,
       messages: this.messages.map((message) => message.toJson()),
-    };
-    if (this.tools !== undefined) {
-      body.tools = this.tools.map((tool) => ({
-        type: functionToolType,
-        function: {
-          name: tool.name,
-          ...(tool.description === undefined ? {} : { description: tool.description }),
-          parameters: tool.parameters,
-        },
-      }));
-    }
-    if (this.temperature !== undefined) {
-      body.temperature = this.temperature;
-    }
-    if (this.topP !== undefined) {
-      body.top_p = this.topP;
-    }
-    if (this.maxTokens !== undefined) {
-      body.max_tokens = this.maxTokens;
-    }
-    if (this.stop !== undefined) {
-      body.stop = [...this.stop];
-    }
-    if (this.seed !== undefined) {
-      body.seed = this.seed;
-    }
-    body.stream = this.stream;
-    return body;
+      stream: this.stream,
+      ...(this.tools === undefined ? {} : { tools: this.tools }),
+      ...(this.temperature === undefined ? {} : { temperature: this.temperature }),
+      ...(this.topP === undefined ? {} : { topP: this.topP }),
+      ...(this.maxTokens === undefined ? {} : { maxTokens: this.maxTokens }),
+      ...(this.stop === undefined ? {} : { stop: this.stop }),
+      ...(this.seed === undefined ? {} : { seed: this.seed }),
+    });
   }
+}
+
+/**
+ * Request fields composed around an already-serialized message list.
+ *
+ * The message list comes from the chat DTO or from an injected message mapper.
+ * These fields do not select a protocol.
+ */
+export interface OpenAIChatCompletionJsonInput {
+  /** Provider-facing model name. */
+  readonly model: string;
+
+  /** Messages already serialized for the request body, in send order. */
+  readonly messages: readonly JsonValue[];
+
+  /** Whether the service should stream events. */
+  readonly stream: boolean;
+
+  /** Sampling temperature when the request sends one. */
+  readonly temperature?: number;
+
+  /** Nucleus sampling mass when the request sends one. */
+  readonly topP?: number;
+
+  /** Output token limit when the request sends one. */
+  readonly maxTokens?: number;
+
+  /** Stop sequences in order when the request sends them. */
+  readonly stop?: readonly string[];
+
+  /** Deterministic sampling seed when the request sends one. */
+  readonly seed?: number;
+
+  /** Function tools when the request declares them. */
+  readonly tools?: readonly ToolDeclaration[];
+}
+
+/**
+ * Returns the chat-completions body in frozen profile order.
+ *
+ * Omitted optional members are absent rather than null. `stream` is always
+ * written. The message array is copied by reference into a fresh body object;
+ * callers pass a list they already own.
+ *
+ * @param input Model, messages, stream flag, and any optional members.
+ * @returns A fresh JSON object.
+ */
+export function openAIChatCompletionRequestJson(input: OpenAIChatCompletionJsonInput): {
+  readonly [key: string]: JsonValue;
+} {
+  const body: { [key: string]: JsonValue } = {
+    model: input.model,
+    messages: [...input.messages],
+  };
+  if (input.tools !== undefined) {
+    body.tools = input.tools.map((tool) => ({
+      type: functionToolType,
+      function: {
+        name: tool.name,
+        ...(tool.description === undefined ? {} : { description: tool.description }),
+        parameters: tool.parameters,
+      },
+    }));
+  }
+  if (input.temperature !== undefined) {
+    body.temperature = input.temperature;
+  }
+  if (input.topP !== undefined) {
+    body.top_p = input.topP;
+  }
+  if (input.maxTokens !== undefined) {
+    body.max_tokens = input.maxTokens;
+  }
+  if (input.stop !== undefined) {
+    body.stop = [...input.stop];
+  }
+  if (input.seed !== undefined) {
+    body.seed = input.seed;
+  }
+  body.stream = input.stream;
+  return body;
 }
 
 /**

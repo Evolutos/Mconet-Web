@@ -3,6 +3,7 @@
 import {
   isMessageDocument,
   ModelInteractionError,
+  type ArtifactCatalog,
   type MessageDocument,
   type MessageEntry,
   type MessageGroup,
@@ -20,6 +21,9 @@ const messageEntryKind = "message.entry";
 /** Message-tree element visited while collecting request messages. */
 type MessageElement = MessageGroup | MessageEntry;
 
+/** Empty catalog used when a caller maps a text-only document. */
+const emptyCatalog: ArtifactCatalog = Object.freeze({ artifacts: Object.freeze([]) });
+
 /**
  * Returns request chat messages for one message document.
  *
@@ -30,12 +34,14 @@ type MessageElement = MessageGroup | MessageEntry;
  * a model or sampling parameters.
  *
  * @param document Request message tree.
+ * @param catalog Catalog that resolves image references in the document.
  * @returns Frozen messages in send order. The list is empty when the tree has no entries.
  * @throws ModelInteractionError When `document` is not a valid message document,
- *   an entry role has no wire spelling, or any content value is not text.
+ *   an entry role has no wire spelling, or any content value cannot be sent.
  */
 export function mapMessageDocumentToWire(
   document: MessageDocument,
+  catalog: ArtifactCatalog = emptyCatalog,
 ): readonly OpenAIChatMessageDTO[] {
   // The document guard checks the whole tree, including nested identity and
   // relations, before any entry is turned into a message.
@@ -56,7 +62,7 @@ export function mapMessageDocumentToWire(
   while (element !== undefined) {
     if (isEntry(element)) {
       // One leaf is one turn. Content order inside that turn belongs to the entry mapper.
-      messages.push(mapMessageEntryToWire(element));
+      messages.push(mapMessageEntryToWire(element, catalog));
     } else {
       // Reverse a shallow copy so the stack restores left-to-right child order.
       // The document's own children array is not reversed or otherwise modified.

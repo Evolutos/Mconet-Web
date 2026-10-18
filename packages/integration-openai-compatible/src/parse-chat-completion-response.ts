@@ -14,7 +14,7 @@ import {
 } from "@evolutos/mconet-core-domain";
 import type { ErasedRuntimeValue, TransportResponseMetadata } from "@evolutos/mconet-core-spi";
 
-import { mapChoicesToMessageDocument } from "./map-choices.js";
+import { OpenAIChatMessageResponseMapper } from "./openai-chat-message-response-mapper.js";
 import { mapWireFinishReasonToDomain } from "./map-finish-reason.js";
 import { mapWireModelToDomain } from "./map-resolved-model.js";
 import { mapWireUsageToDomain } from "./map-token-usage.js";
@@ -74,10 +74,8 @@ const emptyMetadata: ConversationTaskResult["metadata"] = Object.freeze({});
 /** Shared empty task-result extensions. Response extensions stay on the parsed response. */
 const emptyResultExtensions: ConversationTaskResult["extensions"] = Object.freeze({});
 
-/** Shared empty artifact catalog. This parser does not read artifact bytes. */
-const emptyArtifacts: ConversationTaskResult["artifacts"] = Object.freeze({
-  artifacts: Object.freeze([]),
-});
+/** Recovers message text and image parts. One instance is stateless. */
+const messageResponseMapper = new OpenAIChatMessageResponseMapper();
 
 /** Shared empty protocol state. A success body does not carry a service id. */
 const emptyProtocolState: ParsedTaskResponse["protocolState"] = Object.freeze([]);
@@ -130,9 +128,11 @@ export function parseOpenAIChatCompletionResponse(input: {
     throw error;
   }
 
-  let messages: ConversationTaskResult["messages"];
+  let mapped: ReturnType<OpenAIChatMessageResponseMapper["mapResponse"]>;
   try {
-    messages = mapChoicesToMessageDocument(response.choices);
+    // The mapper recovers text and image parts together. Its catalog is the
+    // one stored on the parsed response; a text-only body keeps that catalog empty.
+    mapped = messageResponseMapper.mapResponse(input.payload);
   } catch (error) {
     const rejected = thrownFailure(error);
     if (rejected !== undefined) {
@@ -169,7 +169,8 @@ export function parseOpenAIChatCompletionResponse(input: {
   }
 
   const parsed = assembleResponse({
-    messages,
+    messages: mapped.document,
+    artifacts: mapped.artifacts,
     stopReason,
     status: statusForFinishReason(stopReason),
     extensions: response.extensions,
@@ -206,6 +207,7 @@ interface ReportedFacts {
 function assembleResponse(
   facts: ReportedFacts & {
     readonly messages: ConversationTaskResult["messages"];
+    readonly artifacts: ConversationTaskResult["artifacts"];
     readonly stopReason: FinishReason;
     readonly status: OutputStatus;
     readonly extensions: Extensions;
@@ -232,7 +234,7 @@ function assembleResponse(
       extensions: emptyResultExtensions,
     }),
     messages: facts.messages,
-    artifacts: emptyArtifacts,
+    artifacts: facts.artifacts,
     metadata: emptyMetadata,
     extensions: emptyResultExtensions,
   });

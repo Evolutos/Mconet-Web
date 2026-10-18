@@ -1,16 +1,26 @@
 // Copyright © 2026 Mcont.
 
 import {
+  isArtifactMessageContent,
   isMessageEntry,
   isOpenIdentifier,
+  isUriValue,
   ModelInteractionError,
+  resolveArtifactReference,
+  type Artifact,
+  type ArtifactCatalog,
   type MessageEntry,
   type ToolCall,
 } from "@evolutos/mconet-core-domain";
 
+import { encodeBytesAsBase64 } from "./image-bytes.js";
 import { mapMessageRoleToWire, mapWireRoleToDomain } from "./map-message-role.js";
 import { mapTextMessageContentToWire, mapWireTextToDomain } from "./map-text-message-content.js";
-import { OpenAIChatMessageDTO, type OpenAIChatFunctionCall } from "./openai-chat-message-dto.js";
+import {
+  OpenAIChatMessageDTO,
+  type OpenAIChatContentPart,
+  type OpenAIChatFunctionCall,
+} from "./openai-chat-message-dto.js";
 
 /** Stable code for a request value that is not a message-entry leaf. */
 const invalidMessageEntryCode = "invalid_message_entry";
@@ -20,6 +30,18 @@ const missingToolCallIdCode = "missing_tool_call_id";
 
 /** Stable code when tool facts are attached to a role that cannot carry them. */
 const unexpectedToolCallCode = "unexpected_tool_call";
+
+/** Stable code when an image source cannot be written as `image_url`. */
+const unsupportedArtifactSourceCode = "unsupported_artifact_source";
+
+/** Inline image bytes. */
+const inlineSourceKind = "artifact.source.inline";
+
+/** URI image source. */
+const uriSourceKind = "artifact.source.uri";
+
+/** Empty catalog used when a caller maps text without images. */
+const emptyCatalog: ArtifactCatalog = Object.freeze({ artifacts: Object.freeze([]) });
 
 /** Role that answers one earlier function call. */
 const toolRoleId = "message.tool";
@@ -58,12 +80,17 @@ const emptyExtensions: MessageEntry["extensions"] = Object.freeze({});
  * because a request must not send unknown members.
  *
  * @param entry One leaf of a request message document.
- * @returns A message whose wire members are the role, text, and any tool facts.
+ * @param catalog Catalog that resolves `content.artifact` references. Text-only
+ *   entries may omit it.
+ * @returns A message whose wire members are the role, text, images, and any tool facts.
  * @throws ModelInteractionError When `entry` is not a message-entry leaf, its
- *   role has no wire spelling, any content value is not text, or tool facts do
+ *   role has no wire spelling, any content value cannot be sent, or tool facts do
  *   not belong on that role.
  */
-export function mapMessageEntryToWire(entry: MessageEntry): OpenAIChatMessageDTO {
+export function mapMessageEntryToWire(
+  entry: MessageEntry,
+  catalog: ArtifactCatalog = emptyCatalog,
+): OpenAIChatMessageDTO {
   // The domain guard rejects containers, accessors, and an empty content list
   // before any text is read. A lookalike object must not be concatenated.
   if (!isMessageEntry(entry)) {
@@ -79,15 +106,84 @@ export function mapMessageEntryToWire(entry: MessageEntry): OpenAIChatMessageDTO
   // Role is selected before content so an unsupported participant fails without
   // depending on how many content values follow it.
   const role = mapMessageRoleToWire(entry.role);
-  const segments: string[] = [];
+  const parts: OpenAIChatContentPart[] = [];
+  let sawImage = false;
   for (const content of entry.content) {
-    // Index order is the content order. A non-text value fails inside the
-    // content mapper and leaves no partial message to send.
-    segments.push(mapTextMessageContentToWire(content));
+    // Index order is the content order. A value this protocol cannot send fails
+    // inside the mapper and leaves no partial message.
+    if (isArtifactMessageContent(content)) {
+      // An image reference becomes one image_url part. Text stays in order
+      // around it. The catalog lookup happens inside the URL helper.
+      sawImage = true;
+      parts.push({ type: "image_url", url: imageUrlForContent(content.artifactId, catalog) });
+      continue;
+    }
+    parts.push({ type: "text", text: mapTextMessageContentToWire(content) });
   }
   const toolFields = toolFieldsForRequest(entry);
+  const text = parts
+    .filter((part) => part.type === "text")
+    .map((part) => part.text)
+    .join(exactContentSeparator);
+  // Text-only messages stay a single string. Parts are written only when an
+  // image is present, so a request that has no image does not change shape.
+  if (!sawImage) {
+    return new OpenAIChatMessageDTO(role, text, {}, toolFields);
+  }
+  return new OpenAIChatMessageDTO(role, text, {}, toolFields, parts);
+}
 
-  return new OpenAIChatMessageDTO(role, segments.join(exactContentSeparator), {}, toolFields);
+/**
+ * Resolves one image reference and returns the `image_url` URL.
+ *
+ * Inline bytes become a data URI. An absolute URI is copied as stored so a
+ * provider that fetches URLs can use it. The bytes themselves are read here;
+ * network fetch of a URI is the runtime materializer's job.
+ *
+ * @param artifactId Catalog-local image identity.
+ * @param catalog Request catalog.
+ * @returns A data URI or absolute URL.
+ */
+function imageUrlForContent(artifactId: string, catalog: ArtifactCatalog): string {
+  const resolved = resolveArtifactReference({ artifactId, metadata: {} }, catalog);
+  if (resolved.value === undefined) {
+    throw new ModelInteractionError({
+      message: "The referenced image artifact does not exist in the request catalog.",
+      category: "invalid_request",
+      phase: "protocol_adaptation",
+      code: "artifact_reference_not_found",
+      diagnostics: resolved.diagnostics,
+    });
+  }
+  return imageUrlForArtifact(resolved.value);
+}
+
+/**
+ * Writes one image source as an `image_url` URL.
+ *
+ * @param artifact Resolved image artifact.
+ * @returns The URL placed in the request body.
+ */
+function imageUrlForArtifact(artifact: Artifact): string {
+  const source = artifact.source;
+  // Inline bytes are encoded here. An absolute URI is copied unchanged;
+  // fetching it is the runtime materializer's job, and this function stays
+  // synchronous because the adapter cannot do network I/O.
+  if (source.kind === inlineSourceKind && "bytes" in source && source.bytes instanceof Uint8Array) {
+    const mediaType = artifact.mediaType ?? "application/octet-stream";
+    return `data:${mediaType};base64,${encodeBytesAsBase64(source.bytes)}`;
+  }
+  const uri = "uri" in source ? source.uri : undefined;
+  if (source.kind === uriSourceKind && isUriValue(uri) && uri.kind === "absolute") {
+    return uri.value;
+  }
+  throw new ModelInteractionError({
+    message: "Image artifact source cannot be written as image_url.",
+    category: "unsupported_feature",
+    phase: "protocol_adaptation",
+    code: unsupportedArtifactSourceCode,
+    diagnostics: [],
+  });
 }
 
 /**

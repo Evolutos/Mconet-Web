@@ -1,6 +1,6 @@
 // Copyright © 2026 Mcont.
 
-import type { TaskProtocolAdapter } from "@evolutos/mconet-core-spi";
+import type { MessageRequestMapper, TaskProtocolAdapter } from "@evolutos/mconet-core-spi";
 
 import { buildOpenAIChatCompletionRequest } from "./build-chat-completion-request.js";
 import { matchesTextChatInteractionMode } from "./match-interaction-mode.js";
@@ -29,11 +29,16 @@ const adapterCapabilities: TaskProtocolAdapter["descriptor"]["capabilities"] = n
  * The adapter matches protocol, task type, and a text mode. A model name does
  * not affect `supports`. The methods delegate to the existing planning, request,
  * response, and error functions. This object does not encode, authorize, or
- * send.
+ * send. An omitted message mapper keeps OpenAI `image_url` messages. A supplied
+ * mapper replaces only that list; the protocol id is not used to choose it.
  *
- * @returns A new adapter with the same behavior as every other instance.
+ * @param input Optional injected message mapper. Omission keeps the default chat messages.
+ * @returns A new adapter. Instances that share a mapper share that mapper.
  */
-export function createOpenAIChatCompletionAdapter(): TaskProtocolAdapter {
+export function createOpenAIChatCompletionAdapter(input?: {
+  readonly messageRequestMapper?: MessageRequestMapper;
+}): TaskProtocolAdapter {
+  const messageRequestMapper = input?.messageRequestMapper;
   return Object.freeze({
     descriptor: Object.freeze({
       name: adapterName,
@@ -58,7 +63,13 @@ export function createOpenAIChatCompletionAdapter(): TaskProtocolAdapter {
       );
     },
     preparePlan: prepareOpenAIChatCompletionPlan,
-    buildRequest: buildOpenAIChatCompletionRequest,
+    buildRequest(buildInput: Parameters<TaskProtocolAdapter["buildRequest"]>[0]) {
+      // Pass the injected mapper only when the caller supplied one. Omission
+      // leaves the general image_url messages in place.
+      return buildOpenAIChatCompletionRequest(
+        messageRequestMapper === undefined ? buildInput : { ...buildInput, messageRequestMapper },
+      );
+    },
     parseResponse: parseOpenAIChatCompletionResponse,
     parseError: parseOpenAIChatCompletionError,
   });
