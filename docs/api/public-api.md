@@ -26,6 +26,7 @@
 | Package | Name | Kind |
 | --- | --- | --- |
 | `client` | `ClientComponentSelection` | type |
+| `client` | `ConversationImage` | type |
 | `client` | `ConversationMessage` | type |
 | `client` | `conversationRequest` | value |
 | `client` | `ConversationRequestInput` | type |
@@ -75,6 +76,7 @@
 | `core-domain` | `ArtifactCatalog` | type |
 | `core-domain` | `ArtifactDescriptor` | type |
 | `core-domain` | `ArtifactKind` | type |
+| `core-domain` | `ArtifactMessageContent` | type |
 | `core-domain` | `ArtifactMetadata` | type |
 | `core-domain` | `ArtifactReference` | type |
 | `core-domain` | `ArtifactSource` | type |
@@ -101,6 +103,7 @@
 | `core-domain` | `InteractionPhase` | type |
 | `core-domain` | `InteractionResourceLimits` | type |
 | `core-domain` | `isArtifact` | value |
+| `core-domain` | `isArtifactMessageContent` | value |
 | `core-domain` | `isConversationTaskRequest` | value |
 | `core-domain` | `isDuration` | value |
 | `core-domain` | `isGenerationParameters` | value |
@@ -182,6 +185,7 @@
 | `core-domain` | `validateConversationTaskNodeSupport` | value |
 | `core-domain` | `validateConversationTaskTypeSupport` | value |
 | `core-domain` | `validateEmptyArtifactCatalogSupport` | value |
+| `core-domain` | `validateImageArtifactSupport` | value |
 | `core-domain` | `validateTextInteractionModeSupport` | value |
 | `core-domain` | `validateTextMessageContentSupport` | value |
 | `core-domain` | `validateUnaryInteractionModeSupport` | value |
@@ -212,6 +216,7 @@
 | `core-runtime` | `InteractionTerminalState` | type |
 | `core-runtime` | `InteractionTermination` | type |
 | `core-runtime` | `joinIntegrationBranches` | value |
+| `core-runtime` | `materializeImageArtifactSources` | value |
 | `core-runtime` | `mergeInteractionConfiguration` | value |
 | `core-runtime` | `ModelClientConfigurationData` | type |
 | `core-runtime` | `normalizeInteractionRequest` | value |
@@ -376,6 +381,8 @@
 | `integration-openai-compatible` | `matchIntegrationChain` | value |
 | `integration-openai-compatible` | `matchIntegrationType` | value |
 | `integration-openai-compatible` | `ModelIntegrationBinding` | type |
+| `integration-openai-compatible` | `OllamaChatMessage` | type |
+| `integration-openai-compatible` | `OllamaChatMessageRequestMapper` | value |
 | `integration-openai-compatible` | `OPENAI_CHAT_BINDING_ID` | value |
 | `integration-openai-compatible` | `OPENAI_CHAT_BINDING_VERSION` | value |
 | `integration-openai-compatible` | `OPENAI_CHAT_COMPLETIONS_PROTOCOL_ID` | value |
@@ -387,6 +394,7 @@
 | `integration-openai-compatible` | `OpenAIChatCompletionRequestDTO` | value |
 | `integration-openai-compatible` | `OpenAIChatCompletionResponseDTO` | value |
 | `integration-openai-compatible` | `OpenAIChatCompletionUsageDTO` | value |
+| `integration-openai-compatible` | `OpenAIChatContentPart` | type |
 | `integration-openai-compatible` | `openAIChatFixtureErrorBody` | value |
 | `integration-openai-compatible` | `openAIChatFixtureErrorMetadata` | value |
 | `integration-openai-compatible` | `openAIChatFixtureErrorPayload` | value |
@@ -400,6 +408,7 @@
 | `integration-openai-compatible` | `openAIChatFixtureSuccessMetadata` | value |
 | `integration-openai-compatible` | `openAIChatFixtureSuccessPayload` | value |
 | `integration-openai-compatible` | `OpenAIChatMessageDTO` | value |
+| `integration-openai-compatible` | `OpenAIChatMessageResponseMapper` | value |
 | `integration-openai-compatible` | `parseOpenAIChatCompletionError` | value |
 | `integration-openai-compatible` | `parseOpenAIChatCompletionResponse` | value |
 | `integration-openai-compatible` | `prepareOpenAIChatCompletionPlan` | value |
